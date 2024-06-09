@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Dropdown } from 'react-native-element-dropdown';
-import AntDesign from 'react-native-vector-icons/AntDesign';
+// import AntDesign from 'react-native-vector-icons/AntDesign';
 
 const userTypes = [
     { label: 'Ứng viên', value: '1' },
@@ -68,14 +68,7 @@ const Login = () => {
                     setUserType(item.value);
                     setIsFocus(false);
                 }}
-                renderLeftIcon={() => (
-                    <AntDesign
-                        style={styles.icon}
-                        color={isFocus ? 'blue' : 'black'}
-                        name="Safety"
-                        size={20}
-                    />
-                )}
+                
             />
 
             <Button title="Submit" onPress={handleSubmit} />

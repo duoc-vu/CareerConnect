@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { Button, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Dropdown } from 'react-native-element-dropdown';
-import AntDesign from 'react-native-vector-icons/AntDesign';
+// import AntDesign from 'react-native-vector-icons/AntDesign';
+import firestore from '@react-native-firebase/firestore';
+
+const usersCollection = firestore().collection('users');
 
 const userTypes = [
     { label: 'Ứng viên', value: '1' },
@@ -17,6 +20,7 @@ const Register = ({navigation}:any) => {
     const [value, setValue] = useState(null);
     const [isFocus, setIsFocus] = useState(false);
     const [error, setError] = useState('');
+    console.log(usersCollection.doc())
 
     const handleRegister = () => {
         // Validate email
@@ -49,6 +53,7 @@ const Register = ({navigation}:any) => {
         console.log('Password:', password);
         console.log('Confirm Password:', confirmPassword);
         console.log('User Type:', userType);
+        
     };
 
     return (
