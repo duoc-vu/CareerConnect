@@ -1,18 +1,26 @@
 import React, { useState } from 'react';
-import { View, TextInput, Button, StyleSheet, Text } from 'react-native';
+import { Button, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Dropdown } from 'react-native-element-dropdown';
+import AntDesign from 'react-native-vector-icons/AntDesign';
 
-const userType = [
+const userTypes = [
     { label: 'Ứng viên', value: '1' },
     { label: 'Doanh nghiệp', value: '2' },
 ];
 
-const LoginScreen = () => {
+const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [userType, setUserType] = useState('applicant');
+    const [userType, setUserType] = useState('');
     const [value, setValue] = useState(null);
     const [isFocus, setIsFocus] = useState(false);
 
+    const handleSubmit = () => {
+        // Xử lý đăng ký/đăng nhập tại đây
+        console.log('Email:', email);
+        console.log('Password:', password);
+        console.log('User Type:', userType);
+    };
     const renderLabel = () => {
         if (value || isFocus) {
             return (
@@ -22,13 +30,6 @@ const LoginScreen = () => {
             );
         }
         return null;
-    };
-
-    const handleSubmit = () => {
-        // Xử lý đăng ký/đăng nhập tại đây
-        console.log('Email:', email);
-        console.log('Password:', password);
-        console.log('User Type:', userType);
     };
 
     return (
@@ -46,11 +47,43 @@ const LoginScreen = () => {
                 value={password}
                 onChangeText={setPassword}
             />
+            {renderLabel()}
+            <Dropdown
+                style={[styles.dropdown, isFocus && { borderColor: 'blue' }]}
+                placeholderStyle={styles.placeholderStyle}
+                selectedTextStyle={styles.selectedTextStyle}
+                inputSearchStyle={styles.inputSearchStyle}
+                iconStyle={styles.iconStyle}
+                data={userTypes}
+                search
+                maxHeight={300}
+                labelField="label"
+                valueField="value"
+                placeholder={!isFocus ? 'Select item' : '...'}
+                searchPlaceholder="Search..."
+                value={value}
+                onFocus={() => setIsFocus(true)}
+                onBlur={() => setIsFocus(false)}
+                onChange={(item: any) => {
+                    setUserType(item.value);
+                    setIsFocus(false);
+                }}
+                renderLeftIcon={() => (
+                    <AntDesign
+                        style={styles.icon}
+                        color={isFocus ? 'blue' : 'black'}
+                        name="Safety"
+                        size={20}
+                    />
+                )}
+            />
 
             <Button title="Submit" onPress={handleSubmit} />
         </View>
     );
 };
+
+
 
 const styles = StyleSheet.create({
     container: {
@@ -66,9 +99,10 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         marginVertical: 10,
         paddingHorizontal: 10,
-    }, 
+    },
     dropdown: {
-        height: 50,
+        width: '80%',
+        height: 40,
         borderColor: 'gray',
         borderWidth: 0.5,
         borderRadius: 8,
@@ -102,4 +136,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default LoginScreen;
+export default Login;
