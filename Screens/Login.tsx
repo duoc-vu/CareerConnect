@@ -2,35 +2,50 @@ import React, { useState } from 'react';
 import { Button, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Dropdown } from 'react-native-element-dropdown';
 // import AntDesign from 'react-native-vector-icons/AntDesign';
+import firestore, { onSnapshot, query } from '@react-native-firebase/firestore';
 
 const userTypes = [
     { label: 'Ứng viên', value: '1' },
     { label: 'Doanh nghiệp', value: '2' },
 ];
 
-const Login = () => {
+// Lấy reference đến collection "users"
+const fb = firestore().collection('users');
+
+
+const Login = ({ navigation }: any) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [userType, setUserType] = useState('');
-    const [value, setValue] = useState(null);
-    const [isFocus, setIsFocus] = useState(false);
+    const [error, setError] = useState('');
 
-    const handleSubmit = () => {
+
+    const handleSubmit = async () => {
+        try {
+            // Tạo query để tìm document với email cụ thể
+            const userDoc = await fb.where('email', '==', email).limit(1).get();
+            if (!email || !password) {
+                setError('Vui lòng nhập email và password');
+                return;
+            }
+            else if (!userDoc.empty) {
+                const userData = userDoc.docs[0].data()
+                if (userData.password === password) {
+                    setError('Thông tin hợp lệ');
+                    navigation.navigate('Home');
+                } else {
+                    setError('Mật khẩu không chính xác');
+                }
+            } else {
+                setError('Thông tin đăng nhập không chính xác');
+            }
+        } catch (error) {
+            console.error('Lỗi khi kiểm tra User:', error);
+        }
         // Xử lý đăng ký/đăng nhập tại đây
         console.log('Email:', email);
         console.log('Password:', password);
-        console.log('User Type:', userType);
     };
-    const renderLabel = () => {
-        if (value || isFocus) {
-            return (
-                <Text style={[styles.label, isFocus && { color: 'blue' }]}>
-                    Dropdown label
-                </Text>
-            );
-        }
-        return null;
-    };
+
 
     return (
         <View style={styles.container}>
@@ -47,30 +62,7 @@ const Login = () => {
                 value={password}
                 onChangeText={setPassword}
             />
-            {renderLabel()}
-            <Dropdown
-                style={[styles.dropdown, isFocus && { borderColor: 'blue' }]}
-                placeholderStyle={styles.placeholderStyle}
-                selectedTextStyle={styles.selectedTextStyle}
-                inputSearchStyle={styles.inputSearchStyle}
-                iconStyle={styles.iconStyle}
-                data={userTypes}
-                search
-                maxHeight={300}
-                labelField="label"
-                valueField="value"
-                placeholder={!isFocus ? 'Select item' : '...'}
-                searchPlaceholder="Search..."
-                value={value}
-                onFocus={() => setIsFocus(true)}
-                onBlur={() => setIsFocus(false)}
-                onChange={(item: any) => {
-                    setUserType(item.value);
-                    setIsFocus(false);
-                }}
-                
-            />
-
+            {error ? <Text style={styles.error}>{error}</Text> : null}
             <Button title="Submit" onPress={handleSubmit} />
         </View>
     );
@@ -126,6 +118,10 @@ const styles = StyleSheet.create({
     inputSearchStyle: {
         height: 40,
         fontSize: 16,
+    },
+    error: {
+        color: 'red',
+        marginVertical: 10,
     },
 });
 
