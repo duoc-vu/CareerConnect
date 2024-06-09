@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Dropdown } from 'react-native-element-dropdown';
 // import AntDesign from 'react-native-vector-icons/AntDesign';
@@ -11,13 +11,31 @@ const userTypes = [
 
 // Lấy reference đến collection "users"
 const fb = firestore().collection('users');
+const fbInfo = firestore().collection('infoUser');
 
+    
 
 const Login = ({ navigation }: any) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
 
+    // useEffect(() => {
+    //     fbInfo.onSnapshot(querySnapshot => {
+
+    //         querySnapshot.forEach((doc) => {
+    //             const list: any = [];
+    //             list.push({
+    //                 id: doc.data().id,
+    //                 email: doc.data().email,
+    //                 name: doc.data().name,
+    //                 date: doc.data().date,
+    //                 phone: doc.data().phone,
+    //             })
+    //             console.log(list);
+    //         })
+    //     })
+    // })
 
     const handleSubmit = async () => {
         try {
@@ -28,10 +46,17 @@ const Login = ({ navigation }: any) => {
                 return;
             }
             else if (!userDoc.empty) {
-                const userData = userDoc.docs[0].data()
+                const userData = userDoc.docs[0].data();
                 if (userData.password === password) {
                     setError('Thông tin hợp lệ');
-                    navigation.navigate('Home');
+                    const userId = userDoc.docs[0].id;
+                    console.log(userId);
+                    //kiem tra xem user có thông tin chưa nếu không có bắt đăng kí thông tin
+                    const userInfo = await fbInfo.where('id', '==', userId).limit(1).get();
+                    if (userInfo.empty)
+                        navigation.navigate('Home', { userId });
+                    else
+                        navigation.navigate('Info', { userId });
                 } else {
                     setError('Mật khẩu không chính xác');
                 }

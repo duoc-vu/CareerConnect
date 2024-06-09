@@ -1,10 +1,13 @@
 import React from 'react';
 import { Text, View } from 'react-native';
 
-const Home = () => {
+const Home = ({route}:any) => {
+
+    const { userId } = route.params;
+    console.log(userId);
     return(
         <View>
-            <Text>Day la Home</Text>
+            <Text>Xin chào {userId}</Text>
         </View>
     )
 }
