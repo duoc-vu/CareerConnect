@@ -14,7 +14,6 @@ const userTypes = [
 
 // const list: any = [];
 const Register = ({ navigation }: any) => {
-    const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -78,6 +77,7 @@ const Register = ({ navigation }: any) => {
                 const newUserRef = await fb.add({
                     email: email,
                     password: password,
+                    userType: userTypes
                 });
 
                 // Lấy ID của document vừa tạo
@@ -100,7 +100,6 @@ const Register = ({ navigation }: any) => {
         // Xử lý đăng ký tại đây
 
         navigation.navigate('Login')
-        console.log('Username:', username);
         console.log('Email:', email);
         console.log('Password:', password);
         console.log('Confirm Password:', confirmPassword);
@@ -110,12 +109,6 @@ const Register = ({ navigation }: any) => {
 
     return (
         <View style={styles.container}>
-            <TextInput
-                style={styles.input}
-                placeholder="Username"
-                value={username}
-                onChangeText={setUsername}
-            />
             <TextInput
                 style={styles.input}
                 placeholder="Email"

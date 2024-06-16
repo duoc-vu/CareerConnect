@@ -1,153 +1,135 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { Alert, Button, Image, PermissionsAndroid, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import firestore from '@react-native-firebase/firestore';
+import { launchImageLibrary } from 'react-native-image-picker';
 
-const Info = ({route} :any) => {
-    const { userId } = route.params;
-    const [name, setName] = useState('');
-    const [hometown, setHometown] = useState('');
-    const [age, setAge] = useState('');
-    const [phone, setPhone] = useState('');
-    const [specialty, setSpecialty] = useState('');
-    const [dateOfBirth, setDateOfBirth] = useState('');
-    const [email, setEmail] = useState('');
+const Info = ({navigation,route}:any) => {
 
-    const handleSubmit = () => {
-        if (
-            name.trim() === '' ||
-            hometown.trim() === '' ||
-            age.trim() === '' ||
-            phone.trim() === '' ||
-            specialty.trim() === '' ||
-            dateOfBirth.trim() === '' ||
-            email.trim() === ''
-        ) {
-            Alert.alert(
-                'Thông báo',
-                'Vui lòng điền đầy đủ thông tin cá nhân.',
-                [{ text: 'OK' }],
-                { cancelable: false }
-            );
-            return;
-        }
+  const { userId } = route.params;
 
-        if (!/^\d{2}\/\d{2}\/\d{4}$/.test(dateOfBirth)) {
-            Alert.alert(
-                'Thông báo',
-                'Định dạng ngày sinh không hợp lệ. Vui lòng nhập đúng định dạng DD/MM/YYYY.',
-                [{ text: 'OK' }],
-                { cancelable: false }
-            );
-            return;
-        }
+  const [image, setImage] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [name, setName] = useState('');
+  const [birthDate, setBirthDate] = useState('');
+  const [phone, setPhone] = useState('');
+  const [address, setAddress] = useState('');
+  const [introduction, setIntroduction] = useState('');
 
-        if (!/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(email)) {
-            Alert.alert(
-                'Thông báo',
-                'Địa chỉ email không hợp lệ. Vui lòng nhập lại.',
-                [{ text: 'OK' }],
-                { cancelable: false }
-            );
-            return;
-        }
+  const pickImage = async () => {
+    let checkCam = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.CAMERA);
 
-        // Ở đây bạn có thể thêm logic để lưu thông tin người dùng vào database hoặc thực hiện các hành động khác
-        console.log('Thông tin người dùng:', {
-            name,
-            hometown,
-            age,
-            phone,
-            specialty,
-            dateOfBirth,
-            email,
-        });
-    };
+    if (checkCam === PermissionsAndroid.RESULTS.GRANTED) {
+      const result: any = await launchImageLibrary({ mediaType: 'photo' });
+      setImage(result.assets[0].uri);
+    } else {
+      Alert.alert('Bạn đã từ chối quyền truy cập vào thư viện ảnh.');
+    }
+  };
 
-    return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Thông tin cá nhân</Text>
-            <Text>{userId}</Text>
-            <TextInput
-                style={styles.input}
-                placeholder="Họ và tên"
-                value={name}
-                onChangeText={setName}
-            />
+  const uploadImage = async () => {
+    setUploading(true);
+    try {
+      await firestore().collection('infoUser').doc(userId).set({
+        id: userId,
+        avtUri: image,
+        name: name,
+        birthDate: birthDate,
+        phone: phone,
+        address: address,
+        introduction: introduction
+      });
+      setUploading(false);
+      navigation.navigate('Home', {userId});
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      setUploading(false);
+    }
+  };
 
-            <TextInput
-                style={styles.input}
-                placeholder="Email"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-            />
-
-            <TextInput
-                style={styles.input}
-                placeholder="Ngày sinh"
-                value={dateOfBirth}
-                onChangeText={setDateOfBirth}
-                keyboardType="numeric"
-            />
-
-            <TextInput
-                style={styles.input}
-                placeholder="Quê quán"
-                value={hometown}
-                onChangeText={setHometown}
-            />
-
-
-            <TextInput
-                style={styles.input}
-                placeholder="Số điện thoại"
-                value={phone}
-                onChangeText={setPhone}
-                keyboardType="phone-pad"
-            />
-
-            <TextInput
-                style={styles.input}
-                placeholder="Sở trường"
-                value={specialty}
-                onChangeText={setSpecialty}
-            />
-
-            <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-                <Text style={styles.submitText}>Lưu thông tin</Text>
-            </TouchableOpacity>
+  return (
+    <View style={styles.container}>
+      <Text>Xin chào {userId}</Text>
+      <TouchableOpacity onPress={pickImage}>
+        <View style={styles.imageContainer}>
+          {image ? (
+            <Image source={{ uri: image }} style={styles.image} />
+          ) : (
+            <Image source={require('../asset/default.png')} style={styles.image} />
+          )}
         </View>
-    );
+      </TouchableOpacity>
+      <View style={styles.infoContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Họ và tên"
+          value={name}
+          onChangeText={setName}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Ngày sinh"
+          value={birthDate}
+          onChangeText={setBirthDate}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Số điện thoại"
+          value={phone}
+          onChangeText={setPhone}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Địa chỉ"
+          value={address}
+          onChangeText={setAddress}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Giới thiệu"
+          value={introduction}
+          onChangeText={setIntroduction}
+        />
+      </View>
+      <View style={styles.buttonContainer}>
+        <Button
+          title={uploading ? 'Uploading...' : 'Lưu thông tin'}
+          onPress={uploadImage}
+          disabled={uploading}
+          color="#4CAF50"
+        />
+      </View>
+    </View>
+  );
 };
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        padding: 20,
-        backgroundColor: '#fff',
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        marginBottom: 20,
-    },
-    input: {
-        borderWidth: 1,
-        borderColor: '#ccc',
-        borderRadius: 5,
-        padding: 10,
-        marginBottom: 15,
-    },
-    submitButton: {
-        backgroundColor: '#007AFF',
-        paddingVertical: 12,
-        borderRadius: 5,
-        alignItems: 'center',
-    },
-    submitText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: 'bold',
-    },
+  container: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  imageContainer: {
+    marginBottom: 20,
+  },
+  image: {
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+  },
+  infoContainer: {
+    width: '80%',
+    marginBottom: 20,
+  },
+  input: {
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    marginVertical: 8,
+    paddingHorizontal: 10,
+  },
+  buttonContainer: {
+    width: '80%',
+  },
 });
 
 export default Info;
