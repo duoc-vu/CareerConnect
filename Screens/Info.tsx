@@ -3,6 +3,7 @@ import { Alert, Button, Image, PermissionsAndroid, StyleSheet, Text, TextInput, 
 import firestore from '@react-native-firebase/firestore';
 import { launchImageLibrary } from 'react-native-image-picker';
 
+const fb = firestore().collection('users');
 const Info = ({navigation,route}:any) => {
 
   const { userId } = route.params;
@@ -10,6 +11,7 @@ const Info = ({navigation,route}:any) => {
   const [image, setImage] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [name, setName] = useState('');
+  const [email,setEmail] = useState('');
   const [birthDate, setBirthDate] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
@@ -26,6 +28,23 @@ const Info = ({navigation,route}:any) => {
     }
   };
 
+  useEffect(() => {
+    const getUser = async () => {
+        try {
+            const userDoc = await fb.doc(userId).get();
+            if (userDoc.exists) {
+                const userData:any = userDoc.data();
+                setEmail(userData.email);
+            } else {
+                console.log('Không có bản ghi nào với id', userId);
+            }
+        } catch (error) {
+            console.error('Lỗi khi lấy thông tin người dùng:', error);
+        }
+    };
+    getUser();
+}, [userId]);
+
   const uploadImage = async () => {
     setUploading(true);
     try {
@@ -33,13 +52,14 @@ const Info = ({navigation,route}:any) => {
         id: userId,
         avtUri: image,
         name: name,
+        email: email,
         birthDate: birthDate,
         phone: phone,
         address: address,
         introduction: introduction
       });
       setUploading(false);
-      navigation.navigate('Home', {userId});
+      navigation.navigate('bottom', {userId});
     } catch (error) {
       console.error('Error uploading image:', error);
       setUploading(false);

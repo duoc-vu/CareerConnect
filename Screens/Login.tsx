@@ -54,7 +54,7 @@ const Login = ({ navigation }: any) => {
                     //kiem tra xem user có thông tin chưa nếu không có bắt đăng kí thông tin
                     const userInfo = await fbInfo.where('id', '==', userId).limit(1).get();
                     if (!userInfo.empty)
-                        navigation.navigate('Home', { userId });
+                        navigation.navigate('bottom', { userId });
                     else
                         navigation.navigate('Info', { userId });
                 } else {
