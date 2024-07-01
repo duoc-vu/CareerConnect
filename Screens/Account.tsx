@@ -2,13 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { Button, Image, StyleSheet, Text, View } from 'react-native';
 import firestore, { onSnapshot, query } from '@react-native-firebase/firestore';
 
-const Account = ({navigation, route }: any) => {
+const Account = ({ navigation, route }: any) => {
 
     const [uploading, setUploading] = useState(false);
-    const [Img, setImg] = useState(false);
+    const [image,setImage] = useState('');
     const { userId } = route.params;
     const [user, setUser] = useState({
-        image: '',
+        avtUri: '',
         name: '',
         email: '',
         birthDate: '',
@@ -17,10 +17,10 @@ const Account = ({navigation, route }: any) => {
         introduction: '',
     });
     const handleUpdate = () => {
-        if(!route){
+        if (!route) {
             navigation.navigate('Login');
-        }else{
-            navigation.navigate('Info' , {userId});
+        } else {
+            navigation.navigate('If', { userId });
         }
     }
 
@@ -30,11 +30,8 @@ const Account = ({navigation, route }: any) => {
                 const userDoc = await firestore().collection('infoUser').doc(userId).get();
                 if (userDoc.exists) {
                     const userData: any = userDoc.data();
-                    if (!userData.avtUri) setImg(false);
-                    else setImg(true);
-                    
                     setUser({
-                        image: userData.avtUri,
+                        avtUri: userData.avtUri,
                         name: userData.name,
                         email: userData.email,
                         birthDate: userData.birthDate,
@@ -42,6 +39,7 @@ const Account = ({navigation, route }: any) => {
                         address: userData.address,
                         introduction: userData.introduction,
                     });
+                    setImage(userData.avtUri);
                     setUploading(false);
                 } else {
                     console.log('Không có bản ghi nào với id', userId);
@@ -58,7 +56,7 @@ const Account = ({navigation, route }: any) => {
     return (
         <View style={styles.container}>
             <View style={styles.profileContainer}>
-                <Image source={Img ? { uri: user.image } :  require('../asset/default.png') } style={styles.profileImage} />
+                <Image source={image ? { uri: image } : require('../asset/default.png')} style={styles.profileImage} />
                 <Text style={styles.name}>{user.name}</Text>
             </View>
             <View style={styles.infoContainer}>
