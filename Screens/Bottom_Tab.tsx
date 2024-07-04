@@ -18,8 +18,8 @@ const Bottom_Tab = ({ route }: any) => {
         const { userId } = route?.params || {};
         return(
             <Tab.Navigator  >
-                <Tab.Screen name='Home' component={Home} initialParams={{ userId }}/>
-                <Tab.Screen name='Account' component={Account} initialParams={{ userId }}/>
+                <Tab.Screen name='Home' component={Home} initialParams={{ userId }} options={{ headerShown: false}}/>
+                <Tab.Screen name='Account' component={Account} initialParams={{ userId }} options={{ headerShown: false}}/>
             </Tab.Navigator>
         )
     }

@@ -1,68 +1,36 @@
 import React, { useEffect, useState } from 'react';
-import { Button, StyleSheet, Text, TextInput, View, TouchableOpacity, Image, Animated } from 'react-native';
-import { Dropdown } from 'react-native-element-dropdown';
-import firestore, { onSnapshot, query } from '@react-native-firebase/firestore';
-import LinearGradient from 'react-native-linear-gradient';
-// import { FontAwesome5 } from '@expo/vector-icons';
+import { View, StyleSheet, Image, Dimensions } from 'react-native';
+import { TextInput, Button, Text } from 'react-native-paper';
+import * as Animatable from 'react-native-animatable';
+import firestore from '@react-native-firebase/firestore';
 
-const userTypes = [
-    { label: 'Ứng viên', value: '1' },
-    { label: 'Doanh nghiệp', value: '2' },
-];
+const { width, height } = Dimensions.get('window');
 
-const fb = firestore().collection('users');
-const fbInfo = firestore().collection('infoUser');
+const fb = firestore().collection('tblTaiKhoan');
+const fbInfo = firestore().collection('tblUserInfo');
 
-const Login = ({ navigation }: any) => {
+const Login = ({ navigation }:any) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
-    const [opacity] = useState(new Animated.Value(0));
-    // useEffect(() => {
-    //     fbInfo.onSnapshot(querySnapshot => {
-
-    //         querySnapshot.forEach((doc) => {
-    //             const list: any = [];
-    //             list.push({
-    //                 id: doc.data().id,
-    //                 email: doc.data().email,
-    //                 name: doc.data().name,
-    //                 date: doc.data().date,
-    //                 phone: doc.data().phone,
-    //             })
-    //             console.log(list);
-    //         })
-    //     })
-    // })
-
-    useEffect(() => {
-        Animated.timing(opacity, {
-            toValue: 1,
-            duration: 1000,
-            useNativeDriver: true,
-        }).start();
-    }, []);
 
     const handleSubmit = async () => {
         try {
-            // Tạo query để tìm document với email cụ thể
             const userDoc = await fb.where('email', '==', email).limit(1).get();
             if (!email || !password) {
                 setError('Vui lòng nhập email và password');
                 return;
-            }
-            else if (!userDoc.empty) {
+            } else if (!userDoc.empty) {
                 const userData = userDoc.docs[0].data();
                 if (userData.password === password) {
                     setError('Thông tin hợp lệ');
                     const userId = userDoc.docs[0].id;
-                    console.log(userId);
-                    //kiem tra xem user có thông tin chưa nếu không có bắt đăng kí thông tin
                     const userInfo = await fbInfo.where('id', '==', userId).limit(1).get();
-                    if (!userInfo.empty)
+                    if (!userInfo.empty) {
                         navigation.navigate('bottom', { userId });
-                    else
+                    } else {
                         navigation.navigate('Info', { userId });
+                    }
                 } else {
                     setError('Mật khẩu không chính xác');
                 }
@@ -71,57 +39,43 @@ const Login = ({ navigation }: any) => {
             }
         } catch (error) {
             console.error('Lỗi khi kiểm tra User:', error);
+            setError('Đã xảy ra lỗi');
         }
-        // Xử lý đăng ký/đăng nhập tại đây
-        console.log('Email:', email);
-        console.log('Password:', password);
     };
 
     return (
         <View style={styles.container}>
-            <View style={styles.backgroundContainer}>
-                <LinearGradient
-                    colors={['#ADD8E6', '#87CEEB', '#00BFFF']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.background}
+            <Animatable.View animation="bounceIn" duration={1500} style={styles.logoContainer}>
+                <Image source={require('../asset/logo2.png')} style={styles.logo} />
+            </Animatable.View>
+            <Animatable.View animation="fadeInUp" duration={1500} style={styles.formContainer}>
+                <Text style={styles.title}>Đăng Nhập</Text>
+                <TextInput
+                    label="Email"
+                    value={email}
+                    onChangeText={setEmail}
+                    style={styles.input}
+                    theme={{ colors: { primary: '#1E90FF' } }}
                 />
-                <Animated.View style={[styles.card, { opacity: opacity }]}>
-                    <Image source={require('../asset/default.png')} style={styles.logo} />
-                    <Text style={styles.title}>Chào mừng đến với ứng dụng</Text>
-                    <View style={styles.inputContainer}>
-                        {/* <FontAwesome5 name="envelope" size={20} color="#00BFFF" style={styles.icon} /> */}
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Email"
-                            placeholderTextColor="#87CEEB"
-                            value={email}
-                            onChangeText={setEmail}
-                        />
-                    </View>
-                    <View style={styles.inputContainer}>
-                        {/* <FontAwesome5 name="lock" size={20} color="#00BFFF" style={styles.icon} /> */}
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Password"
-                            placeholderTextColor="#87CEEB"
-                            secureTextEntry
-                            value={password}
-                            onChangeText={setPassword}
-                        />
-                    </View>
-                    {error ? <Text style={styles.error}>{error}</Text> : null}
-                    <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-                        <Text style={styles.buttonText}>Đăng nhập</Text>
-                    </TouchableOpacity>
-                    <View style={styles.footer}>
-                        <Text style={styles.footerText}>Chưa có tài khoản?</Text>
-                        <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-                            <Text style={[styles.footerText, styles.footerLink]}>Đăng ký</Text>
-                        </TouchableOpacity>
-                    </View>
-                </Animated.View>
-            </View>
+                <TextInput
+                    label="Mật Khẩu"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry
+                    style={styles.input}
+                    theme={{ colors: { primary: '#1E90FF' } }}
+                />
+                {error ? <Text style={styles.errorText}>{error}</Text> : null}
+                <Button mode="contained" onPress={handleSubmit} style={styles.button}>
+                    Đăng Nhập
+                </Button>
+                <Button onPress={() => navigation.navigate('Register')} color="#1E90FF">
+                    Chưa có tài khoản? Đăng Ký
+                </Button>
+            </Animatable.View>
+            <Animatable.View animation="fadeIn" duration={2000} style={styles.footer}>
+                <Text style={styles.footerText}>Welcome to our app</Text>
+            </Animatable.View>
         </View>
     );
 };
@@ -129,93 +83,57 @@ const Login = ({ navigation }: any) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
-    },
-    backgroundContainer: {
-        flex: 1,
+        backgroundColor: '#F0F4F7',
         justifyContent: 'center',
         alignItems: 'center',
     },
-    background: {
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        top: 0,
-        height: '100%',
-    },
-    card: {
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-        padding: 30,
-        borderRadius: 10,
-        width: '80%',
-        shadowColor: '#ADD8E6',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-        elevation: 5,
+    logoContainer: {
+        marginBottom: 30,
+        alignItems: 'center',
     },
     logo: {
-        marginHorizontal:'auto',
         width: 100,
         height: 100,
-        marginBottom: 20,
+    },
+    formContainer: {
+        width: '80%',
+        backgroundColor: '#ffffff',
+        borderRadius: 20,
+        padding: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 2,
+        elevation: 5,
     },
     title: {
         fontSize: 24,
         fontWeight: 'bold',
-        marginBottom: 20,
         textAlign: 'center',
-        color: '#00BFFF',
-    },
-    inputContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        borderColor: '#ADD8E6',
-        borderWidth: 1,
-        marginVertical: 10,
-        paddingHorizontal: 10,
-        borderRadius: 5,
-        backgroundColor: 'rgba(255, 255, 255, 0.5)',
-        color: '#333',
-        width: '100%',
-    },
-    icon: {
-        marginRight: 10,
+        marginBottom: 20,
+        color: '#1E90FF',
     },
     input: {
-        flex: 1,
-        color: '#00BFFF',
+        marginBottom: 15,
+        backgroundColor: 'white',
+    },
+    errorText: {
+        color: 'red',
+        textAlign: 'center',
+        marginBottom: 15,
     },
     button: {
-        backgroundColor: '#00BFFF',
-        paddingVertical: 12,
-        borderRadius: 5,
-        marginVertical: 20,
-    },
-    buttonText: {
-        color: '#fff',
-        fontWeight: 'bold',
-        textAlign: 'center',
+        marginBottom: 15,
+        backgroundColor: '#1E90FF',
     },
     footer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
+        position: 'absolute',
+        bottom: 20,
         alignItems: 'center',
     },
     footerText: {
-        color: '#00BFFF',
-        marginRight: 5,
-    },
-    footerLink: {
-        color: '#00BFFF',
-        fontWeight: 'bold',
-    },
-    error: {
-        color: 'red',
-        marginVertical: 10,
+        fontSize: 16,
+        color: '#1E90FF',
     },
 });
 

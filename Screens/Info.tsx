@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Alert, Button, Image, PermissionsAndroid, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, PermissionsAndroid, StyleSheet, View, Dimensions, TouchableOpacity } from 'react-native';
+import { TextInput, Button, Text } from 'react-native-paper';
 import firestore from '@react-native-firebase/firestore';
 import { launchImageLibrary } from 'react-native-image-picker';
+import * as Animatable from 'react-native-animatable';
 
-const fb = firestore().collection('users');
-const Info = ({navigation,route}:any) => {
+const { width, height } = Dimensions.get('window');
+const fb = firestore().collection('tblTaiKhoan');
 
+const Info = ({ navigation, route }:any) => {
   const { userId } = route.params;
-
   const [image, setImage] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [name, setName] = useState('');
-  const [email,setEmail] = useState('');
+  const [email, setEmail] = useState('');
   const [birthDate, setBirthDate] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
@@ -21,8 +23,10 @@ const Info = ({navigation,route}:any) => {
     let checkCam = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.CAMERA);
 
     if (checkCam === PermissionsAndroid.RESULTS.GRANTED) {
-      const result: any = await launchImageLibrary({ mediaType: 'photo' });
-      setImage(result.assets[0].uri);
+      const result:any = await launchImageLibrary({ mediaType: 'photo' });
+      if (result.assets && result.assets.length > 0) {
+        setImage(result.assets[0].uri);
+      }
     } else {
       Alert.alert('Bạn đã từ chối quyền truy cập vào thư viện ảnh.');
     }
@@ -30,25 +34,25 @@ const Info = ({navigation,route}:any) => {
 
   useEffect(() => {
     const getUser = async () => {
-        try {
-            const userDoc = await fb.doc(userId).get();
-            if (userDoc.exists) {
-                const userData:any = userDoc.data();
-                setEmail(userData.email);
-            } else {
-                console.log('Không có bản ghi nào với id', userId);
-            }
-        } catch (error) {
-            console.error('Lỗi khi lấy thông tin người dùng:', error);
+      try {
+        const userDoc = await fb.doc(userId).get();
+        if (userDoc.exists) {
+          const userData:any = userDoc.data();
+          setEmail(userData.email);
+        } else {
+          console.log('Không có bản ghi nào với id', userId);
         }
+      } catch (error) {
+        console.error('Lỗi khi lấy thông tin người dùng:', error);
+      }
     };
     getUser();
-}, [userId]);
+  }, [userId]);
 
   const uploadImage = async () => {
     setUploading(true);
     try {
-      await firestore().collection('infoUser').doc(userId).set({
+      await firestore().collection('tblUserInfo').doc(userId).set({
         id: userId,
         avtUri: image,
         name: name,
@@ -59,7 +63,7 @@ const Info = ({navigation,route}:any) => {
         introduction: introduction
       });
       setUploading(false);
-      navigation.navigate('bottom', {userId});
+      navigation.navigate('bottom', { userId });
     } catch (error) {
       console.error('Error uploading image:', error);
       setUploading(false);
@@ -68,56 +72,64 @@ const Info = ({navigation,route}:any) => {
 
   return (
     <View style={styles.container}>
-      <Text>Xin chào {userId}</Text>
-      <TouchableOpacity onPress={pickImage}>
-        <View style={styles.imageContainer}>
-          {image ? (
-            <Image source={{ uri: image }} style={styles.image} />
-          ) : (
-            <Image source={require('../asset/default.png')} style={styles.image} />
-          )}
-        </View>
-      </TouchableOpacity>
-      <View style={styles.infoContainer}>
+      <Animatable.View animation="fadeIn" duration={1500} style={styles.header}>
+        <Text style={styles.headerText}>Thông Tin Cá Nhân</Text>
+      </Animatable.View>
+      <Animatable.View animation="fadeInUp" duration={1500} style={styles.formContainer}>
+        <TouchableOpacity onPress={pickImage}>
+          <View style={styles.imageContainer}>
+            {image ? (
+              <Image source={{ uri: image }} style={styles.image} />
+            ) : (
+              <Image source={require('../asset/default.png')} style={styles.image} />
+            )}
+          </View>
+        </TouchableOpacity>
         <TextInput
-          style={styles.input}
-          placeholder="Họ và tên"
+          label="Họ và tên"
           value={name}
           onChangeText={setName}
+          style={styles.input}
+          theme={{ colors: { primary: '#1E90FF' } }}
         />
         <TextInput
-          style={styles.input}
-          placeholder="Ngày sinh"
+          label="Ngày sinh"
           value={birthDate}
           onChangeText={setBirthDate}
+          style={styles.input}
+          theme={{ colors: { primary: '#1E90FF' } }}
         />
         <TextInput
-          style={styles.input}
-          placeholder="Số điện thoại"
+          label="Số điện thoại"
           value={phone}
           onChangeText={setPhone}
+          style={styles.input}
+          theme={{ colors: { primary: '#1E90FF' } }}
         />
         <TextInput
-          style={styles.input}
-          placeholder="Địa chỉ"
+          label="Địa chỉ"
           value={address}
           onChangeText={setAddress}
+          style={styles.input}
+          theme={{ colors: { primary: '#1E90FF' } }}
         />
         <TextInput
-          style={styles.input}
-          placeholder="Giới thiệu"
+          label="Giới thiệu"
           value={introduction}
           onChangeText={setIntroduction}
+          style={styles.input}
+          theme={{ colors: { primary: '#1E90FF' } }}
         />
-      </View>
-      <View style={styles.buttonContainer}>
         <Button
-          title={uploading ? 'Uploading...' : 'Lưu thông tin'}
+          mode="contained"
           onPress={uploadImage}
           disabled={uploading}
-          color="#4CAF50"
-        />
-      </View>
+          style={styles.button}
+          loading={uploading}
+        >
+          {uploading ? 'Đang tải lên...' : 'Lưu thông tin'}
+        </Button>
+      </Animatable.View>
     </View>
   );
 };
@@ -125,30 +137,52 @@ const Info = ({navigation,route}:any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#F0F4F7',
     alignItems: 'center',
+    paddingTop: 20,
+  },
+  header: {
+    width: '100%',
+    height: height * 0.15,
     justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#1E90FF',
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    marginBottom: 20,
+  },
+  headerText: {
+    fontSize: 24,
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  formContainer: {
+    width: '90%',
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 5,
   },
   imageContainer: {
+    alignItems: 'center',
     marginBottom: 20,
   },
   image: {
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-  },
-  infoContainer: {
-    width: '80%',
-    marginBottom: 20,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
   },
   input: {
-    height: 40,
-    borderColor: 'gray',
-    borderWidth: 1,
-    marginVertical: 8,
-    paddingHorizontal: 10,
+    marginBottom: 15,
+    backgroundColor: 'white',
   },
-  buttonContainer: {
-    width: '80%',
+  button: {
+    marginTop: 20,
+    backgroundColor: '#1E90FF',
   },
 });
 

@@ -29,7 +29,7 @@ const CVProfile = () => {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      const profileDoc = await firestore().collection('infoUser').doc('Mobz1ng5EQTZZuYc5id2').get();
+      const profileDoc:any = await firestore().collection('tblUserInfo').doc('Mobz1ng5EQTZZuYc5id2').get();
       if (profileDoc.exists) {
         setUser(profileDoc.data());
       }

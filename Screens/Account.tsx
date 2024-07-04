@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Image, StyleSheet, Text, View } from 'react-native';
-import firestore, { onSnapshot, query } from '@react-native-firebase/firestore';
+import { Image, StyleSheet, Text, View, TouchableHighlight } from 'react-native';
+import firestore from '@react-native-firebase/firestore';
+import * as Animatable from 'react-native-animatable';
 
 const Account = ({ navigation, route }: any) => {
-
     const [uploading, setUploading] = useState(false);
-    const [image,setImage] = useState('');
+    const [image, setImage] = useState('');
     const { userId } = route.params;
     const [user, setUser] = useState({
         avtUri: '',
@@ -16,18 +16,11 @@ const Account = ({ navigation, route }: any) => {
         address: '',
         introduction: '',
     });
-    const handleUpdate = () => {
-        if (!route) {
-            navigation.navigate('Login');
-        } else {
-            navigation.navigate('If', { userId });
-        }
-    }
 
     useEffect(() => {
         const getUser = async () => {
             try {
-                const userDoc = await firestore().collection('infoUser').doc(userId).get();
+                const userDoc = await firestore().collection('tblUserInfo').doc(userId).get();
                 if (userDoc.exists) {
                     const userData: any = userDoc.data();
                     setUser({
@@ -53,13 +46,22 @@ const Account = ({ navigation, route }: any) => {
 
         getUser();
     }, [userId]);
+
+    const handleUpdate = () => {
+        if (!route) {
+            navigation.navigate('Login');
+        } else {
+            navigation.navigate('If', { userId });
+        }
+    };
+
     return (
         <View style={styles.container}>
-            <View style={styles.profileContainer}>
+            <Animatable.View animation="bounceIn" duration={1500} style={styles.profileContainer}>
                 <Image source={image ? { uri: image } : require('../asset/default.png')} style={styles.profileImage} />
                 <Text style={styles.name}>{user.name}</Text>
-            </View>
-            <View style={styles.infoContainer}>
+            </Animatable.View>
+            <Animatable.View animation="fadeInUp" duration={1500} style={styles.infoContainer}>
                 <View style={styles.infoRow}>
                     <Text style={styles.infoLabel}>Email:</Text>
                     <Text style={styles.infoValue}>{user.email}</Text>
@@ -80,24 +82,27 @@ const Account = ({ navigation, route }: any) => {
                     <Text style={styles.infoLabel}>Giới thiệu:</Text>
                     <Text style={styles.infoValue}>{user.introduction}</Text>
                 </View>
-            </View>
-            <View style={styles.buttonContainer}>
-                <Button
-                    title={uploading ? 'Đăng nhập' : 'Cập nhật thông tin'}
+            </Animatable.View>
+            <Animatable.View animation="fadeIn" duration={2000} style={styles.buttonContainer}>
+                <TouchableHighlight
+                    style={styles.button}
                     onPress={handleUpdate}
-                    color="#4CAF50"
-                />
-            </View>
+                    underlayColor="#1E90FF"
+                >
+                    <Text style={styles.buttonText}>{uploading ? 'Đăng nhập' : 'Cập nhật thông tin'}</Text>
+                </TouchableHighlight>
+            </Animatable.View>
         </View>
     );
-}
+};
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: '#F0F4F7',
         paddingHorizontal: 20,
         paddingVertical: 40,
+        alignItems: 'center',
     },
     profileContainer: {
         alignItems: 'center',
@@ -118,6 +123,9 @@ const styles = StyleSheet.create({
         borderColor: '#ccc',
         borderRadius: 8,
         padding: 20,
+        marginTop: 20,
+        width: '100%',
+        backgroundColor: 'white',
     },
     infoRow: {
         flexDirection: 'row',
@@ -128,6 +136,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
         marginRight: 10,
+        color: '#1E90FF',
     },
     infoValue: {
         fontSize: 16,
@@ -138,7 +147,17 @@ const styles = StyleSheet.create({
         marginHorizontal: '20%',
         marginTop: 50,
     },
-
+    button: {
+        backgroundColor: '#1E90FF',
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 20,
+    },
+    buttonText: {
+        color: 'white',
+        fontWeight: 'bold',
+        textAlign: 'center',
+    },
 });
 
 export default Account;
