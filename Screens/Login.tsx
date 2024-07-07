@@ -8,8 +8,9 @@ const { width, height } = Dimensions.get('window');
 
 const fb = firestore().collection('tblTaiKhoan');
 const fbInfo = firestore().collection('tblUserInfo');
+const fbInfoCom = firestore().collection('tblCompany');
 
-const Login = ({ navigation }:any) => {
+const Login = ({ navigation }: any) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -24,12 +25,24 @@ const Login = ({ navigation }:any) => {
                 const userData = userDoc.docs[0].data();
                 if (userData.password === password) {
                     setError('Thông tin hợp lệ');
-                    const userId = userDoc.docs[0].id;
-                    const userInfo = await fbInfo.where('id', '==', userId).limit(1).get();
-                    if (!userInfo.empty) {
-                        navigation.navigate('bottom', { userId });
-                    } else {
-                        navigation.navigate('Info', { userId });
+                    console.log(userData.userType);
+                    const userType = userData.userType;
+                    if (userData.userType === '1') {
+                        const userId = userDoc.docs[0].id;
+                        const userInfo = await fbInfo.where('id', '==', userId).limit(1).get();
+                        if (!userInfo.empty) {
+                            navigation.navigate('bottom', { userId, userType});
+                        } else {
+                            navigation.navigate('Info', { userId, userType});
+                        }
+                    }else if(userData.userType ==='2'){
+                        const userId = userDoc.docs[0].id;
+                        const userInfo = await fbInfoCom.where('id', '==', userId).limit(1).get();
+                        if (!userInfo.empty) {
+                            navigation.navigate('bottom', { userId, userType });
+                        } else {
+                            navigation.navigate('CompanyInfo', { userId, userType });
+                        }
                     }
                 } else {
                     setError('Mật khẩu không chính xác');

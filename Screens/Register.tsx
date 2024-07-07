@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, Image, Dimensions, Alert } from 'react-native';
 import { TextInput, Button, Text } from 'react-native-paper';
 import * as Animatable from 'react-native-animatable';
@@ -14,12 +14,11 @@ const userTypes = [
     { label: 'Doanh nghiệp', value: '2' },
 ];
 
-const Register = ({ navigation }:any) => {
+const Register = ({ navigation }: any) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [userType, setUserType] = useState('1');
-    const [value, setValue] = useState(null);
     const [isFocus, setIsFocus] = useState(false);
     const [error, setError] = useState('');
 
@@ -64,7 +63,6 @@ const Register = ({ navigation }:any) => {
         setError('');
         navigation.navigate('Login');
     };
-
     return (
         <View style={styles.container}>
             <Animatable.View animation="bounceIn" duration={1500} style={styles.logoContainer}>
@@ -108,11 +106,11 @@ const Register = ({ navigation }:any) => {
                     valueField="value"
                     placeholder={!isFocus ? 'Chọn loại người dùng' : '...'}
                     searchPlaceholder="Tìm kiếm..."
-                    value={value}
+                    value={userType}  // Đặt giá trị là userType để đảm bảo đồng bộ
                     onFocus={() => setIsFocus(true)}
                     onBlur={() => setIsFocus(false)}
                     onChange={(item) => {
-                        setUserType(item.value);
+                        setUserType(item.value);  // Chỉ lấy giá trị từ đối tượng đã chọn
                         setIsFocus(false);
                     }}
                 />
@@ -169,7 +167,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'white',
     },
     dropdown: {
-        width: '80%',
+        width: '100%',
         height: 40,
         borderColor: 'gray',
         borderWidth: 0.5,

@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Image, Dimensions, ScrollView } from 'react-native';
+import { View, StyleSheet, Image, Dimensions, ScrollView, Alert } from 'react-native';
 import { Text, Button } from 'react-native-paper';
 import * as Animatable from 'react-native-animatable';
 import firestore from '@react-native-firebase/firestore';
+import storage from '@react-native-firebase/storage';
 
 const { width, height } = Dimensions.get('window');
 
@@ -12,19 +13,24 @@ const fbCompany = firestore().collection('tblCompany');
 const JobDetail = ({ route, navigation }: any) => {
     const [jobDetail, setJobDetail] = useState<any>(null);
     const [companyDetail, setCompanyDetail] = useState<any>(null);
-    const { jobId } = route.params;
+    const { jobId, userId, userType } = route.params;
+    const [image, setImage] = useState<string | null>(null);
 
     useEffect(() => {
         const getJobDetail = async () => {
             try {
                 const jobDoc = await fbJobDetail.doc(jobId).get();
                 if (jobDoc.exists) {
-                    const jobData:any = jobDoc.data();
+                    const jobData: any = jobDoc.data();
                     setJobDetail(jobData);
-                    
+
                     const companyDoc = await fbCompany.doc(jobData.idCT).get();
                     if (companyDoc.exists) {
-                        setCompanyDetail(companyDoc.data());
+                        const companyData: any = companyDoc.data();
+                        setCompanyDetail(companyData);
+                        const storageRef = storage().ref(`images/${companyData.id}.jpg`);
+                        const downloadUrl: string = await storageRef.getDownloadURL();
+                        setImage(downloadUrl);
                     } else {
                         console.log('Không có bản ghi công ty nào với id', jobData.idCT);
                     }
@@ -47,7 +53,7 @@ const JobDetail = ({ route, navigation }: any) => {
         );
     }
 
-    const renderTextWithNewLines = (text: string|undefined) => {
+    const renderTextWithNewLines = (text: string | undefined) => {
         if (!text) return null; // Handle case when text is undefined or empty
         return text.split('/n').map((line, index) => (
             <Text key={index} style={styles.text}>
@@ -56,10 +62,22 @@ const JobDetail = ({ route, navigation }: any) => {
         ));
     };
 
+    const handleApply = () => {
+        if (userType === '1') {
+            navigation.navigate('ApplyJob', { jobId, userType, userId });
+        } else if (userType === '2') {
+            Alert.alert('Thông báo', 'Bạn không phải là 1 ứng viên.');
+        }
+    };
+
     return (
         <ScrollView style={styles.container}>
             <Animatable.View animation="fadeInUp" duration={1500} style={styles.header}>
-                <Image source={{ uri: companyDetail.avt }} style={styles.companyImage} />
+                {image ? (
+                    <Image source={{ uri: image }} style={styles.companyImage} />
+                ) : (
+                    <Image source={require('../asset/default.png')} style={styles.companyImage} />
+                )}
                 <Text style={styles.jobName}>{jobDetail.tenJob}</Text>
                 <Text style={styles.companyName}>{companyDetail.name}</Text>
             </Animatable.View>
@@ -82,7 +100,7 @@ const JobDetail = ({ route, navigation }: any) => {
                 </View>
                 <Button
                     mode="contained"
-                    onPress={() => navigation.navigate('ApplyJob', { jobId })}
+                    onPress={handleApply}
                     style={styles.applyButton}
                     labelStyle={styles.applyButtonText}
                 >

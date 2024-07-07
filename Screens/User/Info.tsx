@@ -2,14 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { Alert, Image, PermissionsAndroid, StyleSheet, View, Dimensions, TouchableOpacity } from 'react-native';
 import { TextInput, Button, Text } from 'react-native-paper';
 import firestore from '@react-native-firebase/firestore';
+import storage from '@react-native-firebase/storage';
 import { launchImageLibrary } from 'react-native-image-picker';
 import * as Animatable from 'react-native-animatable';
+
 
 const { width, height } = Dimensions.get('window');
 const fb = firestore().collection('tblTaiKhoan');
 
-const Info = ({ navigation, route }:any) => {
-  const { userId } = route.params;
+const Info = ({ navigation, route }: any) => {
+  const { userId,userType } = route.params;
   const [image, setImage] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [name, setName] = useState('');
@@ -19,11 +21,13 @@ const Info = ({ navigation, route }:any) => {
   const [address, setAddress] = useState('');
   const [introduction, setIntroduction] = useState('');
 
+  const [imageUrl,setImageUrl] = useState(null);
+
   const pickImage = async () => {
     let checkCam = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.CAMERA);
 
     if (checkCam === PermissionsAndroid.RESULTS.GRANTED) {
-      const result:any = await launchImageLibrary({ mediaType: 'photo' });
+      const result: any = await launchImageLibrary({ mediaType: 'photo' });
       if (result.assets && result.assets.length > 0) {
         setImage(result.assets[0].uri);
       }
@@ -37,7 +41,7 @@ const Info = ({ navigation, route }:any) => {
       try {
         const userDoc = await fb.doc(userId).get();
         if (userDoc.exists) {
-          const userData:any = userDoc.data();
+          const userData: any = userDoc.data();
           setEmail(userData.email);
         } else {
           console.log('Không có bản ghi nào với id', userId);
@@ -48,10 +52,28 @@ const Info = ({ navigation, route }:any) => {
     };
     getUser();
   }, [userId]);
+  // Hàm lấy ảnh từ Firebase Storage
+  
+
 
   const uploadImage = async () => {
     setUploading(true);
+    const imageUrl: any = image;
     try {
+      const fileName = `${userId}.jpg`;
+      const storageRef = storage().ref(`images/${fileName}`);
+
+      // Tải hình ảnh từ URL
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+
+      // Tải lên Firebase Storage
+      await storageRef.put(blob);
+
+      // // Lấy URL của hình ảnh đã tải lên
+      // const downloadUrl = await storageRef.getDownloadURL();
+
+      // Cập nhật thông tin người dùng trong Firestore
       await firestore().collection('tblUserInfo').doc(userId).set({
         id: userId,
         avtUri: image,
@@ -62,13 +84,22 @@ const Info = ({ navigation, route }:any) => {
         address: address,
         introduction: introduction
       });
+
       setUploading(false);
-      navigation.navigate('bottom', { userId });
+      navigation.navigate('bottom', { userId ,userType});
+
+      // Hiển thị thông báo thành công
+      console.log('Tải lên hình ảnh thành công!');
     } catch (error) {
       console.error('Error uploading image:', error);
       setUploading(false);
+
+      // Hiển thị thông báo lỗi
+      console.log('Đã có lỗi xảy ra khi tải lên hình ảnh. Vui lòng thử lại.');
     }
   };
+
+  
 
   return (
     <View style={styles.container}>
@@ -81,7 +112,7 @@ const Info = ({ navigation, route }:any) => {
             {image ? (
               <Image source={{ uri: image }} style={styles.image} />
             ) : (
-              <Image source={require('../asset/default.png')} style={styles.image} />
+              <Image source={require('../../asset/default.png')} style={styles.image} />
             )}
           </View>
         </TouchableOpacity>

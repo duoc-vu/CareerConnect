@@ -1,36 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { View, Image, StyleSheet, Dimensions, TouchableOpacity, Alert, PermissionsAndroid } from 'react-native';
-import { launchImageLibrary } from 'react-native-image-picker';
+import { Alert, Image, PermissionsAndroid, StyleSheet, View, Dimensions, TouchableOpacity } from 'react-native';
 import { TextInput, Button, Text } from 'react-native-paper';
 import firestore from '@react-native-firebase/firestore';
+import storage from '@react-native-firebase/storage';
+import { launchImageLibrary } from 'react-native-image-picker';
 import * as Animatable from 'react-native-animatable';
 
 const { width, height } = Dimensions.get('window');
-const fbInfo = firestore().collection('tblUserInfo');
+const fb = firestore().collection('tblTaiKhoan');
 
-const UserInfoScreen = ({ navigation, route }:any) => {
-    const { userId } = route.params;
+const CompanyInfo = ({ navigation, route }: any) => {
+    const { userId, userType } = route.params;
     const [image, setImage] = useState(null);
     const [uploading, setUploading] = useState(false);
-    const [userInfo, setUserInfo] = useState({
-        id: userId,
-        avtUri: '',
-        name: '',
-        email: '',
-        birthDate: '',
-        phone: '',
-        address: '',
-        introduction: '',
-    });
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+    const [phone, setPhone] = useState('');
+    const [address, setAddress] = useState('');
+    const [detail, setDetail] = useState('');
+    const [imageUrl, setImageUrl] = useState(null);
 
     const pickImage = async () => {
         let checkCam = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.CAMERA);
 
         if (checkCam === PermissionsAndroid.RESULTS.GRANTED) {
-            const result:any = await launchImageLibrary({ mediaType: 'photo' });
+            const result: any = await launchImageLibrary({ mediaType: 'photo' });
             if (result.assets && result.assets.length > 0) {
                 setImage(result.assets[0].uri);
-                setUserInfo((prevState) => ({ ...prevState, avtUri: result.assets[0].uri }));
             }
         } else {
             Alert.alert('Bạn đã từ chối quyền truy cập vào thư viện ảnh.');
@@ -38,90 +34,101 @@ const UserInfoScreen = ({ navigation, route }:any) => {
     };
 
     useEffect(() => {
-        const fetchUserInfo = async () => {
+        const getUser = async () => {
             try {
-                const userDoc:any = await fbInfo.doc(userId).get();
+                const userDoc = await fb.doc(userId).get();
                 if (userDoc.exists) {
-                    setUserInfo(userDoc.data());
-                    setImage(userDoc.data().avtUri);
+                    const userData: any = userDoc.data();
+                    setEmail(userData.email);
+                } else {
+                    console.log('Không có bản ghi nào với id: ', userId);
                 }
             } catch (error) {
-                console.error('Error fetching user info:', error);
+                console.error('Lỗi khi lấy thông tin người dùng:', error);
             }
         };
-
-        fetchUserInfo();
+        getUser();
     }, [userId]);
 
-    const handleSaveUserInfo = async () => {
+    const uploadImage = async () => {
+        const imageUrl: any = image;
         try {
-            await fbInfo.doc(userId).set(userInfo);
-            console.log('User info saved successfully.');
-            navigation.navigate('bottom', { userId });
+            
+            const fileName = `${userId}.jpg`;
+            const storageRef = storage().ref(`images/${fileName}`);
+
+            const response = await fetch(imageUrl);
+            const blob = await response.blob();
+
+            await storageRef.put(blob);
+
+            await firestore().collection('tblCompany').doc(userId).set({
+                id: userId,
+                avtUri: image,
+                name: name,
+                email: email,
+                phone: phone,
+                address: address,
+                detail: detail
+            });
+
+            setUploading(false);
+            navigation.navigate('bottom', { userId , userType});
+
+            console.log('Tải lên hình ảnh thành công!');
         } catch (error) {
-            console.error('Error saving user info:', error);
+            console.error('Error uploading image:', error);
+            setUploading(false);
+            Alert.alert('Lỗi', 'Đã có lỗi xảy ra khi tải lên hình ảnh. Vui lòng thử lại.');
         }
     };
 
-    const handleChangeText = (key:any ,text:any) => {
-        setUserInfo((prevState) => ({
-            ...prevState,
-            [key]: text
-        }));
-    };
-
-
     return (
         <View style={styles.container}>
-            {/* Header */}
             <Animatable.View animation="fadeIn" duration={1500} style={styles.header}>
-                <Text style={styles.headerText}>Thông Tin Cá Nhân</Text>
+                <Text style={styles.headerText}>Thông Tin Công Ty</Text>
             </Animatable.View>
-
-            {/* Form Container */}
             <Animatable.View animation="fadeInUp" duration={1500} style={styles.formContainer}>
                 <TouchableOpacity onPress={pickImage}>
                     <View style={styles.imageContainer}>
                         {image ? (
-                            <Image source={{ uri: userInfo.avtUri }} style={styles.image} />
+                            <Image source={{ uri: image }} style={styles.image} />
                         ) : (
-                            <Image source={require('../asset/default.png')} style={styles.image} />
+                            <Image source={require('../../asset/default.png')} style={styles.image} />
                         )}
                     </View>
                 </TouchableOpacity>
                 <TextInput
-                    label="Họ và tên"
-                    value={userInfo.name}
-                    onChangeText={(text) => handleChangeText('name',text)}
+                    label="Tên công ty"
+                    value={name}
+                    onChangeText={setName}
                     style={styles.input}
-                />
-                <TextInput
-                    label="Ngày sinh"
-                    value={userInfo.birthDate}
-                    onChangeText={(text) => handleChangeText('birthDate',text)}
-                    style={styles.input}
+                    theme={{ colors: { primary: '#1E90FF' } }}
                 />
                 <TextInput
                     label="Số điện thoại"
-                    value={userInfo.phone}
-                    onChangeText={(text) => handleChangeText('phone',text)}
+                    value={phone}
+                    onChangeText={setPhone}
                     style={styles.input}
+                    theme={{ colors: { primary: '#1E90FF' } }}
                 />
                 <TextInput
                     label="Địa chỉ"
-                    value={userInfo.address}
-                    onChangeText={(text) => handleChangeText('address',text)}
+                    value={address}
+                    onChangeText={setAddress}
                     style={styles.input}
+                    theme={{ colors: { primary: '#1E90FF' } }}
                 />
                 <TextInput
                     label="Giới thiệu"
-                    value={userInfo.introduction}
-                    onChangeText={(text) => handleChangeText('introduction',text)}
+                    value={detail}
+                    onChangeText={setDetail}
                     style={styles.input}
+                    theme={{ colors: { primary: '#1E90FF' } }}
                 />
                 <Button
                     mode="contained"
-                    onPress={handleSaveUserInfo}
+                    onPress={uploadImage}
                     disabled={uploading}
                     style={styles.button}
                     loading={uploading}
@@ -185,4 +192,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default UserInfoScreen;
+export default CompanyInfo;

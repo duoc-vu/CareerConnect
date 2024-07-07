@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { Image, StyleSheet, Text, View, TouchableHighlight } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
+import storage from '@react-native-firebase/storage';
 import * as Animatable from 'react-native-animatable';
 
-const Account = ({ navigation, route }: any) => {
+const Account = ({ navigation, route }:any) => {
     const [uploading, setUploading] = useState(false);
+    const [imageUrl, setImageUrl] = useState(null);
     const [image, setImage] = useState('');
-    const { userId } = route.params;
+    const { userId,userType } = route.params;
     const [user, setUser] = useState({
         avtUri: '',
         name: '',
@@ -17,48 +19,53 @@ const Account = ({ navigation, route }: any) => {
         introduction: '',
     });
 
-    useEffect(() => {
-        const getUser = async () => {
-            try {
-                const userDoc = await firestore().collection('tblUserInfo').doc(userId).get();
-                if (userDoc.exists) {
-                    const userData: any = userDoc.data();
-                    setUser({
-                        avtUri: userData.avtUri,
-                        name: userData.name,
-                        email: userData.email,
-                        birthDate: userData.birthDate,
-                        phone: userData.phone,
-                        address: userData.address,
-                        introduction: userData.introduction,
-                    });
-                    setImage(userData.avtUri);
-                    setUploading(false);
-                } else {
-                    console.log('Không có bản ghi nào với id', userId);
-                    setUploading(true);
-                }
-            } catch (error) {
-                console.error('Lỗi khi lấy thông tin người dùng:', error);
-                setUploading(true);
-            }
-        };
+    const fetchUserData = async () => {
+        setUploading(true);
+        try {
+            const userDoc = await firestore().collection('tblUserInfo').doc(userId).get();
+            if (userDoc.exists) {
+                const userData:any = userDoc.data();
+                const storageRef = storage().ref(`images/${userId}.jpg`);
+                const downloadUrl = await storageRef.getDownloadURL();
 
-        getUser();
+                setUser({
+                    avtUri: userData.avtUri,
+                    name: userData.name,
+                    email: userData.email,
+                    birthDate: userData.birthDate,
+                    phone: userData.phone,
+                    address: userData.address,
+                    introduction: userData.introduction,
+                });
+                setImage(downloadUrl);
+            } else {
+                console.log('Không có bản ghi nào với id', userId);
+            }
+        } catch (error) {
+            console.error('Lỗi khi lấy thông tin người dùng:', error);
+        }
+        setUploading(false);
+    };
+
+    useEffect(() => {
+        fetchUserData();
     }, [userId]);
 
+    useEffect(() => {
+        const unsubscribe = navigation.addListener('focus', () => {
+            fetchUserData();
+        });
+        return unsubscribe;
+    }, [navigation]);
+
     const handleUpdate = () => {
-        if (!route) {
-            navigation.navigate('Login');
-        } else {
-            navigation.navigate('If', { userId });
-        }
+        navigation.navigate('If', { userId,userType });
     };
 
     return (
         <View style={styles.container}>
             <Animatable.View animation="bounceIn" duration={1500} style={styles.profileContainer}>
-                <Image source={image ? { uri: image } : require('../asset/default.png')} style={styles.profileImage} />
+                <Image source={image ? { uri: image } : require('../../asset/default.png')} style={styles.profileImage} />
                 <Text style={styles.name}>{user.name}</Text>
             </Animatable.View>
             <Animatable.View animation="fadeInUp" duration={1500} style={styles.infoContainer}>
@@ -89,7 +96,7 @@ const Account = ({ navigation, route }: any) => {
                     onPress={handleUpdate}
                     underlayColor="#1E90FF"
                 >
-                    <Text style={styles.buttonText}>{uploading ? 'Đăng nhập' : 'Cập nhật thông tin'}</Text>
+                    <Text style={styles.buttonText}>{uploading ? 'Đang tải...' : 'Cập nhật thông tin'}</Text>
                 </TouchableHighlight>
             </Animatable.View>
         </View>
