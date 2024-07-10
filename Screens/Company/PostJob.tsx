@@ -149,7 +149,10 @@ const styles = StyleSheet.create({
     },
     button: {
         width: width * 0.9,
+        marginVertical: 20,
         backgroundColor: '#1E90FF',
+        borderRadius: 15,
+        paddingVertical: 10,
     },
     error: {
         color: 'red',

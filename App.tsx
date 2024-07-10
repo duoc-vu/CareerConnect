@@ -9,10 +9,14 @@ import Info from './Screens/User/Info';
 import Bottom_Tab from './Screens/Component/Bottom_Tab';
 import UserInfoScreen from './Screens/User/UserInfoScreen';
 import CV_Profile from './Screens/User/CV_Profile';
-import JobDetail from './Screens/JobDetail';
+import JobDetail from './Screens/Component/JobDetail';
 import CompanyInfo from './Screens/Company/CompanyInfo';
 import CompanyInfoScreen from './Screens/Company/CompanyInfoScreen';
-import ApplyJob from './Screens/ApplyJob';
+import ApplyJob from './Screens/User/ApplyJob';
+import JobApplyCompany from './Screens/Company/JobApplyCompany';
+import ApplicationDetails from './Screens/Company/ApplicationDetails';
+import AppliedJobs from './Screens/User/AppliedJobs';
+import AppDetails from './Screens/User/AppDetails';
 
 
 const Stack = createNativeStackNavigator();
@@ -33,8 +37,11 @@ const App = () => {
         <Stack.Screen name='CompanyInfo' component={CompanyInfo}  options={{ headerShown: false}}/>
         <Stack.Screen name='CompanyIf' component={CompanyInfoScreen}  options={{ headerShown: false}}/>
         <Stack.Screen name='ApplyJob' component={ApplyJob}  options={{ headerShown: false}}/>
+        <Stack.Screen name='JobApplyCompany' component={JobApplyCompany}  options={{ headerShown: false}}/>
         {/* <Stack.Screen name='Home' component={Home}  options={{ headerShown: false}}/>  */}
         {/* <Stack.Screen name='cv' component={CV_Profile} options={{ headerShown: false}}/> */}
+        <Stack.Screen name='ApplicationDetails' component={ApplicationDetails}  options={{ headerShown: false}}/>
+        <Stack.Screen name='AppDetails' component={AppDetails}  options={{ headerShown: false}}/>
         
 
       </Stack.Navigator>

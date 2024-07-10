@@ -5,6 +5,8 @@ import Home from './Home';
 import Account from '../User/Account';
 import AccountCompany from '../Company/AccountCompany';
 import PostJob from '../Company/PostJob';
+import JobCompany from '../Company/JobCompany';
+import AppliedJobs from '../User/AppliedJobs';
 
 
 const Tab = createBottomTabNavigator();
@@ -14,7 +16,9 @@ const Bottom_Tab = ({ route }: any) => {
         return (
             <Tab.Navigator  >
                 <Tab.Screen name='Home' component={Home} initialParams={{ userId ,userType }} options={{ headerShown: false }} />
+                <Tab.Screen name='AppliedJobs' component={AppliedJobs} initialParams={{ userId ,userType }} options={{ headerShown: false }} /> 
                 <Tab.Screen name='Account' component={Account} initialParams={{ userId ,userType }} options={{ headerShown: false }} />
+              
             </Tab.Navigator>
         )
     } else if (userType === '2') {
@@ -22,7 +26,9 @@ const Bottom_Tab = ({ route }: any) => {
             <Tab.Navigator  >
                 <Tab.Screen name='Home' component={Home} initialParams={{ userId ,userType }} options={{ headerShown: false }} />
                 <Tab.Screen name='PostJob' component={PostJob} initialParams={{ userId ,userType }} options={{ headerShown: false }} />
+                <Tab.Screen name='JobCompany' component={JobCompany} initialParams={{ userId, userType }} options={{ headerShown: false }} />
                 <Tab.Screen name='AccountCompany' component={AccountCompany} initialParams={{ userId, userType }} options={{ headerShown: false }} />
+
             </Tab.Navigator>
         )
     } else {

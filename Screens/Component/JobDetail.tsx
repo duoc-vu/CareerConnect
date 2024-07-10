@@ -15,6 +15,7 @@ const JobDetail = ({ route, navigation }: any) => {
     const [companyDetail, setCompanyDetail] = useState<any>(null);
     const { jobId, userId, userType } = route.params;
     const [image, setImage] = useState<string | null>(null);
+    const [idCompany,setIdCompany] = useState('');
 
     useEffect(() => {
         const getJobDetail = async () => {
@@ -23,7 +24,7 @@ const JobDetail = ({ route, navigation }: any) => {
                 if (jobDoc.exists) {
                     const jobData: any = jobDoc.data();
                     setJobDetail(jobData);
-
+                    setIdCompany(jobData.idCT);
                     const companyDoc = await fbCompany.doc(jobData.idCT).get();
                     if (companyDoc.exists) {
                         const companyData: any = companyDoc.data();
@@ -64,7 +65,7 @@ const JobDetail = ({ route, navigation }: any) => {
 
     const handleApply = () => {
         if (userType === '1') {
-            navigation.navigate('ApplyJob', { jobId, userType, userId });
+            navigation.navigate('ApplyJob', { jobId, userType, userId ,idCompany});
         } else if (userType === '2') {
             Alert.alert('Thông báo', 'Bạn không phải là 1 ứng viên.');
         }
@@ -76,7 +77,7 @@ const JobDetail = ({ route, navigation }: any) => {
                 {image ? (
                     <Image source={{ uri: image }} style={styles.companyImage} />
                 ) : (
-                    <Image source={require('../asset/default.png')} style={styles.companyImage} />
+                    <Image source={require('../../asset/default.png')} style={styles.companyImage} />
                 )}
                 <Text style={styles.jobName}>{jobDetail.tenJob}</Text>
                 <Text style={styles.companyName}>{companyDetail.name}</Text>
