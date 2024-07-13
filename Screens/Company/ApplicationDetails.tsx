@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Dimensions, ActivityIndicator, Alert } from 'react-native';
-import {  Avatar, Card } from 'react-native-paper';
+import { Avatar, Card, IconButton } from 'react-native-paper';
 import { TextInput, Button, Text } from 'react-native-paper';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import Pdf from 'react-native-pdf';
 import Markdown from 'react-native-markdown-display';
+import * as Animatable from 'react-native-animatable';
 
-const ApplicationDetails = ({ route }: any) => {
+const { width, height } = Dimensions.get('window');
+const ApplicationDetails = ({ route, navigation }: any) => {
     const { userId, idCT, idJob, avt } = route.params;
     const [applicantInfo, setApplicantInfo] = useState<any>(null);
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
@@ -89,13 +91,23 @@ const ApplicationDetails = ({ route }: any) => {
 
     return (
         <ScrollView contentContainerStyle={styles.scrollContainer}>
-            <View style={styles.container}>
-                <View style={styles.header}>
+            <View style={styles.headerContainer}>
+                <IconButton
+                    icon="arrow-left"
+                    iconColor="#1E90FF"
+                    size={30}
+                    onPress={() => navigation.goBack()}
+                    style={{ position: 'absolute', left: 0, top: 20 }}
+                />
+                <Text style={styles.header}>Chi tiết ứng tuyển</Text>
+            </View>
+            <Animatable.View animation="fadeInUp" duration={1500} style={styles.container}>
+                <View style={styles.headeravt}>
                     <Avatar.Image size={80} source={{ uri: applicantInfo.avatar }} />
                     <Text style={styles.applicantName}>{applicantInfo.name}</Text>
                 </View>
                 <Card style={styles.card}>
-                    <Card.Title style={{}} title="Thư giới thiệu" />
+                    <Card.Title title="Thư giới thiệu" />
                     <Card.Content>
                         <Markdown
                             style={{
@@ -138,9 +150,22 @@ const ApplicationDetails = ({ route }: any) => {
                     value={comment}
                     onChangeText={setComment}
                     editable={!sendingComment}
+                    mode="outlined"
+                    outlineColor="#1E90FF"
+                    activeOutlineColor="#1E90FF"
+                    theme={{ roundness: 8 }}
                 />
-                <Button mode="contained" style={styles.button} onPress={handleCommentSubmit} disabled={sendingComment} >dhad</Button>
-            </View>
+                <Button
+                    mode="contained"
+                    style={styles.button}
+                    onPress={handleCommentSubmit}
+                    disabled={sendingComment}
+                    labelStyle={{ color: 'white', fontWeight: 'bold' }}
+                    contentStyle={{ height: 50 }}
+                >
+                    Gửi nhận xét
+                </Button>
+            </Animatable.View>
         </ScrollView>
     );
 };
@@ -150,11 +175,20 @@ const styles = StyleSheet.create({
         flexGrow: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        padding: 20,
+        paddingBottom:20
+    },
+    headerContainer: {
+        width: '100%',
+        height: height * 0.115,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderBottomLeftRadius: 20,
+        borderBottomRightRadius: 20,
     },
     container: {
         width: '100%',
         alignItems: 'center',
+        paddingHorizontal: 20,
     },
     loadingContainer: {
         flex: 1,
@@ -162,39 +196,51 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     header: {
-        flexDirection: 'row',
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: '#1E90FF',
+        textAlign: 'center',
+        flex: 1,
+        marginTop: 30,
+    },
+    headeravt: {
+        flexDirection: 'column',
         alignItems: 'center',
-        marginBottom: 20,
     },
     applicantName: {
-        marginLeft: 10,
+        marginVertical: 10,
         fontSize: 20,
         fontWeight: 'bold',
     },
     card: {
         width: '100%',
         marginBottom: 20,
+        borderRadius: 8,
+        elevation: 4,
     },
     pdfContainer: {
         width: '100%',
-        height: Dimensions.get('window').height / 2, // Adjust height as needed
+        height: Dimensions.get('window').height / 2,
         marginBottom: 20,
     },
     pdf: {
         flex: 1,
+        borderRadius: 8,
     },
     textInput: {
         width: '100%',
-        height: 40,
-        borderWidth: 1,
-        paddingHorizontal: 10,
-        marginBottom: 10,
-        backgroundColor:'white'
+        height: 50,
+        marginBottom: 20,
+        backgroundColor: 'white',
+        fontSize: 16,
     },
-    button:{
-        marginBottom: 15,
+    button: {
+        width: '100%',
+        height: 50,
         backgroundColor: '#1E90FF',
-    }
+        justifyContent: 'center',
+        borderRadius: 8,
+    },
 });
 
 export default ApplicationDetails;

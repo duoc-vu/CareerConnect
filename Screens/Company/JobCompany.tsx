@@ -4,6 +4,7 @@ import { Text, Card, ActivityIndicator } from 'react-native-paper';
 import { useFocusEffect } from '@react-navigation/native';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
+import * as Animatable from 'react-native-animatable';
 
 const { width } = Dimensions.get('window');
 
@@ -13,6 +14,7 @@ const JobCompany = ({ route, navigation }: any) => {
     const { userId } = route.params;
     const [jobs, setJobs] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [animationKey, setAnimationKey] = useState(0);
 
     const fetchJobs = async () => {
         try {
@@ -48,6 +50,7 @@ const JobCompany = ({ route, navigation }: any) => {
     useFocusEffect(
         useCallback(() => {
             fetchJobs();
+            setAnimationKey(prevKey => prevKey + 1); // Reset animation
         }, [userId])
     );
 
@@ -60,13 +63,15 @@ const JobCompany = ({ route, navigation }: any) => {
     }
 
     const renderJob = ({ item }: any) => (
-        <Card style={styles.card} onPress={() => navigation.navigate('JobApplyCompany', { idCT: userId, idJob: item.id })}>
-            <Card.Title title={item.tenJob} subtitle={item.tenCongTy} />
-            <Card.Content>
-                {/* <Text>{item.moTa}</Text> */}
-                <Text style={styles.fileCount}>Số lượng người ứng tuyển: {item.fileCount}</Text>
-            </Card.Content>
-        </Card>
+        <Animatable.View key={`job-${item.id}-${animationKey}`} animation="fadeInUp" duration={1500} style={styles.animatable}>
+            <Card style={styles.card} onPress={() => navigation.navigate('JobApplyCompany', { idCT: userId, idJob: item.id })}>
+                <Card.Title title={item.tenJob} subtitle={item.tenCongTy} />
+                <Card.Content>
+                    {/* <Text>{item.moTa}</Text> */}
+                    <Text style={styles.fileCount}>Số lượng người ứng tuyển: {item.fileCount}</Text>
+                </Card.Content>
+            </Card>
+        </Animatable.View>
     );
 
     return (
@@ -100,8 +105,14 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-    card: {
+    animatable: {
         marginBottom: 10,
+        backgroundColor: 'transparent',
+    },
+    card: {
+        borderRadius: 1,
+        elevation: 3,
+        overflow: 'visible',
     },
     fileCount: {
         marginTop: 10,

@@ -25,17 +25,16 @@ const Login = ({ navigation }: any) => {
                 const userData = userDoc.docs[0].data();
                 if (userData.password === password) {
                     setError('Thông tin hợp lệ');
-                    console.log(userData.userType);
                     const userType = userData.userType;
                     if (userData.userType === '1') {
                         const userId = userDoc.docs[0].id;
                         const userInfo = await fbInfo.where('id', '==', userId).limit(1).get();
                         if (!userInfo.empty) {
-                            navigation.navigate('bottom', { userId, userType});
+                            navigation.navigate('bottom', { userId, userType });
                         } else {
-                            navigation.navigate('Info', { userId, userType});
+                            navigation.navigate('Info', { userId, userType });
                         }
-                    }else if(userData.userType ==='2'){
+                    } else if (userData.userType === '2') {
                         const userId = userDoc.docs[0].id;
                         const userInfo = await fbInfoCom.where('id', '==', userId).limit(1).get();
                         if (!userInfo.empty) {
@@ -55,6 +54,15 @@ const Login = ({ navigation }: any) => {
             setError('Đã xảy ra lỗi');
         }
     };
+
+    useEffect(() => {
+        const unsubscribe = navigation.addListener('focus', () => {
+            setEmail('');
+            setPassword('');
+            setError('');
+        });
+        return unsubscribe;
+    }, [navigation]);
 
     return (
         <View style={styles.container}>

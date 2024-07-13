@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Image, StyleSheet, Dimensions, TouchableOpacity, Alert, PermissionsAndroid } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
-import { TextInput, Button, Text } from 'react-native-paper';
+import { TextInput, Button, Text, IconButton } from 'react-native-paper';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import * as Animatable from 'react-native-animatable';
@@ -90,8 +90,14 @@ const UserInfoScreen = ({ navigation, route }:any) => {
 
     return (
         <View style={styles.container}>
-            {/* Header */}
             <Animatable.View animation="fadeIn" duration={1500} style={styles.header}>
+            <IconButton
+                    icon="arrow-left"
+                    iconColor="white"
+                    size={30}
+                    onPress={() => navigation.goBack()}
+                    style={{ position: 'absolute', left: 16, top: 20 }}
+                />
                 <Text style={styles.headerText}>Thông Tin Cá Nhân</Text>
             </Animatable.View>
 
@@ -155,11 +161,10 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#F0F4F7',
         alignItems: 'center',
-        paddingTop: 20,
     },
     header: {
         width: '100%',
-        height: height * 0.15,
+        height: height * 0.115,
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: '#1E90FF',

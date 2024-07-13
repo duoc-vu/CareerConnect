@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { Image, StyleSheet, Text, View, TouchableHighlight, ScrollView } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Image, StyleSheet, Text, View, TouchableHighlight, TouchableOpacity } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import * as Animatable from 'react-native-animatable';
+import { useFocusEffect } from '@react-navigation/native';
 
-const AccountCompany = ({ navigation, route }:any) => {
+const AccountCompany = ({ navigation, route }: any) => {
     const [uploading, setUploading] = useState(false);
     const [imageUrl, setImageUrl] = useState(null);
     const [image, setImage] = useState('');
@@ -17,13 +18,14 @@ const AccountCompany = ({ navigation, route }:any) => {
         address: '',
         detail: '',
     });
+    const [animationKey, setAnimationKey] = useState(0);
 
     const fetchUserData = async () => {
         setUploading(true);
         try {
             const userDoc = await firestore().collection('tblCompany').doc(userId).get();
             if (userDoc.exists) {
-                const userData:any = userDoc.data();
+                const userData: any = userDoc.data();
                 const storageRef = storage().ref(`images/${userId}.jpg`);
                 const downloadUrl = await storageRef.getDownloadURL();
 
@@ -49,25 +51,30 @@ const AccountCompany = ({ navigation, route }:any) => {
         fetchUserData();
     }, [userId]);
 
-    useEffect(() => {
-        const unsubscribe = navigation.addListener('focus', () => {
+    useFocusEffect(
+        useCallback(() => {
             fetchUserData();
-        });
-        return unsubscribe;
-    }, [navigation]);
+            setAnimationKey(prevKey => prevKey + 1); // Reset animation
+        }, [userId])
+    );
 
     const handleUpdate = () => {
         navigation.navigate('CompanyIf', { userId });
     };
+    const handleLogout = () => {
+        // Implement your logout logic here
+        // Example: Clear authentication state, navigate to login screen, etc.
+        // For demo purposes, navigate back to the login screen
+        navigation.navigate('Login');
+    };
 
     return (
         <View style={styles.container}>
-            <Animatable.View animation="bounceIn" duration={1500} style={styles.profileContainer}>
+            <Animatable.View key={`profile-${animationKey}`} animation="bounceIn" duration={1500} style={styles.profileContainer}>
                 <Image source={image ? { uri: image } : require('../../asset/default.png')} style={styles.profileImage} />
                 <Text style={styles.name}>{company.name}</Text>
             </Animatable.View>
-            <Animatable.View animation="fadeInUp" duration={1500} style={styles.infoContainer}>
-            
+            <Animatable.View key={`info-${animationKey}`} animation="fadeInUp" duration={1500} style={styles.infoContainer}>
                 <View style={styles.infoRow}>
                     <Text style={styles.infoLabel}>Email:</Text>
                     <Text style={styles.infoValue}>{company.email}</Text>
@@ -84,9 +91,8 @@ const AccountCompany = ({ navigation, route }:any) => {
                     <Text style={styles.infoLabel}>Giới thiệu:</Text>
                     <Text style={styles.infoValue}>{company.detail}</Text>
                 </View>
-                
             </Animatable.View>
-            <Animatable.View animation="fadeIn" duration={2000} style={styles.buttonContainer}>
+            <View style={styles.buttonContainer}>
                 <TouchableHighlight
                     style={styles.button}
                     onPress={handleUpdate}
@@ -94,7 +100,10 @@ const AccountCompany = ({ navigation, route }:any) => {
                 >
                     <Text style={styles.buttonText}>{uploading ? 'Đang tải...' : 'Cập nhật thông tin'}</Text>
                 </TouchableHighlight>
-            </Animatable.View>
+                <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+                    <Text style={styles.logoutText}>Đăng xuất</Text>
+                </TouchableOpacity>
+            </View>
         </View>
     );
 };
@@ -160,6 +169,15 @@ const styles = StyleSheet.create({
         color: 'white',
         fontWeight: 'bold',
         textAlign: 'center',
+    },
+    logoutButton: {
+        marginTop: 10,
+        marginHorizontal:'auto'
+    },
+    logoutText: {
+        color: '#1E90FF',
+        fontWeight: 'bold',
+        fontSize: 16,
     },
 });
 

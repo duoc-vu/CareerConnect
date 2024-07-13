@@ -1,14 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import { Image, StyleSheet, Text, View, TouchableHighlight } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Image, StyleSheet, Text, View, TouchableHighlight, TouchableOpacity } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import * as Animatable from 'react-native-animatable';
+import { useFocusEffect } from '@react-navigation/native';
 
-const Account = ({ navigation, route }:any) => {
+const Account = ({ navigation, route }: any) => {
     const [uploading, setUploading] = useState(false);
-    const [imageUrl, setImageUrl] = useState(null);
     const [image, setImage] = useState('');
-    const { userId,userType } = route.params;
+    const { userId, userType } = route.params;
     const [user, setUser] = useState({
         avtUri: '',
         name: '',
@@ -18,13 +18,14 @@ const Account = ({ navigation, route }:any) => {
         address: '',
         introduction: '',
     });
+    const [animationKey, setAnimationKey] = useState(0);
 
     const fetchUserData = async () => {
         setUploading(true);
         try {
             const userDoc = await firestore().collection('tblUserInfo').doc(userId).get();
             if (userDoc.exists) {
-                const userData:any = userDoc.data();
+                const userData: any = userDoc.data();
                 const storageRef = storage().ref(`images/${userId}.jpg`);
                 const downloadUrl = await storageRef.getDownloadURL();
 
@@ -51,20 +52,27 @@ const Account = ({ navigation, route }:any) => {
         fetchUserData();
     }, [userId]);
 
-    useEffect(() => {
-        const unsubscribe = navigation.addListener('focus', () => {
+    useFocusEffect(
+        useCallback(() => {
             fetchUserData();
-        });
-        return unsubscribe;
-    }, [navigation]);
+            setAnimationKey(prevKey => prevKey + 1); // Reset animation
+        }, [userId])
+    );
 
     const handleUpdate = () => {
-        navigation.navigate('If', { userId,userType });
+        navigation.navigate('If', { userId, userType });
+    };
+
+    const handleLogout = () => {
+        // Implement your logout logic here
+        // Example: Clear authentication state, navigate to login screen, etc.
+        // For demo purposes, navigate back to the login screen
+        navigation.navigate('Login');
     };
 
     return (
         <View style={styles.container}>
-            <Animatable.View animation="bounceIn" duration={1500} style={styles.profileContainer}>
+            <Animatable.View key={`profile-${animationKey}`} animation="bounceIn" duration={1500} style={styles.profileContainer}>
                 <Image source={image ? { uri: image } : require('../../asset/default.png')} style={styles.profileImage} />
                 <Text style={styles.name}>{user.name}</Text>
             </Animatable.View>
@@ -90,7 +98,7 @@ const Account = ({ navigation, route }:any) => {
                     <Text style={styles.infoValue}>{user.introduction}</Text>
                 </View>
             </Animatable.View>
-            <Animatable.View animation="fadeIn" duration={2000} style={styles.buttonContainer}>
+            <View style={styles.buttonContainer}>
                 <TouchableHighlight
                     style={styles.button}
                     onPress={handleUpdate}
@@ -98,7 +106,10 @@ const Account = ({ navigation, route }:any) => {
                 >
                     <Text style={styles.buttonText}>{uploading ? 'Đang tải...' : 'Cập nhật thông tin'}</Text>
                 </TouchableHighlight>
-            </Animatable.View>
+                <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+                    <Text style={styles.logoutText}>Đăng xuất</Text>
+                </TouchableOpacity>
+            </View>
         </View>
     );
 };
@@ -150,20 +161,29 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     buttonContainer: {
-        width: '60%',
-        marginHorizontal: '20%',
-        marginTop: 50,
+        width: '100%',
+        marginTop: 20,
+        alignItems: 'center',
     },
     button: {
-        marginVertical: 20,
+        marginVertical: 10,
         backgroundColor: '#1E90FF',
         borderRadius: 15,
         paddingVertical: 10,
+        paddingHorizontal: 20,
     },
     buttonText: {
         color: 'white',
         fontWeight: 'bold',
         textAlign: 'center',
+    },
+    logoutButton: {
+        marginTop: 10,
+    },
+    logoutText: {
+        color: '#1E90FF',
+        fontWeight: 'bold',
+        fontSize: 16,
     },
 });
 

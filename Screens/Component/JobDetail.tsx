@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Image, Dimensions, ScrollView, Alert } from 'react-native';
-import { Text, Button } from 'react-native-paper';
+import { View, StyleSheet, Image, Dimensions, ScrollView, Alert, TouchableOpacity } from 'react-native';
+import { Text, Button, IconButton } from 'react-native-paper';
 import * as Animatable from 'react-native-animatable';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
@@ -74,6 +74,13 @@ const JobDetail = ({ route, navigation }: any) => {
     return (
         <ScrollView style={styles.container}>
             <Animatable.View animation="fadeInUp" duration={1500} style={styles.header}>
+                <IconButton
+                    icon="arrow-left"
+                    iconColor="#000"
+                    size={30}
+                    onPress={() => navigation.goBack()}
+                    style={{ position: 'absolute', left: 16, top: 20 }}
+                />
                 {image ? (
                     <Image source={{ uri: image }} style={styles.companyImage} />
                 ) : (
@@ -114,6 +121,7 @@ const JobDetail = ({ route, navigation }: any) => {
 
 const styles = StyleSheet.create({
     container: {
+        marginTop:0,
         flex: 1,
         backgroundColor: '#F0F4F7',
     },

@@ -1,12 +1,9 @@
-import { onSnapshot, query } from '@react-native-firebase/firestore';
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Image, Dimensions, FlatList, TouchableOpacity, Alert } from 'react-native';
+import { View, StyleSheet, Image, FlatList, TouchableOpacity } from 'react-native';
 import { Text, Card } from 'react-native-paper';
 import * as Animatable from 'react-native-animatable';
 import firestore from '@react-native-firebase/firestore';
 import { useFocusEffect } from '@react-navigation/native';
-
-const { width, height } = Dimensions.get('window');
 
 const fbInfo = firestore().collection('tblUserInfo');
 const fbCT = firestore().collection('tblCompany');
@@ -16,49 +13,56 @@ const Home = ({ navigation, route }: any) => {
     const [jobs, setJobs] = useState([]);
     const [user, setUser] = useState('');
     const [com, setCom] = useState('');
+    const [animationKey, setAnimationKey] = useState(0);
 
-    const { userId ,userType} = route.params;
+    const { userId, userType } = route.params;
+
+    const fetchJobs = async () => {
+        try {
+            const querySnapshot = await fbJob.get();
+            const listJob: any = [];
+            const promises: Promise<void>[] = [];
+
+            querySnapshot.forEach(doc => {
+                const jobData = doc.data();
+                const promise = fbCT
+                    .doc(jobData.idCT)
+                    .get()
+                    .then(companyDoc => {
+                        const companyData = companyDoc.data();
+                        listJob.push({
+                            idJob: jobData.idJob,
+                            jobName: jobData.tenJob,
+                            companyName: companyData ? companyData.name : 'Unknown Company',
+                            avt: jobData.avt,
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error getting company data: ', error);
+                        listJob.push({
+                            idJob: jobData.idJob,
+                            jobName: jobData.tenJob,
+                            companyName: 'Unknown Company',
+                            avt: jobData.avt,
+                        });
+                    });
+
+                promises.push(promise);
+            });
+
+            Promise.all(promises).then(() => {
+                setJobs(listJob);
+            });
+        } catch (error) {
+            console.error('Error fetching jobs: ', error);
+        }
+    };
 
     useFocusEffect(
         React.useCallback(() => {
-            const unsubscribe = fbJob.onSnapshot(querySnapshot => {
-                const listJob: any = [];
-                const promises: Promise<void>[] = [];
-
-                querySnapshot.forEach(doc => {
-                    const jobData = doc.data();
-                    const promise = fbCT
-                        .doc(jobData.idCT)
-                        .get()
-                        .then(companyDoc => {
-                            const companyData = companyDoc.data();
-                            listJob.push({
-                                idJob: jobData.idJob,
-                                jobName: jobData.tenJob,
-                                companyName: companyData ? companyData.name : 'Unknown Company',
-                                avt: jobData.avt,
-                            });
-                        })
-                        .catch(error => {
-                            console.error('Error getting company data: ', error);
-                            listJob.push({
-                                idJob: jobData.idJob,
-                                jobName: jobData.tenJob,
-                                companyName: 'Unknown Company',
-                                avt: jobData.avt,
-                            });
-                        });
-
-                    promises.push(promise);
-                });
-
-                Promise.all(promises).then(() => {
-                    setJobs(listJob);
-                });
-            });
-
-            return () => unsubscribe();
-        }, [userId])
+            fetchJobs();
+            setAnimationKey(prevKey => prevKey + 1); // Reset animation
+        }, [])
     );
 
     useEffect(() => {
@@ -75,12 +79,12 @@ const Home = ({ navigation, route }: any) => {
                         if (userComData) {
                             setCom(userComData.name);
                         } else {
-                            console.log('Không có bản ghi nào với id', userId);
+                            console.log('No record found with id', userId);
                         }
                     }
                 }
             } catch (error) {
-                console.error('Lỗi khi lấy thông tin người dùng:', error);
+                console.error('Error getting user info: ', error);
             }
         };
 
@@ -89,47 +93,38 @@ const Home = ({ navigation, route }: any) => {
         }
     }, [userId]);
 
-    if (!route) {
-        return (
-            <View>
-                <Text>Vui lòng đăng nhập</Text>
-            </View>
-        );
-    } else {
-        const renderItem = ({ item }: any) => (
-            <Animatable.View animation="fadeInUp" duration={1500}>
-                <TouchableOpacity onPress={() => navigation.navigate('JobDetail', { jobId: item.idJob ,userId, userType })}>
-                    <Card style={styles.card}>
-                        <Card.Title
-                            title={item.jobName}
-                            titleStyle={styles.jobName}
-                            subtitle={item.companyName}
-                            subtitleStyle={styles.companyName}
-                            left={() =>
-                                <View>
-                                    <Image source={{ uri: item.avt }} style={styles.avatar} />
-                                </View>}
-                        />
-                    </Card>
-                </TouchableOpacity>
-            </Animatable.View>
-        );
+    const renderItem = ({ item }: any) => (
+        <Animatable.View key={`job-${item.id}-${animationKey}`} animation="fadeInUp" duration={1500}>
+            <TouchableOpacity onPress={() => navigation.navigate('JobDetail', { jobId: item.idJob, userId, userType })}>
+                <Card style={styles.card}>
+                    <Card.Title
+                        title={item.jobName}
+                        titleStyle={styles.jobName}
+                        subtitle={item.companyName}
+                        subtitleStyle={styles.companyName}
+                        left={() => <Image source={{ uri: item.avt }} style={styles.avatar} />}
+                    />
+                </Card>
+            </TouchableOpacity>
+        </Animatable.View>
+    );
 
-        return (
-            <View style={styles.container}>
-                <Text style={styles.greeting}>Xin chào {user ? user : com}</Text>
-                <Animatable.View animation="bounceIn" duration={1500} style={styles.header}>
-                    <Text style={styles.title}>Danh Sách Công Việc</Text>
-                </Animatable.View>
+    return (
+        <View style={styles.container}>
+            <Text style={styles.greeting}>Xin chào {user ? user : com}</Text>
+            <Animatable.View animation="bounceIn" duration={1500} style={styles.header}>
+                <Text style={styles.title}>Danh Sách Công Việc</Text>
+            </Animatable.View>
+            <Animatable.View animation="fadeIn" duration={2000} style={styles.listContainer}>
                 <FlatList
                     data={jobs}
                     renderItem={renderItem}
                     // keyExtractor={item => item.idJob}
                     contentContainerStyle={styles.list}
                 />
-            </View>
-        );
-    }
+            </Animatable.View>
+        </View>
+    );
 };
 
 const styles = StyleSheet.create({
@@ -153,21 +148,23 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#1E90FF',
     },
+    listContainer: {
+        flex: 1,
+        width: '100%',
+    },
     list: {
-        width: '90%',
+        paddingHorizontal: 10,
     },
     card: {
-        width: 385,
         marginVertical: 10,
-        borderRadius: 15,
-        elevation: 5,
-        padding: 10,
+        borderRadius: 1,
+        elevation: 3,
+        overflow: 'visible',
     },
     avatar: {
         width: 50,
         height: 50,
         borderRadius: 25,
-        marginLeft: -12
     },
     jobName: {
         fontSize: 18,

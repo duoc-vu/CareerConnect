@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, FlatList, Dimensions, TouchableOpacity } from 'react-native';
-import { Text, Avatar, ActivityIndicator, List } from 'react-native-paper';
+import { View, StyleSheet, FlatList, TouchableOpacity, Dimensions } from 'react-native';
+import { Text, Avatar, ActivityIndicator, IconButton } from 'react-native-paper';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
+import * as Animatable from 'react-native-animatable';
 
-const { width } = Dimensions.get('window');
 
-const JobFiles = ({navigation, route }: any) => {
+const { width, height } = Dimensions.get('window');
+const JobFiles = ({ navigation, route }: any) => {
     const { idCT, idJob } = route.params;
     const [applications, setApplications] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [avt,setAvt] = useState();
 
     useEffect(() => {
         const fetchApplications = async () => {
@@ -35,8 +35,8 @@ const JobFiles = ({navigation, route }: any) => {
 
                         // Get avatar from storage
                         const avtRef = storage().ref(`images/${userId}.jpg`);
-                        const avtUrl:any = await avtRef.getDownloadURL();
-                        setAvt(avtUrl);
+                        const avtUrl = await avtRef.getDownloadURL();
+
                         // Construct application item
                         const applicationItem = {
                             userId,
@@ -74,10 +74,9 @@ const JobFiles = ({navigation, route }: any) => {
             userId: item.userId,
             idCT: idCT,
             idJob: idJob,
-            avt: item.avt
+            avt: item.avt,
         });
     };
-    
 
     const renderApplication = ({ item }: any) => (
         <TouchableOpacity style={styles.notificationItem} onPress={() => handleViewApplication(item)}>
@@ -92,11 +91,19 @@ const JobFiles = ({navigation, route }: any) => {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.header}>Thông báo ứng tuyển</Text>
+            <Animatable.View animation="fadeIn" duration={1500} style={styles.headerContainer}>
+                <IconButton
+                    icon="arrow-left"
+                    iconColor="#1E90FF"
+                    size={30}
+                    onPress={() => navigation.goBack()}
+                    style={{ position: 'absolute', left:0 , top: 20 }}
+                />
+                <Text style={styles.header}>Thông báo ứng tuyển</Text>
+            </Animatable.View>
             <FlatList
                 data={applications}
                 renderItem={renderApplication}
-                // keyExtractor={(item) => item.userId}
                 contentContainerStyle={styles.list}
             />
         </View>
@@ -107,14 +114,25 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#F0F4F7',
-        padding: 20,
+    },
+    headerContainer: {
+        width: '100%',
+        height: height * 0.115,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderBottomLeftRadius: 20,
+        borderBottomRightRadius: 20,
+    },
+    backButton: {
+        marginRight: 10,
     },
     header: {
         fontSize: 24,
         fontWeight: 'bold',
         color: '#1E90FF',
-        marginBottom: 20,
         textAlign: 'center',
+        flex: 1, // To allow header text to expand
+        marginTop:30
     },
     loadingContainer: {
         flex: 1,
@@ -130,8 +148,9 @@ const styles = StyleSheet.create({
         marginBottom: 10,
         padding: 10,
         backgroundColor: '#FFF',
-        borderRadius: 8,
+        borderRadius: 25,
         elevation: 2,
+        marginHorizontal:10
     },
     notificationText: {
         fontSize: 16,
