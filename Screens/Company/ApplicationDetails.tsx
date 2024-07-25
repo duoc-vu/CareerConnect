@@ -10,7 +10,7 @@ import * as Animatable from 'react-native-animatable';
 
 const { width, height } = Dimensions.get('window');
 const ApplicationDetails = ({ route, navigation }: any) => {
-    const { userId, idCT, idJob, avt } = route.params;
+    const { userId, idCT, idJob, avt ,cmt } = route.params;
     const [applicantInfo, setApplicantInfo] = useState<any>(null);
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
@@ -19,6 +19,7 @@ const ApplicationDetails = ({ route, navigation }: any) => {
 
     useEffect(() => {
         const fetchApplicantInfo = async () => {
+            console.log(cmt);
             try {
                 setLoading(true);
 
@@ -147,7 +148,7 @@ const ApplicationDetails = ({ route, navigation }: any) => {
                 <TextInput
                     style={styles.textInput}
                     placeholder="Nhận xét"
-                    value={comment}
+                    value={cmt}
                     onChangeText={setComment}
                     editable={!sendingComment}
                     mode="outlined"

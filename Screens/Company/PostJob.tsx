@@ -3,6 +3,7 @@ import { View, StyleSheet, Alert, Dimensions, ScrollView, Image } from 'react-na
 import { TextInput, Button, Text } from 'react-native-paper';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
+import Toast from 'react-native-toast-message';
 
 const { width, height } = Dimensions.get('window');
 
@@ -58,11 +59,19 @@ const PostJob = ({ navigation, route }: any) => {
             });
 
             console.log('Đã tạo job mới với ID:', newJobId);
-            Alert.alert('Đăng tin thành công');
+            Toast.show({
+                type: 'success',
+                text1: 'Thành công',
+                text2: 'Đăng tin tuyển dụng thành công!',
+            });
             navigation.goBack(); // Điều hướng quay lại màn hình trước
         } catch (error) {
             console.error('Lỗi khi tạo job:', error);
-            setError('Đã xảy ra lỗi khi đăng tin');
+            Toast.show({
+                type: 'error',
+                text1: 'Thất bại',
+                text2: 'Đăng tin tuyển dụng thất bại!',
+            });
         }
     };
 

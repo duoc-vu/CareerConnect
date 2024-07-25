@@ -4,6 +4,7 @@ import { Text, Button, TextInput, ActivityIndicator, Avatar } from 'react-native
 import DocumentPicker, { DocumentPickerResponse } from 'react-native-document-picker';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
+import Toast from 'react-native-toast-message';
 
 const ApplyJob = ({ route, navigation }: any) => {
     const { jobId, userId, userType, idCompany } = route.params;
@@ -55,12 +56,20 @@ const ApplyJob = ({ route, navigation }: any) => {
             }); // Save application information to Firestore
 
             setUploading(false); // Finish uploading, hide uploading indicator
-            Alert.alert('Thông báo', 'Nộp đơn thành công');
+            Toast.show({
+                type: 'success',
+                text1: 'Thành công',
+                text2: 'Bạn đã ứng tuyển thành công!',
+            });
             navigation.goBack();
         } catch (error) {
             console.error('Lỗi khi tải lên tệp:', error);
             setUploading(false); // Finish uploading with error, hide uploading indicator
-            Alert.alert('Thông báo', 'Đã xảy ra lỗi khi nộp đơn. Vui lòng thử lại.');
+            Toast.show({
+                type: 'error',
+                text1: 'Thất bại',
+                text2: 'Ứng tuyển thất bại!',
+            });
         }
     };
 

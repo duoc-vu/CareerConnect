@@ -5,6 +5,7 @@ import { TextInput, Button, Text, IconButton } from 'react-native-paper';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import * as Animatable from 'react-native-animatable';
+import Toast from 'react-native-toast-message';
 
 const { width, height } = Dimensions.get('window');
 const fbInfo = firestore().collection('tblCompany');
@@ -48,7 +49,11 @@ const CompanyInfoScreen = ({ navigation, route }:any) => {
                 setUploading(false);
             }
         } else {
-            Alert.alert('Bạn đã từ chối quyền truy cập vào thư viện ảnh.');
+            Toast.show({
+                type: 'error',
+                text1: 'Thất bại',
+                text2: 'Bạn đã từ chối quyền truy cập vào ảnh!',
+            });
         }
     };
 
@@ -80,9 +85,18 @@ const CompanyInfoScreen = ({ navigation, route }:any) => {
     const handleSaveUserInfo = async () => {
         try {
             await fbInfo.doc(userId).set(CompanyInfo);
-            console.log('User info saved successfully.');
+            Toast.show({
+                type: 'success',
+                text1: 'Thành công',
+                text2: 'Sửa thông tin thành công!',
+            });
             navigation.goBack()
         } catch (error) {
+            Toast.show({
+                type: 'error',
+                text1: 'Thất bại',
+                text2: 'Sửa thông tin thất bại!',
+            });
             console.error('Error saving user info:', error);
         }
     };

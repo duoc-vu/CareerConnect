@@ -26,7 +26,9 @@ const AppliedJobs = ({ navigation, route }: any) => {
 
             const jobList: any = [];
             const jobPromises = appDocs.docs.map(async (doc) => {
+                
                 const appData = doc.data();
+                const cmt = appData.comment;
                 const idJob = appData.jobId;
 
                 // Get job details from tblChiTietJob
@@ -54,6 +56,7 @@ const AppliedJobs = ({ navigation, route }: any) => {
                     tenJob,
                     tenCT,
                     companyAvatar: avtUrl,
+                    cmt : cmt ? cmt : null
                 };
 
                 jobList.push(jobItem);
@@ -108,6 +111,7 @@ const AppliedJobs = ({ navigation, route }: any) => {
                     <Card.Title
                         title={item.tenJob}
                         left={(props) => <Avatar.Image {...props} source={{ uri: item.companyAvatar }} />}
+                        right={(props) => <Text style={{marginRight:15}}>{item.cmt ? "Đã tạo lịch hẹn" : "Chưa tạo lịch hẹn"}</Text>}
                     />
                     <Card.Content>
                         <Text>Bạn đã ứng tuyển vào công ty {item.tenCT}</Text>

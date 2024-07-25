@@ -29,6 +29,7 @@ const JobFiles = ({ navigation, route }: any) => {
                         const appData = doc.data();
                         const userId = appData.userId;
 
+                        const cmt = appData.comment;
                         // Get user information from tblUserInfo
                         const userDoc = await firestore().collection('tblUserInfo').doc(userId).get();
                         const tenuser = userDoc.exists ? userDoc.data()?.name : 'Người dùng không tồn tại';
@@ -43,6 +44,7 @@ const JobFiles = ({ navigation, route }: any) => {
                             tenuser,
                             tenJob,
                             avt: avtUrl,
+                            cmt 
                         };
 
                         appList.push(applicationItem);
@@ -75,7 +77,9 @@ const JobFiles = ({ navigation, route }: any) => {
             idCT: idCT,
             idJob: idJob,
             avt: item.avt,
+            cmt: item.cmt
         });
+        
     };
 
     const renderApplication = ({ item }: any) => (
@@ -85,6 +89,7 @@ const JobFiles = ({ navigation, route }: any) => {
                 <Text style={styles.notificationText}>
                     <Text style={{ fontWeight: 'bold' }}>{item.tenuser}</Text> đã ứng tuyển <Text style={{ fontWeight: 'bold' }}>{item.tenJob}</Text>
                 </Text>
+                <Text style={{marginTop:20,marginLeft:190}}>{item.cmt ? "Đã tạo lịch hẹn" : "Chưa tạo lịch hẹn"}</Text>
             </View>
         </TouchableOpacity>
     );
@@ -150,9 +155,12 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFF',
         borderRadius: 25,
         elevation: 2,
-        marginHorizontal:10
+        marginHorizontal:10,
+        height:100
     },
     notificationText: {
+        display:'flex',
+        justifyContent:'space-between',
         fontSize: 16,
     },
 });

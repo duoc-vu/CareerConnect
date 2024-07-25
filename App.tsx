@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, View } from 'react-native';
+import { StatusBar, Text, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Home from './Screens/Component/Home';
@@ -17,6 +17,9 @@ import JobApplyCompany from './Screens/Company/JobApplyCompany';
 import ApplicationDetails from './Screens/Company/ApplicationDetails';
 import AppliedJobs from './Screens/User/AppliedJobs';
 import AppDetails from './Screens/User/AppDetails';
+import EditJob from './Screens/Company/EditJob';
+import PostJob from './Screens/Company/PostJob';
+import Toast from 'react-native-toast-message';
 
 
 const Stack = createNativeStackNavigator();
@@ -26,10 +29,10 @@ const Stack = createNativeStackNavigator();
 const App = () => {
   return (
 
-    <NavigationContainer>
+    <NavigationContainer >
       <Stack.Navigator>
-        <Stack.Screen name='Login' component={Login}  options={{ headerShown: false}}/>
-        <Stack.Screen name='Register' component={Register} />
+        <Stack.Screen name='Login' component={Login}  options={{ headerShown: false}} />
+        <Stack.Screen name='Register' component={Register} options={{ headerShown: false}} />
         <Stack.Screen name='bottom' component={Bottom_Tab} options={{ headerShown: false}}/>
         <Stack.Screen name='Info' component={Info}  options={{ headerShown: false}}/>
         <Stack.Screen name='If' component={UserInfoScreen}  options={{ headerShown: false}}/>
@@ -42,9 +45,12 @@ const App = () => {
         {/* <Stack.Screen name='cv' component={CV_Profile} options={{ headerShown: false}}/> */}
         <Stack.Screen name='ApplicationDetails' component={ApplicationDetails}  options={{ headerShown: false}}/>
         <Stack.Screen name='AppDetails' component={AppDetails}  options={{ headerShown: false}}/>
+        <Stack.Screen name='EditJob' component={EditJob}  options={{ headerShown: false}}/>
+        <Stack.Screen name="PostJob" component={PostJob}  options={{ headerShown: false }} />
         
 
       </Stack.Navigator>
+      <Toast />
     </NavigationContainer>
   )
 }

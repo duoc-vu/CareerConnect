@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Image, StyleSheet, Text, View, TouchableHighlight, TouchableOpacity } from 'react-native';
+import { Image, StyleSheet, Text, View, TouchableHighlight, TouchableOpacity, Alert } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import * as Animatable from 'react-native-animatable';
@@ -19,6 +19,12 @@ const AccountCompany = ({ navigation, route }: any) => {
         detail: '',
     });
     const [animationKey, setAnimationKey] = useState(0);
+    const [changePasswordModalVisible, setChangePasswordModalVisible] = useState(false);
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [isPasswordMatching, setIsPasswordMatching] = useState(true);
+    const [error, setError] = useState('');
+
 
     const fetchUserData = async () => {
         setUploading(true);
@@ -68,6 +74,21 @@ const AccountCompany = ({ navigation, route }: any) => {
         navigation.navigate('Login');
     };
 
+
+    const handleChangePasswordConfirm = () => {
+        if (!isPasswordMatching) {
+            setError('Mật khẩu không khớp');
+            return
+        } 
+        const documentRef = firestore().collection('tblTaiKhoan').doc(userId);
+        console.log(newPassword);
+        documentRef.update({
+            password: newPassword,
+        })
+            .then(() => Alert.alert('Đổi mật khẩu thành công'))
+            .catch(error => console.log('Lỗi trong quá trình update', error));
+        navigation.goBack();
+    };
     return (
         <View style={styles.container}>
             <Animatable.View key={`profile-${animationKey}`} animation="bounceIn" duration={1500} style={styles.profileContainer}>

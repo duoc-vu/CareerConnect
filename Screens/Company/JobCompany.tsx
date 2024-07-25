@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, StyleSheet, FlatList, Dimensions } from 'react-native';
-import { Text, Card, ActivityIndicator } from 'react-native-paper';
+import { View, StyleSheet, FlatList, Dimensions,  Alert } from 'react-native';
+import { Text, Card, ActivityIndicator, Button,} from 'react-native-paper';
 import { useFocusEffect } from '@react-navigation/native';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
-import * as Animatable from 'react-native-animatable';
+import Icons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const { width } = Dimensions.get('window');
 
@@ -14,7 +14,8 @@ const JobCompany = ({ route, navigation }: any) => {
     const { userId } = route.params;
     const [jobs, setJobs] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [animationKey, setAnimationKey] = useState(0);
+    const [error, setError] = useState('');
+
 
     const fetchJobs = async () => {
         try {
@@ -24,7 +25,7 @@ const JobCompany = ({ route, navigation }: any) => {
                 jobDocs.docs.map(async doc => {
                     const jobData = doc.data();
                     const idJob = doc.id;
-                    const storageRef = storage().ref(`${userId}/${idJob}`);
+                    const storageRef = storage().ref(`/${userId}/${idJob}`);
                     let fileCount = 0;
                     try {
                         const listResult = await storageRef.listAll();
@@ -50,9 +51,36 @@ const JobCompany = ({ route, navigation }: any) => {
     useFocusEffect(
         useCallback(() => {
             fetchJobs();
-            setAnimationKey(prevKey => prevKey + 1); // Reset animation
         }, [userId])
     );
+    const handleUpdate = (idJob : string) => {
+        navigation.navigate('EditJob', {userId, idJob});
+    }
+    const handleDelete = (idJob: string) => {
+        Alert.alert(
+            "Xóa công việc",
+            "Bạn có chắc chắn muốn xóa công việc này không?",
+            [
+                {
+                    text: "Hủy",
+                    style: "cancel"
+                },
+                {
+                    text: "Xóa",
+                    onPress: async () => {
+                        try {
+                            await fbJobDetail.doc(idJob).delete();
+                            fetchJobs(); // Refresh the list after deletion
+                        } catch (error) {
+                            console.error('Lỗi khi xóa công việc:', error);
+                            setError('Lỗi khi xóa công việc. Vui lòng thử lại');
+                        }
+                    }
+                }
+            ],
+            { cancelable: true }
+        );
+    };
 
     if (loading) {
         return (
@@ -61,17 +89,31 @@ const JobCompany = ({ route, navigation }: any) => {
             </View>
         );
     }
+    if (error) {
+        return (
+            <View style={styles.loadingContainer}>
+                <Text>{error}</Text>
+            </View>
+        );
+    }
+
 
     const renderJob = ({ item }: any) => (
-        <Animatable.View key={`job-${item.id}-${animationKey}`} animation="fadeInUp" duration={1500} style={styles.animatable}>
-            <Card style={styles.card} onPress={() => navigation.navigate('JobApplyCompany', { idCT: userId, idJob: item.id })}>
-                <Card.Title title={item.tenJob} subtitle={item.tenCongTy} />
-                <Card.Content>
-                    {/* <Text>{item.moTa}</Text> */}
-                    <Text style={styles.fileCount}>Số lượng người ứng tuyển: {item.fileCount}</Text>
-                </Card.Content>
-            </Card>
-        </Animatable.View>
+        <Card style={styles.card} onPress={() => navigation.navigate('JobApplyCompany', { idCT: userId, idJob: item.id })}>
+            <Card.Title title={item.tenJob} subtitle={item.tenCongTy} />
+            <Card.Content>
+                {/* <Text>{item.moTa}</Text> */}
+                <Text style={styles.fileCount}>Số lượng người ứng tuyển: {item.fileCount}</Text>
+                <View style={styles.buttonContainer}>
+                    <Button mode="contained" buttonColor='#1E90FF' onPress={() => handleUpdate(item.id)} style={styles.button}>
+                        Sửa
+                    </Button>
+                    {/* <Button mode="contained" buttonColor='#1E90FF'  onPress={() => handleDelete(item.id)} style={styles.button} color="red">
+                        Xóa
+                    </Button> */}
+                </View>
+            </Card.Content>
+        </Card>
     );
 
     return (
@@ -105,22 +147,25 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-    animatable: {
-        marginBottom: 10,
-        backgroundColor: 'transparent',
-    },
     card: {
-        borderRadius: 1,
-        elevation: 3,
-        overflow: 'visible',
+        marginBottom: 10,
     },
     fileCount: {
-        marginTop: 10,
         fontSize: 16,
         color: 'gray',
     },
     list: {
         paddingBottom: 20,
+    },
+    buttonContainer: {
+        flexDirection: 'row',
+        justifyContent : 'flex-end',
+        marginTop : 10,
+    },
+    button: {
+        width: '22%',
+        marginLeft : 10,
+        height : 40,
     },
 });
 

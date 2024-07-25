@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, View } from 'react-native';
+import { StatusBar, Text, View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Home from './Home';
 import Account from '../User/Account';
@@ -9,6 +9,7 @@ import JobCompany from '../Company/JobCompany';
 import AppliedJobs from '../User/AppliedJobs';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import AntDesign from 'react-native-vector-icons/AntDesign';
 
 const Tab = createBottomTabNavigator();
 const Bottom_Tab = ({ route }: any) => {
@@ -17,25 +18,21 @@ const Bottom_Tab = ({ route }: any) => {
     const screenOptions = ({ route }: any) => ({
         tabBarIcon: ({ focused, color, size }:any) => {
             let iconName;
-
             if (route.name === 'Trang chủ') {
-                iconName = focused ? 'home' : 'home-outline';
-                return <Ionicons name={iconName} size={size} color={color} />;
+                iconName = focused ? 'home' : 'home';
+                return <AntDesign name={iconName} size={size} color={color} />;
             } else if (route.name === 'Đã ứng tuyển') {
                 iconName = focused ? 'documents' : 'documents';
                 return <Ionicons name={iconName} size={size} color={color} />;
             } else if (route.name === 'Tài khoản') {
                 iconName = focused ? 'user' : 'user-o';
                 return <Icon name={iconName} size={size} color={color} />;
-            } else if (route.name === 'Đăng tải Job') {
-                iconName = focused ? 'briefcase' : 'briefcase-outline';
-                return <Ionicons name={iconName} size={size} color={color} />;
             } else if (route.name === 'Đã đăng tải') {
-                iconName = focused ? 'clipboard' : 'clipboard-outline';
+                iconName = focused ? 'documents' : 'documents';
                 return <Ionicons name={iconName} size={size} color={color} />;
             } else if (route.name === 'Tài khoản công ty') {
-                iconName = focused ? 'business' : 'business-outline';
-                return <Ionicons name={iconName} size={size} color={color} />;
+                iconName = focused ? 'user' : 'user-o';
+                return <Icon name={iconName} size={size} color={color} />;
             }
 
             return null;
@@ -46,7 +43,7 @@ const Bottom_Tab = ({ route }: any) => {
 
     if (userType === '1') {
         return (
-            <Tab.Navigator screenOptions={screenOptions}>
+            <Tab.Navigator screenOptions={screenOptions} >
                 <Tab.Screen name="Trang chủ" component={Home} initialParams={{ userId, userType }} options={{ headerShown: false }} />
                 <Tab.Screen name="Đã ứng tuyển" component={AppliedJobs} initialParams={{ userId, userType }} options={{ headerShown: false }} />
                 <Tab.Screen name="Tài khoản" component={Account} initialParams={{ userId, userType }} options={{ headerShown: false }} />
@@ -56,7 +53,6 @@ const Bottom_Tab = ({ route }: any) => {
         return (
             <Tab.Navigator screenOptions={screenOptions}>
                 <Tab.Screen name="Trang chủ" component={Home} initialParams={{ userId, userType }} options={{ headerShown: false }} />
-                <Tab.Screen name="Đăng tải Job" component={PostJob} initialParams={{ userId, userType }} options={{ headerShown: false }} />
                 <Tab.Screen name="Đã đăng tải" component={JobCompany} initialParams={{ userId, userType }} options={{ headerShown: false }} />
                 <Tab.Screen name="Tài khoản công ty" component={AccountCompany} initialParams={{ userId, userType }} options={{ headerShown: false }} />
             </Tab.Navigator>

@@ -1,19 +1,22 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Image, FlatList, TouchableOpacity } from 'react-native';
-import { Text, Card } from 'react-native-paper';
+import { View, StyleSheet, Image, FlatList, TouchableOpacity ,TextInput, StatusBar} from 'react-native';
+import { Text, Card, Button } from 'react-native-paper';
 import * as Animatable from 'react-native-animatable';
 import firestore from '@react-native-firebase/firestore';
 import { useFocusEffect } from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/MaterialIcons'; // Ensure this import is correctly set up
 
 const fbInfo = firestore().collection('tblUserInfo');
 const fbCT = firestore().collection('tblCompany');
 const fbJob = firestore().collection('tblChiTietJob');
 
 const Home = ({ navigation, route }: any) => {
-    const [jobs, setJobs] = useState([]);
+    const [jobs, setJobs] = useState<any>([]);
     const [user, setUser] = useState('');
     const [com, setCom] = useState('');
     const [animationKey, setAnimationKey] = useState(0);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [filteredJobs, setFilteredJobs] = useState([]);
 
     const { userId, userType } = route.params;
 
@@ -52,6 +55,7 @@ const Home = ({ navigation, route }: any) => {
 
             Promise.all(promises).then(() => {
                 setJobs(listJob);
+                setFilteredJobs(listJob); // Initialize filtered jobs
             });
         } catch (error) {
             console.error('Error fetching jobs: ', error);
@@ -93,6 +97,17 @@ const Home = ({ navigation, route }: any) => {
         }
     }, [userId]);
 
+    const handleSearch = () => {
+        const lowerCaseQuery = searchQuery.toLowerCase();
+        const filtered = jobs.filter((job:any) => {
+            return (
+                job.jobName.toLowerCase().includes(lowerCaseQuery) ||
+                job.companyName.toLowerCase().includes(lowerCaseQuery)
+            );
+        });
+        setFilteredJobs(filtered);
+    };
+
     const renderItem = ({ item }: any) => (
         <Animatable.View key={`job-${item.id}-${animationKey}`} animation="fadeInUp" duration={1500}>
             <TouchableOpacity onPress={() => navigation.navigate('JobDetail', { jobId: item.idJob, userId, userType })}>
@@ -111,18 +126,38 @@ const Home = ({ navigation, route }: any) => {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.greeting}>Xin chào {user ? user : com}</Text>
+            <StatusBar backgroundColor={"#F0F4F7"}/>
             <Animatable.View animation="bounceIn" duration={1500} style={styles.header}>
                 <Text style={styles.title}>Danh Sách Công Việc</Text>
             </Animatable.View>
+            <View style={styles.searchContainer}>
+                <TextInput
+                    placeholder='Tìm kiếm...'
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                    style={styles.inputSearch}
+                    // right={<TextInput.Icon name="magnify" onPress={handleSearch} />}
+                />
+                <Button mode="contained" onPress={handleSearch} style={styles.searchButton}>
+                    <Icon name='search' size={22}/>
+                </Button>
+            </View>
+            
             <Animatable.View animation="fadeIn" duration={2000} style={styles.listContainer}>
                 <FlatList
-                    data={jobs}
+                    data={filteredJobs}
                     renderItem={renderItem}
-                    // keyExtractor={item => item.idJob}
                     contentContainerStyle={styles.list}
                 />
             </Animatable.View>
+            {userType === '2' && (
+                <TouchableOpacity
+                    style={styles.fab}
+                    onPress={() => navigation.navigate('PostJob', { userId })}
+                >
+                    <Icon name="add" size={30} color="#fff" />
+                </TouchableOpacity>
+            )}
         </View>
     );
 };
@@ -174,6 +209,40 @@ const styles = StyleSheet.create({
     companyName: {
         fontSize: 16,
         color: '#888',
+    },
+    fab: {
+        position: 'absolute',
+        width: 60,
+        height: 60,
+        alignItems: 'center',
+        justifyContent: 'center',
+        right: 30,
+        bottom: 30,
+        backgroundColor: '#1E90FF',
+        borderRadius: 30,
+        elevation: 8,
+    },
+    searchContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 10,
+        paddingHorizontal: 10,
+    },
+    inputSearch: {
+        flex: 1,
+        marginRight: 10,
+        borderRadius: 20,
+        backgroundColor: '#fff',
+        height:50,
+        paddingLeft:20
+    },
+    searchButton: {
+        height: 50,
+        justifyContent: 'center',
+        borderRadius: 20,
+        marginLeft: 10,
+        backgroundColor:'#1E90FF'
+        
     },
 });
 

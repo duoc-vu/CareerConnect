@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Image, Dimensions, Alert } from 'react-native';
+import { View, StyleSheet, Image, Dimensions, Alert, ActivityIndicator } from 'react-native';
 import { TextInput, Button, Text } from 'react-native-paper';
 import * as Animatable from 'react-native-animatable';
 import { Dropdown } from 'react-native-element-dropdown';
 import firestore from '@react-native-firebase/firestore';
+import Toast from 'react-native-toast-message';
+import Modal from 'react-native-modal';
 
 const { width, height } = Dimensions.get('window');
 
@@ -21,10 +23,12 @@ const Register = ({ navigation }: any) => {
     const [userType, setUserType] = useState('1');
     const [isFocus, setIsFocus] = useState(false);
     const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
 
     const handleRegister = async () => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/;
+        
         if (!emailRegex.test(email)) {
             setError('Địa chỉ email không hợp lệ');
             return;
@@ -40,6 +44,8 @@ const Register = ({ navigation }: any) => {
             return;
         }
 
+        setLoading(true);
+
         try {
             const newUserRef = await fb.add({
                 email: email,
@@ -54,15 +60,20 @@ const Register = ({ navigation }: any) => {
             });
 
             console.log('Đã tạo user mới với ID:', newUserId);
-            Alert.alert('Đăng ký thành công');
+            Toast.show({
+                type: 'success',
+                text1: 'Đăng ký thành công',
+                text2: 'Chào mừng bạn đến với ứng dụng của chúng tôi!',
+            });
+            navigation.navigate('Login');
         } catch (error) {
             console.error('Lỗi khi tạo user:', error);
             setError('Đã xảy ra lỗi');
         }
 
-        setError('');
-        navigation.navigate('Login');
+        setLoading(false);
     };
+
     return (
         <View style={styles.container}>
             <Animatable.View animation="bounceIn" duration={1500} style={styles.logoContainer}>
@@ -115,8 +126,8 @@ const Register = ({ navigation }: any) => {
                     }}
                 />
                 {error ? <Text style={styles.error}>{error}</Text> : null}
-                <Button mode="contained" onPress={handleRegister} style={styles.button}>
-                    Đăng Ký
+                <Button mode="contained" onPress={handleRegister} style={styles.button} disabled={loading}>
+                    {loading ? <ActivityIndicator size="small" color="#fff" /> : 'Đăng Ký'}
                 </Button>
                 <Button onPress={() => navigation.navigate('Login')} color="#1E90FF">
                     Đã có tài khoản? Đăng Nhập

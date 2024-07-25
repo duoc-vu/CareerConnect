@@ -5,6 +5,7 @@ import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import { launchImageLibrary } from 'react-native-image-picker';
 import * as Animatable from 'react-native-animatable';
+import Toast from 'react-native-toast-message';
 
 const { width, height } = Dimensions.get('window');
 const fb = firestore().collection('tblTaiKhoan');
@@ -74,12 +75,20 @@ const CompanyInfo = ({ navigation, route }: any) => {
 
             setUploading(false);
             navigation.navigate('bottom', { userId , userType});
-
+            Toast.show({
+                type: 'success',
+                text1: 'Thành công',
+                text2: 'Cập nhật thông tin thành công!',
+            });
             console.log('Tải lên hình ảnh thành công!');
         } catch (error) {
             console.error('Error uploading image:', error);
             setUploading(false);
-            Alert.alert('Lỗi', 'Đã có lỗi xảy ra khi tải lên hình ảnh. Vui lòng thử lại.');
+            Toast.show({
+                type: 'error',
+                text1: 'Thất bại',
+                text2: 'Cập nhật thông tin thất bại!',
+            });
         }
     };
 
