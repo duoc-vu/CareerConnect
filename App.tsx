@@ -6,6 +6,7 @@ import Home from './Screens/Component/Home';
 import Login from './Screens/Login';
 import Register from './Screens/Register';
 <<<<<<< HEAD
+<<<<<<< HEAD
 import Info from './Screens/User/Info';
 import Bottom_Tab from './Screens/Component/Bottom_Tab';
 import UserInfoScreen from './Screens/User/UserInfoScreen';
@@ -21,6 +22,9 @@ import AppDetails from './Screens/User/AppDetails';
 import EditJob from './Screens/Company/EditJob';
 import PostJob from './Screens/Company/PostJob';
 import Toast from 'react-native-toast-message';
+=======
+import ImagePicker from './Screens/ImagePicker';
+>>>>>>> main
 =======
 import ImagePicker from './Screens/ImagePicker';
 >>>>>>> main
@@ -51,8 +55,6 @@ const App = () => {
         <Stack.Screen name='AppDetails' component={AppDetails}  options={{ headerShown: false}}/>
         <Stack.Screen name='EditJob' component={EditJob}  options={{ headerShown: false}}/>
         <Stack.Screen name="PostJob" component={PostJob}  options={{ headerShown: false }} />
-        
-
       </Stack.Navigator>
       <Toast />
     </NavigationContainer>
