@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Alert, Dimensions, ScrollView, Image } from 'react-native';
+import { View, StyleSheet, Dimensions, ScrollView, Image } from 'react-native';
 import { TextInput, Button, Text } from 'react-native-paper';
+import { Picker } from '@react-native-picker/picker';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import Toast from 'react-native-toast-message';
+import moment from 'moment';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 const fbJob = firestore().collection('tblChiTietJob');
 
@@ -19,6 +21,7 @@ const PostJob = ({ navigation, route }: any) => {
     const [quyenLoi, setQuyenLoi] = useState('');
     const [companyAvtUrl, setCompanyAvtUrl] = useState('');
     const [error, setError] = useState('');
+    const [duration, setDuration] = useState(1); // Default to 1 month
 
     useEffect(() => {
         const fetchCompanyAvatar = async () => {
@@ -41,6 +44,9 @@ const PostJob = ({ navigation, route }: any) => {
         }
 
         try {
+            const currentDate = moment();
+            const endDate = moment().add(duration, 'months').toDate(); // Calculate end date based on selected duration
+
             const newJobRef = await fbJob.add({
                 idCT: userId,
                 tenJob: tenJob,
@@ -50,6 +56,7 @@ const PostJob = ({ navigation, route }: any) => {
                 moTa: moTa,
                 quyenLoi: quyenLoi,
                 avt: companyAvtUrl, // Include the avatar URL
+                postingEndDate: endDate, // Save the end date
             });
 
             const newJobId = newJobRef.id;
@@ -62,15 +69,15 @@ const PostJob = ({ navigation, route }: any) => {
             Toast.show({
                 type: 'success',
                 text1: 'Thành công',
-                text2: 'Đăng tin tuyển dụng thành công!',
+                text2: 'Đăng tin tuyển dụng thành công!',
             });
             navigation.goBack(); // Điều hướng quay lại màn hình trước
         } catch (error) {
             console.error('Lỗi khi tạo job:', error);
             Toast.show({
                 type: 'error',
-                text1: 'Thất bại',
-                text2: 'Đăng tin tuyển dụng thất bại!',
+                text1: 'Thất bại',
+                text2: 'Đăng tin tuyển dụng thất bại!',
             });
         }
     };
@@ -123,6 +130,17 @@ const PostJob = ({ navigation, route }: any) => {
                 style={styles.input}
                 theme={{ colors: { primary: '#1E90FF' } }}
             />
+            <View style={styles.pickerContainer}>
+                <Text style={styles.label}>Thời Gian Ứng Tuyển</Text>
+                <Picker
+                    selectedValue={duration}
+                    style={styles.picker}
+                    onValueChange={(itemValue) => setDuration(itemValue)}
+                >
+                    <Picker.Item label="1 Tháng" value={1} />
+                    <Picker.Item label="2 Tháng" value={2} />
+                </Picker>
+            </View>
             {error ? <Text style={styles.error}>{error}</Text> : null}
             <Button mode="contained" onPress={handlePostJob} style={styles.button}>
                 Đăng Tin
@@ -155,6 +173,20 @@ const styles = StyleSheet.create({
         width: width * 0.9,
         marginBottom: 15,
         backgroundColor: 'white',
+    },
+    pickerContainer: {
+        width: width * 0.9,
+        marginBottom: 15,
+    },
+    picker: {
+        height: 50,
+        width: '100%',
+        backgroundColor: 'white',
+    },
+    label: {
+        fontSize: 16,
+        color: '#888',
+        marginBottom: 5,
     },
     button: {
         width: width * 0.9,

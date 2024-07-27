@@ -4,6 +4,7 @@ import { Text, Button, IconButton } from 'react-native-paper';
 import * as Animatable from 'react-native-animatable';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
+import moment from 'moment';
 
 const { width, height } = Dimensions.get('window');
 
@@ -13,9 +14,9 @@ const fbCompany = firestore().collection('tblCompany');
 const JobDetail = ({ route, navigation }: any) => {
     const [jobDetail, setJobDetail] = useState<any>(null);
     const [companyDetail, setCompanyDetail] = useState<any>(null);
-    const { jobId, userId, userType } = route.params;
     const [image, setImage] = useState<string | null>(null);
-    const [idCompany,setIdCompany] = useState('');
+    const { jobId, userId, userType } = route.params;
+    const [applicationEndDate, setApplicationEndDate] = useState<Date | null>(null);
 
     useEffect(() => {
         const getJobDetail = async () => {
@@ -24,7 +25,7 @@ const JobDetail = ({ route, navigation }: any) => {
                 if (jobDoc.exists) {
                     const jobData: any = jobDoc.data();
                     setJobDetail(jobData);
-                    setIdCompany(jobData.idCT);
+                    setApplicationEndDate(jobData.postingEndDate?.toDate()); // Get the application end date
                     const companyDoc = await fbCompany.doc(jobData.idCT).get();
                     if (companyDoc.exists) {
                         const companyData: any = companyDoc.data();
@@ -46,6 +47,22 @@ const JobDetail = ({ route, navigation }: any) => {
         getJobDetail();
     }, [jobId]);
 
+    const isApplicationExpired = () => {
+        return applicationEndDate && moment().isAfter(moment(applicationEndDate));
+    };
+
+    const handleApply = () => {
+        if (userType === '1') {
+            if (!isApplicationExpired()) {
+                navigation.navigate('ApplyJob', { jobId, userType, userId });
+            } else {
+                Alert.alert('Thông báo', 'Thời gian ứng tuyển đã hết hạn.');
+            }
+        } else if (userType === '2') {
+            Alert.alert('Thông báo', 'Bạn không phải là ứng viên.');
+        }
+    };
+
     if (!jobDetail || !companyDetail) {
         return (
             <View style={styles.container}>
@@ -61,14 +78,6 @@ const JobDetail = ({ route, navigation }: any) => {
                 {line.trim()}
             </Text>
         ));
-    };
-
-    const handleApply = () => {
-        if (userType === '1') {
-            navigation.navigate('ApplyJob', { jobId, userType, userId ,idCompany});
-        } else if (userType === '2') {
-            Alert.alert('Thông báo', 'Bạn không phải là 1 ứng viên.');
-        }
     };
 
     return (
@@ -106,14 +115,18 @@ const JobDetail = ({ route, navigation }: any) => {
                     <Text style={styles.title}>Quyền lợi</Text>
                     {renderTextWithNewLines(jobDetail.quyenLoi)}
                 </View>
-                <Button
-                    mode="contained"
-                    onPress={handleApply}
-                    style={styles.applyButton}
-                    labelStyle={styles.applyButtonText}
-                >
-                    Ứng tuyển
-                </Button>
+                {isApplicationExpired() ? (
+                    <Text style={styles.expiredText}>Thời gian ứng tuyển đã hết hạn</Text>
+                ) : (
+                    <Button
+                        mode="contained"
+                        onPress={handleApply}
+                        style={styles.applyButton}
+                        labelStyle={styles.applyButtonText}
+                    >
+                        Ứng tuyển
+                    </Button>
+                )}
             </Animatable.View>
         </ScrollView>
     );
@@ -177,6 +190,12 @@ const styles = StyleSheet.create({
     applyButtonText: {
         fontSize: 18,
         color: '#fff',
+    },
+    expiredText: {
+        fontSize: 16,
+        color: 'yellow',
+        textAlign: 'center',
+        marginVertical: 20,
     },
 });
 
