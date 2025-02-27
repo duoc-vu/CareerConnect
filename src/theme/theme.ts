@@ -40,6 +40,10 @@ export const theme = {
         light: '#000000',
         dark: '#ffffff',
       },
+      card: {
+        light: "rgba(162, 206, 244, 0.1)",
+        dark: "rgba(162, 206, 244, 0.1)"
+      }
     },
   };
   
