@@ -1,47 +1,42 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Image, StyleSheet, Text, View, TouchableHighlight, TouchableOpacity, Alert } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Image, StyleSheet, Text, View, TouchableHighlight, TouchableOpacity } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import * as Animatable from 'react-native-animatable';
 import { useFocusEffect } from '@react-navigation/native';
 
-const AccountCompany = ({ navigation, route }: any) => {
+const Account = ({ navigation, route }: any) => {
     const [uploading, setUploading] = useState(false);
-    const [imageUrl, setImageUrl] = useState(null);
     const [image, setImage] = useState('');
-    const { userId } = route.params;
-    const [company, setCompany] = useState({
+    const { userId, userType } = route.params;
+    const [user, setUser] = useState({
         avtUri: '',
         name: '',
         email: '',
+        birthDate: '',
         phone: '',
         address: '',
-        detail: '',
+        introduction: '',
     });
     const [animationKey, setAnimationKey] = useState(0);
-    const [changePasswordModalVisible, setChangePasswordModalVisible] = useState(false);
-    const [newPassword, setNewPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [isPasswordMatching, setIsPasswordMatching] = useState(true);
-    const [error, setError] = useState('');
-
 
     const fetchUserData = async () => {
         setUploading(true);
         try {
-            const userDoc = await firestore().collection('tblCompany').doc(userId).get();
+            const userDoc = await firestore().collection('tblUserInfo').doc(userId).get();
             if (userDoc.exists) {
                 const userData: any = userDoc.data();
                 const storageRef = storage().ref(`images/${userId}.jpg`);
                 const downloadUrl = await storageRef.getDownloadURL();
 
-                setCompany({
-                    avtUri: downloadUrl,
+                setUser({
+                    avtUri: userData.avtUri,
                     name: userData.name,
                     email: userData.email,
+                    birthDate: userData.birthDate,
                     phone: userData.phone,
                     address: userData.address,
-                    detail: userData.detail,
+                    introduction: userData.introduction,
                 });
                 setImage(downloadUrl);
             } else {
@@ -65,8 +60,9 @@ const AccountCompany = ({ navigation, route }: any) => {
     );
 
     const handleUpdate = () => {
-        navigation.navigate('CompanyIf', { userId });
+        navigation.navigate('If', { userId, userType });
     };
+
     const handleLogout = () => {
         // Implement your logout logic here
         // Example: Clear authentication state, navigate to login screen, etc.
@@ -74,43 +70,32 @@ const AccountCompany = ({ navigation, route }: any) => {
         navigation.navigate('Login');
     };
 
-
-    const handleChangePasswordConfirm = () => {
-        if (!isPasswordMatching) {
-            setError('Mật khẩu không khớp');
-            return
-        } 
-        const documentRef = firestore().collection('tblTaiKhoan').doc(userId);
-        console.log(newPassword);
-        documentRef.update({
-            password: newPassword,
-        })
-            .then(() => Alert.alert('Đổi mật khẩu thành công'))
-            .catch(error => console.log('Lỗi trong quá trình update', error));
-        navigation.goBack();
-    };
     return (
         <View style={styles.container}>
             <Animatable.View key={`profile-${animationKey}`} animation="bounceIn" duration={1500} style={styles.profileContainer}>
-                <Image source={image ? { uri: image } : require('../../asset/default.png')} style={styles.profileImage} />
-                <Text style={styles.name}>{company.name}</Text>
+                <Image source={image ? { uri: image } : require('../../../../asset/default.png')} style={styles.profileImage} />
+                <Text style={styles.name}>{user.name}</Text>
             </Animatable.View>
-            <Animatable.View key={`info-${animationKey}`} animation="fadeInUp" duration={1500} style={styles.infoContainer}>
+            <Animatable.View animation="fadeInUp" duration={1500} style={styles.infoContainer}>
                 <View style={styles.infoRow}>
                     <Text style={styles.infoLabel}>Email:</Text>
-                    <Text style={styles.infoValue}>{company.email}</Text>
+                    <Text style={styles.infoValue}>{user.email}</Text>
                 </View>
                 <View style={styles.infoRow}>
                     <Text style={styles.infoLabel}>Số điện thoại:</Text>
-                    <Text style={styles.infoValue}>{company.phone}</Text>
+                    <Text style={styles.infoValue}>{user.phone}</Text>
                 </View>
                 <View style={styles.infoRow}>
                     <Text style={styles.infoLabel}>Địa chỉ:</Text>
-                    <Text style={styles.infoValue}>{company.address}</Text>
+                    <Text style={styles.infoValue}>{user.address}</Text>
+                </View>
+                <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Ngày sinh:</Text>
+                    <Text style={styles.infoValue}>{user.birthDate}</Text>
                 </View>
                 <View style={styles.infoRow}>
                     <Text style={styles.infoLabel}>Giới thiệu:</Text>
-                    <Text style={styles.infoValue}>{company.detail}</Text>
+                    <Text style={styles.infoValue}>{user.introduction}</Text>
                 </View>
             </Animatable.View>
             <View style={styles.buttonContainer}>
@@ -176,15 +161,16 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     buttonContainer: {
-        width: '60%',
-        marginHorizontal: '20%',
-        marginTop: 50,
+        width: '100%',
+        marginTop: 20,
+        alignItems: 'center',
     },
     button: {
+        marginVertical: 10,
         backgroundColor: '#1E90FF',
+        borderRadius: 15,
         paddingVertical: 10,
         paddingHorizontal: 20,
-        borderRadius: 20,
     },
     buttonText: {
         color: 'white',
@@ -193,7 +179,6 @@ const styles = StyleSheet.create({
     },
     logoutButton: {
         marginTop: 10,
-        marginHorizontal:'auto'
     },
     logoutText: {
         color: '#1E90FF',
@@ -202,4 +187,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default AccountCompany;
+export default Account;

@@ -78,7 +78,7 @@ const CVProfile = () => {
   return (
     <View style={styles.container}>
       <View style={styles.profileContainer}>
-        <Image source={user.avtUri ? { uri: user.avtUri } : require('../asset/default.png')} style={styles.avatar} />
+        <Image source={user.avtUri ? { uri: user.avtUri } : require('../../../../asset/images/defaultNoData.png')} style={styles.avatar} />
         <View style={styles.profileInfo}>
           <Text style={styles.profileName}>{user.name}</Text>
           <Text style={styles.profileRole}>{user.introduction}</Text>

@@ -103,7 +103,7 @@ const CompanyInfo = ({ navigation, route }: any) => {
                         {image ? (
                             <Image source={{ uri: image }} style={styles.image} />
                         ) : (
-                            <Image source={require('../../asset/default.png')} style={styles.image} />
+                            <Image source={require('../../../../asset/default.png')} style={styles.image} />
                         )}
                     </View>
                 </TouchableOpacity>

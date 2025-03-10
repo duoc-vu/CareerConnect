@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { Alert, Animated, Image, ScrollView, StyleSheet, Text, View } from "react-native";
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
-import JobDetail from "../Component/JobDetail";
+import JobDetail from "../components/JobDetail";
 import { ActivityIndicator, Button, IconButton, TextInput } from "react-native-paper";
 import Toast from "react-native-toast-message";
 

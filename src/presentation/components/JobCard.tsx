@@ -1,95 +1,128 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, Dimensions } from 'react-native';
-import { useTheme } from '../../theme/themeContext';
-
-const { width } = Dimensions.get('window'); // Lấy chiều rộng màn hình
+import React from "react";
+import { View, Text, Image, StyleSheet } from "react-native";
+import { useTheme } from "../../theme/themeContext";
+import { TouchableOpacity } from "react-native";
+import { theme } from "../../theme/theme";
 
 interface JobCardProps {
-  company: string;
+  companyLogo: string;
+  companyName: string;
   jobTitle: string;
-  salary: string;
+  location: string,
   jobType: string;
-  logo: any;
-  workType: string;
+  salaryMin: number;
+  salaryMax: number;
+  onPress: () => void;
 }
 
-const JobCard: React.FC<JobCardProps> = ({ company, jobTitle, salary, jobType, logo, workType }) => {
+const JobCard: React.FC<JobCardProps> = ({
+  companyLogo,
+  companyName,
+  jobTitle,
+  location,
+  salaryMin,
+  salaryMax,
+  jobType,
+  onPress,
+}) => {
   const { theme } = useTheme();
 
   return (
-    <View style={[styles.card, { backgroundColor: theme.bG, borderColor: theme.primary }]}>
+    <TouchableOpacity style={[styles.card, { backgroundColor: theme.card }]} onPress={onPress}  activeOpacity={1}>
+      {/* Header */}
       <View style={styles.header}>
-        <Image source={logo} style={styles.logo} />
-        <Text style={[styles.company, { color: theme.primary }]}>{company}</Text>
-        <Text style={[styles.jobType, { color: theme.surface }]}>{jobType}</Text>
+      <Image
+        source={
+          typeof companyLogo === "string" && companyLogo.startsWith("http")
+            ? { uri: companyLogo }
+            : require('../../../asset/images/img_splash.png')
+        }
+        style={styles.logo}
+      />
+        <Text style={[styles.companyName, { color: theme.surface }]}>{companyName}</Text>
+        <Text style={[styles.jobType, { color: theme.primary }]}>{jobType}</Text>
       </View>
+
+      {/* Job Info */}
       <Text style={[styles.jobTitle, { color: theme.surface }]}>{jobTitle}</Text>
-      <Text style={[styles.salary, { color: theme.surface }]}>{salary}</Text>
+      <Text style={[styles.salary, { color: theme.surface }]}>
+        {salaryMin.toLocaleString()} - {salaryMax.toLocaleString()}đ / tháng
+      </Text>
+
+      {/* Footer */}
       <View style={styles.footer}>
-        <Text style={[styles.workType, { backgroundColor: theme.onPrimary, color: theme.surface }]}>
-          {workType}
-        </Text>
-        <Image source={require('../../../asset/images/img_bookmark.png')} style={styles.bookmark} />
+        <View style={[styles.tag, { backgroundColor: theme.primary }]}>
+          <Text style={styles.tagText}>{location}</Text>
+        </View>
+          <Image source={require("../../../asset/images/bookmark_light.png")}></Image>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
   card: {
-    width: width * 0.9, // Chiếm 90% chiều rộng màn hình
-    padding: width * 0.04,
-    borderRadius: width * 0.05,
-    borderWidth: 1.5,
-    marginVertical: width * 0.03,
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-    alignSelf: 'center',
+    borderRadius: 20,
+    padding: 15,
+    marginVertical: 10,
+    backgroundColor: theme.colors.card.light,
+    borderWidth: 1, 
+    borderColor: "rgba(0, 0, 0, 0.1)", 
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2, 
+    minHeight: 150, 
+    width: "90%", 
+    alignSelf: "center", // ✅ Giúp card nằm giữa màn hình
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
   },
   logo: {
-    width: width * 0.1, // 10% chiều rộng màn hình
-    height: width * 0.1,
-    resizeMode: 'contain',
-    marginRight: width * 0.03,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    marginRight: 10,
   },
-  company: {
-    fontSize: width * 0.04,
-    fontWeight: 'bold',
+  companyName: {
     flex: 1,
+    fontSize: 14,
+    fontWeight: "600",
   },
   jobType: {
-    fontSize: width * 0.035,
-    fontWeight: 'bold',
+    fontSize: 14,
+    fontWeight: "bold",
   },
   jobTitle: {
-    fontSize: width * 0.045,
-    fontWeight: 'bold',
-    marginTop: width * 0.02,
+    fontSize: 16,
+    fontWeight: "500",
+    marginVertical: 3,
   },
   salary: {
-    fontSize: width * 0.04,
-    marginTop: width * 0.01,
+    fontSize: 12,
+    fontWeight: "400",
+    marginBottom: 8,
   },
   footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: width * 0.03,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
-  workType: {
-    paddingVertical: width * 0.01,
-    paddingHorizontal: width * 0.03,
-    borderRadius: width * 0.02,
-    fontSize: width * 0.035,
+  tag: {
+    borderRadius: 8,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
   },
-  bookmark: {
-    width: width * 0.06,
-    height: width * 0.06,
-    resizeMode: 'contain',
+  tagText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+  saveIcon: {
+    fontSize: 16,
   },
 });
 

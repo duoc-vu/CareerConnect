@@ -5,7 +5,6 @@ import * as Animatable from 'react-native-animatable';
 import { Dropdown } from 'react-native-element-dropdown';
 import firestore from '@react-native-firebase/firestore';
 import Toast from 'react-native-toast-message';
-import Modal from 'react-native-modal';
 
 const { width, height } = Dimensions.get('window');
 
@@ -77,7 +76,7 @@ const Register = ({ navigation }: any) => {
     return (
         <View style={styles.container}>
             <Animatable.View animation="bounceIn" duration={1500} style={styles.logoContainer}>
-                <Image source={require('../asset/logo2.png')} style={styles.logo} />
+                <Image source={require('../../../asset/logo2.png')} style={styles.logo} />
             </Animatable.View>
             <Animatable.View animation="fadeInUp" duration={1500} style={styles.formContainer}>
                 <Text style={styles.title}>Đăng Ký</Text>

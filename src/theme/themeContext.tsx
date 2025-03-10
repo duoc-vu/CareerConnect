@@ -14,6 +14,7 @@ const theme = {
     onError: "#e2574c",
     success: "#cbf4a27f",
     onSuccess: "#000000",
+    card: "rgba(240, 244, 247, 1)"
   },
   dark: {
     bG: "#25272a",
@@ -26,6 +27,7 @@ const theme = {
     onError: "#ef5a56",
     success: "#cbf4a27f",
     onSuccess: "#ffffff",
+    card: "rgba(240, 244, 247, 1)",
   },
 };
 

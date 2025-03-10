@@ -5,25 +5,25 @@ import { TextInput, Button, Text, IconButton } from 'react-native-paper';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import * as Animatable from 'react-native-animatable';
-import Toast from 'react-native-toast-message';
 
 const { width, height } = Dimensions.get('window');
-const fbInfo = firestore().collection('tblCompany');
+const fbInfo = firestore().collection('tblUserInfo');
 
-const CompanyInfoScreen = ({ navigation, route }:any) => {
-    const { userId } = route.params;
+const UserInfoScreen = ({ navigation, route }:any) => {
+    const { userId, userType } = route.params;
 
     const [image, setImage] = useState(null);
     const [uploading, setUploading] = useState(false);
     const fileName = `${userId}.jpg`;
-    const [CompanyInfo, setCompanyInfo] = useState({
+    const [userInfo, setUserInfo] = useState({
         id: userId,
         avtUri: '',
         name: '',
         email: '',
+        birthDate: '',
         phone: '',
         address: '',
-        detail: '',
+        introduction: '',
     });
 
     const pickImage = async () => {
@@ -42,18 +42,14 @@ const CompanyInfoScreen = ({ navigation, route }:any) => {
                     const blob = await response.blob();
                     await storageRef.put(blob);
                     const downloadUrl = await storageRef.getDownloadURL();
-                    setCompanyInfo((prevState) => ({ ...prevState, avtUri: downloadUrl }));
+                    setUserInfo((prevState) => ({ ...prevState, avtUri: downloadUrl }));
                 } catch (error) {
                     console.error('Error uploading image:', error);
                 }
                 setUploading(false);
             }
         } else {
-            Toast.show({
-                type: 'error',
-                text1: 'Thất bại',
-                text2: 'Bạn đã từ chối quyền truy cập vào ảnh!',
-            });
+            Alert.alert('Bạn đã từ chối quyền truy cập vào thư viện ảnh.');
         }
     };
 
@@ -62,7 +58,7 @@ const CompanyInfoScreen = ({ navigation, route }:any) => {
             try {
                 const userDoc:any = await fbInfo.doc(userId).get();
                 if (userDoc.exists) {
-                    setCompanyInfo(userDoc.data());
+                    setUserInfo(userDoc.data());
                     const storageRef = storage().ref(`images/${userId}.jpg`);
                     const downloadUrl:any = await storageRef.getDownloadURL();
                     setImage(downloadUrl);
@@ -76,7 +72,7 @@ const CompanyInfoScreen = ({ navigation, route }:any) => {
     }, [userId]);
 
     const handleChangeText = (key:any, text:any) => {
-        setCompanyInfo((prevState) => ({
+        setUserInfo((prevState) => ({
             ...prevState,
             [key]: text
         }));
@@ -84,35 +80,25 @@ const CompanyInfoScreen = ({ navigation, route }:any) => {
 
     const handleSaveUserInfo = async () => {
         try {
-            await fbInfo.doc(userId).set(CompanyInfo);
-            Toast.show({
-                type: 'success',
-                text1: 'Thành công',
-                text2: 'Sửa thông tin thành công!',
-            });
-            navigation.goBack()
+            await fbInfo.doc(userId).set(userInfo);
+            console.log('User info saved successfully.');
+            navigation.navigate('bottom', { userId, userType });
         } catch (error) {
-            Toast.show({
-                type: 'error',
-                text1: 'Thất bại',
-                text2: 'Sửa thông tin thất bại!',
-            });
             console.error('Error saving user info:', error);
         }
     };
 
     return (
         <View style={styles.container}>
-            {/* Header */}
             <Animatable.View animation="fadeIn" duration={1500} style={styles.header}>
-                <IconButton
+            <IconButton
                     icon="arrow-left"
                     iconColor="white"
                     size={30}
                     onPress={() => navigation.goBack()}
                     style={{ position: 'absolute', left: 16, top: 20 }}
                 />
-                <Text style={styles.headerText}>Thông Tin Công Ty</Text>
+                <Text style={styles.headerText}>Thông Tin Cá Nhân</Text>
             </Animatable.View>
 
             {/* Form Container */}
@@ -122,31 +108,37 @@ const CompanyInfoScreen = ({ navigation, route }:any) => {
                         {image ? (
                             <Image source={{ uri: image }} style={styles.image} />
                         ) : (
-                            <Image source={require('../../asset/default.png')} style={styles.image} />
+                            <Image source={require('../../../../asset/default.png')} style={styles.image} />
                         )}
                     </View>
                 </TouchableOpacity>
                 <TextInput
                     label="Họ và tên"
-                    value={CompanyInfo.name}
+                    value={userInfo.name}
                     onChangeText={(text) => handleChangeText('name', text)}
                     style={styles.input}
                 />
                 <TextInput
+                    label="Ngày sinh"
+                    value={userInfo.birthDate}
+                    onChangeText={(text) => handleChangeText('birthDate', text)}
+                    style={styles.input}
+                />
+                <TextInput
                     label="Số điện thoại"
-                    value={CompanyInfo.phone}
+                    value={userInfo.phone}
                     onChangeText={(text) => handleChangeText('phone', text)}
                     style={styles.input}
                 />
                 <TextInput
                     label="Địa chỉ"
-                    value={CompanyInfo.address}
+                    value={userInfo.address}
                     onChangeText={(text) => handleChangeText('address', text)}
                     style={styles.input}
                 />
                 <TextInput
                     label="Giới thiệu"
-                    value={CompanyInfo.detail}
+                    value={userInfo.introduction}
                     onChangeText={(text) => handleChangeText('introduction', text)}
                     style={styles.input}
                 />
@@ -166,7 +158,6 @@ const CompanyInfoScreen = ({ navigation, route }:any) => {
 
 const styles = StyleSheet.create({
     container: {
-        marginTop:0,
         flex: 1,
         backgroundColor: '#F0F4F7',
         alignItems: 'center',
@@ -216,4 +207,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default CompanyInfoScreen;
+export default UserInfoScreen;

@@ -20,7 +20,7 @@ const Tab = createBottomTabNavigator();
 
 const BottomBar = ({ route }: any) => {
   const { theme } = useTheme();
-  const { userId, userType } = route?.params || {};
+  const { userId = -1, userType = -1} = route?.params || {};
 
   const screenOptions = ({ route }: any) => ({
     tabBarStyle: [styles.tabBar, { backgroundColor: theme.bG }],
@@ -61,31 +61,21 @@ const BottomBar = ({ route }: any) => {
     tabBarInactiveTintColor: theme.surface,
     tabBarShowLabel: false,
   });
-
-  if (userType === 1) {
-    return (
-      <Tab.Navigator screenOptions={screenOptions}>
-        <Tab.Screen name="Trang chủ" component={Home} initialParams={{ userId, userType }} options={{ headerShown: false }} />
-        <Tab.Screen name="Đã ứng tuyển" component={AppliedJobs} initialParams={{ userId, userType }} options={{ headerShown: false }} />
-        <Tab.Screen name="Tài khoản" component={Account} initialParams={{ userId, userType }} options={{ headerShown: false }} />
-      </Tab.Navigator>
-    );
-  } else if (userType === 2) {
-    return (
-      <Tab.Navigator screenOptions={screenOptions}>
-        <Tab.Screen name="Trang chủ" component={Home} initialParams={{ userId, userType }} options={{ headerShown: false }} />
-        <Tab.Screen name="Đã đăng tải" component={JobCompany} initialParams={{ userId, userType }} options={{ headerShown: false }} />
-        <Tab.Screen name="Tài khoản công ty" component={AccountCompany} initialParams={{ userId, userType }} options={{ headerShown: false }} />
-      </Tab.Navigator>
-    );
-  } else {
-    return (
-      <Tab.Navigator screenOptions={screenOptions}>
-        <Tab.Screen name="Trang chủ" component={Home} />
-        <Tab.Screen name="Tài khoản" component={Account} />
-      </Tab.Navigator>
-    );
-  }
+  const tabs = [
+    { name: "Trang chủ", component: Home },
+    userType === 1 && { name: "Đã ứng tuyển", component: AppliedJobs },
+    userType === 2 && { name: "Đã đăng tải", component: JobCompany },
+    userType === 2 ? { name: "Tài khoản công ty", component: AccountCompany } : { name: "Tài khoản", component: Account },
+    userType === 0 && { name: "Thông báo", component: () => <View></View> },
+  ].filter(Boolean); // Loại bỏ giá trị `false`
+  
+  return (
+    <Tab.Navigator screenOptions={screenOptions}>
+      {tabs.map(({ name, component }:any) => (
+        <Tab.Screen key={name} name={name} component={component} initialParams={{ userId, userType }} options={{ headerShown: false }} />
+      ))}
+    </Tab.Navigator>
+  );
 };
 
 const styles = StyleSheet.create({

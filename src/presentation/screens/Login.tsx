@@ -8,8 +8,8 @@ import Toast from 'react-native-toast-message';
 const { width, height } = Dimensions.get('window');
 
 const fb = firestore().collection('tblTaiKhoan');
-const fbInfo = firestore().collection('tblUserInfo');
-const fbInfoCom = firestore().collection('tblCompany');
+const fbInfo = firestore().collection('tblUngVien');
+const fbInfoCom = firestore().collection('tblDoanhNghiep');
 
 const Login = ({ navigation }: any) => {
     const [email, setEmail] = useState('');
@@ -20,20 +20,24 @@ const Login = ({ navigation }: any) => {
     const handleSubmit = async () => {
         setLoading(true);
         try {
-            const userDoc = await fb.where('email', '==', email).limit(1).get();
+            const userDoc = await fb.where('sEmailLienHe', '==', email).limit(1).get();
             if (!email || !password) {
                 setError('Vui lòng nhập email và password');
                 setLoading(false);
                 return;
             } else if (!userDoc.empty) {
                 const userData = userDoc.docs[0].data();
-                if (userData.password === password) {
-                    const userType = userData.userType;
-                    const userId = userDoc.docs[0].id;
-                    if (userData.userType === '1') {
-                        const userInfo = await fbInfo.where('id', '==', userId).limit(1).get();
+                if (userData.sMatKhau === password) {
+                    const userType = userData.sLoaiTaiKhoan;
+                    const userId = userData.sMaTaiKhoan;
+                        console.log(userType)
+                        console.log(userId)
+                        if (userType === 1) {
+                        console.log("vào màn 1")
+                        const userInfo = await fbInfo.where('sMaUngVien', '==', userId).limit(1).get();
                         if (!userInfo.empty) {
-                            navigation.navigate('bottom', { userId, userType });
+                        console.log("vào màn 2")
+                        navigation.navigate('bottom', { userId, userType });
                             Toast.show({
                                 type: 'success',
                                 text1: 'Đăng nhập thành công',
@@ -48,8 +52,8 @@ const Login = ({ navigation }: any) => {
                                 
                             });
                         }
-                    } else if (userData.userType === '2') {
-                        const userInfo = await fbInfoCom.where('id', '==', userId).limit(1).get();
+                    } else if (userType === 2) {
+                        const userInfo = await fbInfoCom.where('sMaDoanhNghiep', '==', userId).limit(1).get();
                         if (!userInfo.empty) {
                             navigation.navigate('bottom', { userId, userType });
                             Toast.show({
@@ -96,7 +100,7 @@ const Login = ({ navigation }: any) => {
         <View style={styles.container}>
             <StatusBar backgroundColor={"#F0F4F7"}/>
             <Animatable.View animation="bounceIn" duration={1500} style={styles.logoContainer}>
-                <Image source={require('../asset/logo2.png')} style={styles.logo} />
+                <Image source={require('../../../asset/logo2.png')} style={styles.logo} />
             </Animatable.View>
             <Animatable.View animation="fadeInUp" duration={1500} style={styles.formContainer}>
                 <Text style={styles.title}>Đăng Nhập</Text>
