@@ -6,17 +6,18 @@ import { theme } from "../../theme//theme";
 interface ButtonProps {
   title: string;
   onPress: () => void;
+  style?: any;
   disabled?: boolean;
 }
 
-const Button: React.FC<ButtonProps> = ({ title, onPress, disabled = false }) => {
+const Button: React.FC<ButtonProps> = ({ title, onPress, style, disabled = false }) => {
   return (
     <TouchableOpacity
       style={[styles.button, disabled && styles.disabled]}
       onPress={onPress}
       disabled={disabled}
     >
-      <Text style={[styles.text, Fonts.semiBold]}>{title}</Text>
+      <Text style={[styles.text, Fonts.semiBold, style]}>{title}</Text>
     </TouchableOpacity>
   );
 };

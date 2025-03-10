@@ -1,221 +1,234 @@
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Image, Dimensions, Alert, ActivityIndicator } from 'react-native';
-import { TextInput, Button, Text } from 'react-native-paper';
-import * as Animatable from 'react-native-animatable';
-import { Dropdown } from 'react-native-element-dropdown';
+import React, { useState } from 'react';
+import { View, StyleSheet, Image, Dimensions, Text, StatusBar, ScrollView, TouchableOpacity } from 'react-native';
+import Button from '../components/Button';
+import CheckBox from '../components/CheckBox';
+import CustomText from '../components/CustomText';
+import Input from '../components/Input';
+import Loading from "../components/Loading";
+import UserOption from "../components/UserOption";
 import firestore from '@react-native-firebase/firestore';
-import Toast from 'react-native-toast-message';
+import { useLoading } from '../../theme/themeContext';
+import { theme } from '../../theme/theme';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 const fb = firestore().collection('tblTaiKhoan');
-
-const userTypes = [
-    { label: 'Ứng viên', value: '1' },
-    { label: 'Doanh nghiệp', value: '2' },
-];
 
 const Register = ({ navigation }: any) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [userType, setUserType] = useState('1');
-    const [isFocus, setIsFocus] = useState(false);
     const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
+    const { loading, setLoading } = useLoading();
+    const [rememberMe, setRememberMe] = useState(false);
+    const [selectedOption, setSelectedOption] = useState<string>(''); 
+
+    const handleSelectOption = (value: string) => {
+        setSelectedOption(value);  
+    };
 
     const handleRegister = async () => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/;
-        
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    
         if (!emailRegex.test(email)) {
             setError('Địa chỉ email không hợp lệ');
             return;
         }
-
+    
         if (!passwordRegex.test(password)) {
-            setError('Mật khẩu phải có ít nhất 8 ký tự, bao gồm ít nhất một chữ hoa, một chữ thường và một số');
+            setError('Mật khẩu phải có ít nhất 8 ký tự, bao gồm ít nhất một chữ hoa, một chữ thường, một chữ số và một ký tự đặc biệt');
             return;
         }
-
+    
         if (password !== confirmPassword) {
             setError('Mật khẩu không khớp');
             return;
         }
-
+    
+        const normalizedEmail = email.toLowerCase(); 
+        const emailExists = await fb.where('sEmailLienHe', '==', normalizedEmail).get();
+        if (!emailExists.empty) {
+            setError('Email này đã được đăng ký, vui lòng chọn email khác');
+            return;
+        }
+    
         setLoading(true);
-
+    
         try {
+            const usersSnapshot = await fb.get();
+            const userCount = usersSnapshot.size;
+    
+            const newAccountNumber = `TK${(userCount + 1).toString().padStart(3, '0')}`;
+    
             const newUserRef = await fb.add({
-                email: email,
-                password: password,
-                userType: userType
+                sEmailLienHe: normalizedEmail,  
+                sLoaiTaiKhoan: selectedOption,
+                sMaTaiKhoan: newAccountNumber, 
+                sMatKhau: password,
+                sTrangThai: 'Kích hoạt',
             });
-
+    
             const newUserId = newUserRef.id;
-
+    
             await newUserRef.update({
                 id: newUserId
             });
-
+    
             console.log('Đã tạo user mới với ID:', newUserId);
-            Toast.show({
-                type: 'success',
-                text1: 'Đăng ký thành công',
-                text2: 'Chào mừng bạn đến với ứng dụng của chúng tôi!',
-            });
             navigation.navigate('Login');
         } catch (error) {
             console.error('Lỗi khi tạo user:', error);
             setError('Đã xảy ra lỗi');
         }
-
+    
         setLoading(false);
     };
 
     return (
-        <View style={styles.container}>
-            <Animatable.View animation="bounceIn" duration={1500} style={styles.logoContainer}>
-                <Image source={require('../../../asset/logo2.png')} style={styles.logo} />
-            </Animatable.View>
-            <Animatable.View animation="fadeInUp" duration={1500} style={styles.formContainer}>
-                <Text style={styles.title}>Đăng Ký</Text>
-                <TextInput
-                    label="Email"
-                    value={email}
-                    onChangeText={setEmail}
-                    style={styles.input}
-                    theme={{ colors: { primary: '#1E90FF' } }}
-                />
-                <TextInput
-                    label="Mật Khẩu"
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry
-                    style={styles.input}
-                    theme={{ colors: { primary: '#1E90FF' } }}
-                />
-                <TextInput
-                    label="Xác Nhận Mật Khẩu"
-                    value={confirmPassword}
-                    onChangeText={setConfirmPassword}
-                    secureTextEntry
-                    style={styles.input}
-                    theme={{ colors: { primary: '#1E90FF' } }}
-                />
-                <Dropdown
-                    style={[styles.dropdown, isFocus && { borderColor: 'blue' }]}
-                    placeholderStyle={styles.placeholderStyle}
-                    selectedTextStyle={styles.selectedTextStyle}
-                    inputSearchStyle={styles.inputSearchStyle}
-                    iconStyle={styles.iconStyle}
-                    data={userTypes}
-                    search
-                    maxHeight={300}
-                    labelField="label"
-                    valueField="value"
-                    placeholder={!isFocus ? 'Chọn loại người dùng' : '...'}
-                    searchPlaceholder="Tìm kiếm..."
-                    value={userType}  // Đặt giá trị là userType để đảm bảo đồng bộ
-                    onFocus={() => setIsFocus(true)}
-                    onBlur={() => setIsFocus(false)}
-                    onChange={(item) => {
-                        setUserType(item.value);  // Chỉ lấy giá trị từ đối tượng đã chọn
-                        setIsFocus(false);
-                    }}
-                />
-                {error ? <Text style={styles.error}>{error}</Text> : null}
-                <Button mode="contained" onPress={handleRegister} style={styles.button} disabled={loading}>
-                    {loading ? <ActivityIndicator size="small" color="#fff" /> : 'Đăng Ký'}
-                </Button>
-                <Button onPress={() => navigation.navigate('Login')} color="#1E90FF">
-                    Đã có tài khoản? Đăng Nhập
-                </Button>
-            </Animatable.View>
-            <Animatable.View animation="fadeIn" duration={2000} style={styles.footer}>
-                <Text style={styles.footerText}>Welcome to our app</Text>
-            </Animatable.View>
-        </View>
+        <ScrollView contentContainerStyle={styles.container}>
+            <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+            <CustomText style={styles.title}>Welcome Back To</CustomText>
+            <CustomText style={styles.appName}>Jobify</CustomText>
+
+            <Input
+                placeholder="Email Or Phone Number"
+                value={email}
+                onChangeText={setEmail}
+                style={styles.input}
+            />
+
+            <Input
+                placeholder="Password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                style={styles.input}
+            />
+
+            <Input
+                placeholder="Confirm Password"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry
+                style={styles.input}
+            />
+            {error && <Text style={styles.error}>{error}</Text>}
+
+            <UserOption selected={selectedOption} onSelect={handleSelectOption} />
+
+
+            <CheckBox
+                label="Remember Me"
+                checked={rememberMe}
+                onToggle={() => setRememberMe(!rememberMe)}
+                style={styles.rememberContainer}
+            />
+
+            <View style={styles.loginOptionsContainer}>
+                <Button title="Sign In" onPress={handleRegister} />
+
+                <CustomText style={styles.orText}>Or</CustomText>
+
+                <TouchableOpacity style={styles.socialIconContainer}>
+                    <Image source={require('../../../asset/images/img_google.png')} style={styles.socialIcon} />
+                </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
+                <CustomText style={styles.forgotPassword}>Forgot your password?</CustomText>
+            </TouchableOpacity>
+
+            <View style={styles.signupContainer}>
+                <CustomText>Don't Have An Account? </CustomText>
+                <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                <CustomText style={styles.signupLink}>Sign Up</CustomText>
+                </TouchableOpacity>
+            </View>
+            {loading && <Loading />}
+        </ScrollView>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
-        backgroundColor: '#F0F4F7',
-        justifyContent: 'center',
+        flexGrow: 1,
         alignItems: 'center',
-    },
-    logoContainer: {
-        marginBottom: 30,
-        alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingVertical: 40,
+        backgroundColor: '#FFFFFF',
     },
     logo: {
-        width: 100,
-        height: 100,
-    },
-    formContainer: {
-        width: '80%',
-        backgroundColor: '#ffffff',
-        borderRadius: 20,
-        padding: 20,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 2,
-        elevation: 5,
+        width: 80,
+        height: 80,
+        resizeMode: 'contain',
+        marginBottom: 20,
     },
     title: {
         fontSize: 24,
+        color: '#000',
+        marginTop: 30,
+        marginBottom: 4,
+    },
+    appName: {
+        fontSize: 32,
         fontWeight: 'bold',
-        textAlign: 'center',
-        marginBottom: 20,
-        color: '#1E90FF',
+        color: '#000',
+        marginBottom: 70,
     },
     input: {
-        marginBottom: 15,
-        backgroundColor: 'white',
+        width: '90%',
+        height: 50,
+        borderColor: '#aaa',
+        borderWidth: 1,
+        borderRadius: 20,
+        paddingHorizontal: 15,
+        marginVertical: 10,
     },
-    dropdown: {
-        width: '100%',
-        height: 40,
-        borderColor: 'gray',
-        borderWidth: 0.5,
-        borderRadius: 8,
-        paddingHorizontal: 8,
-        marginBottom: 15,
+    rememberContainer: {
+        alignSelf: 'center',
+        borderWidth: 0
     },
-    placeholderStyle: {
+    loginOptionsContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-around',
+        width: width * 0.8,
+        marginBottom: 25,
+    },
+    orText: {
+        color: '#aaa',
         fontSize: 16,
     },
-    selectedTextStyle: {
-        fontSize: 16,
+    socialIconContainer: {
+        borderWidth: 1, 
+        borderRadius: 20,
+        padding: 12,
+        borderColor: '#ccc',
     },
-    iconStyle: {
-        width: 20,
-        height: 20,
+    socialIcon: {
+        width: 30,
+        height: 30,
     },
-    inputSearchStyle: {
-        height: 40,
-        fontSize: 16,
-    },
-    error: {
-        color: 'red',
-        textAlign: 'center',
+    forgotPassword: {
+        color: '#000959',
+        fontSize: 14,
         marginBottom: 15,
     },
-    button: {
-        marginBottom: 15,
-        backgroundColor: '#1E90FF',
-    },
-    footer: {
-        position: 'absolute',
-        bottom: 20,
+    signupContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
         alignItems: 'center',
     },
-    footerText: {
-        fontSize: 16,
-        color: '#1E90FF',
+    signupLink: {
+        color: '#000959',
+        fontWeight: 'bold',
+    },
+    error: {
+        color: theme.colors.error.dark,  
+        fontSize: 12,  
+        marginTop: 5,  
+        textAlign: 'center',
     },
 });
 

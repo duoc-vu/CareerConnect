@@ -1,16 +1,17 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View, StyleProp, TextStyle } from 'react-native';
 import { theme } from '../../theme/theme';
 
 interface CheckBoxProps {
   label: string;
   checked: boolean;
   onToggle: () => void;
+  style?: StyleProp<TextStyle>;
 }
 
-const CheckBox: React.FC<CheckBoxProps> = ({ label, checked, onToggle }) => {
+const CheckBox: React.FC<CheckBoxProps> = ({ label, checked, style, onToggle }) => {
   return (
-    <Pressable onPress={onToggle} style={[styles.container, checked && styles.containerChecked]}>
+    <Pressable onPress={onToggle} style={[styles.container, checked && styles.containerChecked, style]}>
       <View style={[styles.box, checked && styles.boxChecked]}>
         {checked && <Text style={styles.checkmark}>✔</Text>}
       </View>
@@ -24,13 +25,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: theme.colors.primary.light,
     marginBottom: 10,
   },
   containerChecked: {
-    backgroundColor: theme.colors.primary.light + '10', // Màu có opacity
   },
   box: {
     width: 20,

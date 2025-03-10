@@ -5,10 +5,11 @@ import { Fonts } from "../../theme/font";
 interface TextProps {
   children: React.ReactNode;
   style?: any;
+  onPress?: () => void; 
 }
 
-const CustomText: React.FC<TextProps> = ({ children, style }) => {
-  return <Text style={[styles.text, style]}>{children}</Text>;
+const CustomText: React.FC<TextProps> = ({ children, style, onPress }) => {
+  return <Text style={[styles.text, style]} onPress={onPress}>{children}</Text>;
 };
 
 const styles = StyleSheet.create({

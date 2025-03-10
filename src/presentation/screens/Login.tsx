@@ -1,88 +1,75 @@
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Image, Dimensions, ActivityIndicator, StatusBar } from 'react-native';
-import { TextInput, Button, Text } from 'react-native-paper';
-import * as Animatable from 'react-native-animatable';
+import React, { useState, useEffect} from "react";
+import { View, StyleSheet, Image, ScrollView, StatusBar, TouchableOpacity, Dimensions, Text } from 'react-native';
+import Button from '../components/Button';
+import CheckBox from '../components/CheckBox';
+import CustomText from '../components/CustomText';
+import Input from '../components/Input';
+import Loading from "../components/Loading";
 import firestore from '@react-native-firebase/firestore';
-import Toast from 'react-native-toast-message';
+import { theme } from '../../theme/theme';
+import { useLoading } from '../../theme/themeContext';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 const fb = firestore().collection('tblTaiKhoan');
 const fbInfo = firestore().collection('tblUngVien');
 const fbInfoCom = firestore().collection('tblDoanhNghiep');
 
 const Login = ({ navigation }: any) => {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [rememberMe, setRememberMe] = useState(false);
+    const {loading, setLoading} = useLoading();
     const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
 
-    const handleSubmit = async () => {
+    const handleLogin = async () => {
         setLoading(true);
         try {
-            const userDoc = await fb.where('sEmailLienHe', '==', email).limit(1).get();
+            const normalizedEmail = email.toLowerCase();
+
+            const userDoc = await fb.where('sEmailLienHe', '==', normalizedEmail).limit(1).get();
+            
             if (!email || !password) {
-                setError('Vui lòng nhập email và password');
                 setLoading(false);
                 return;
             } else if (!userDoc.empty) {
                 const userData = userDoc.docs[0].data();
+
                 if (userData.sMatKhau === password) {
                     const userType = userData.sLoaiTaiKhoan;
                     const userId = userData.sMaTaiKhoan;
-                        console.log(userType)
-                        console.log(userId)
-                        if (userType === 1) {
-                        console.log("vào màn 1")
+
+                    console.log(userType);
+                    console.log(userId);
+
+                    if (userType === 1) {
                         const userInfo = await fbInfo.where('sMaUngVien', '==', userId).limit(1).get();
                         if (!userInfo.empty) {
-                        console.log("vào màn 2")
-                        navigation.navigate('bottom', { userId, userType });
-                            Toast.show({
-                                type: 'success',
-                                text1: 'Đăng nhập thành công',
-                                text2: 'Chào mừng bạn đến với ứng dụng của chúng tôi!',
-                            });
+                            navigation.navigate('bottom', { userId, userType });
                         } else {
                             navigation.navigate('Info', { userId, userType });
-                            Toast.show({
-                                type: 'success',
-                                text1: 'Đăng nhập thành công',
-                                text2: 'Chào mừng bạn đến với ứng dụng của chúng tôi!',
-                                
-                            });
                         }
                     } else if (userType === 2) {
                         const userInfo = await fbInfoCom.where('sMaDoanhNghiep', '==', userId).limit(1).get();
                         if (!userInfo.empty) {
                             navigation.navigate('bottom', { userId, userType });
-                            Toast.show({
-                                type: 'success',
-                                text1: 'Đăng nhập thành công',
-                                text2: 'Chào mừng bạn đến với ứng dụng của chúng tôi!',
-                            });
                         } else {
                             navigation.navigate('CompanyInfo', { userId, userType });
-                            Toast.show({
-                                type: 'success',
-                                text1: 'Đăng nhập thành công',
-                                text2: 'Chào mừng bạn đến với ứng dụng của chúng tôi!',
-                            });
                         }
                     }
                     setLoading(false);
                 } else {
-                    setError('Mật khẩu không chính xác');
                     setLoading(false);
-                }
+                    setError("Sai tài khoản hoặc mật khẩu.")
+            }
             } else {
-                setError('Thông tin đăng nhập không chính xác');
                 setLoading(false);
+                setError("Sai tài khoản hoặc mật khẩu.")
             }
         } catch (error) {
             console.error('Lỗi khi kiểm tra User:', error);
-            setError('Đã xảy ra lỗi');
             setLoading(false);
+            setError("Lỗi khi đăng nhập")
         }
     };
 
@@ -90,104 +77,144 @@ const Login = ({ navigation }: any) => {
         const unsubscribe = navigation.addListener('focus', () => {
             setEmail('');
             setPassword('');
-            setError('');
             setLoading(false);
         });
         return unsubscribe;
     }, [navigation]);
 
     return (
-        <View style={styles.container}>
-            <StatusBar backgroundColor={"#F0F4F7"}/>
-            <Animatable.View animation="bounceIn" duration={1500} style={styles.logoContainer}>
-                <Image source={require('../../../asset/logo2.png')} style={styles.logo} />
-            </Animatable.View>
-            <Animatable.View animation="fadeInUp" duration={1500} style={styles.formContainer}>
-                <Text style={styles.title}>Đăng Nhập</Text>
-                <TextInput
-                    label="Email"
-                    value={email}
-                    onChangeText={setEmail}
-                    style={styles.input}
-                    theme={{ colors: { primary: '#1E90FF' } }}
-                />
-                <TextInput
-                    label="Mật Khẩu"
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry
-                    style={styles.input}
-                    theme={{ colors: { primary: '#1E90FF' } }}
-                />
-                {error ? <Text style={styles.errorText}>{error}</Text> : null}
-                <Button mode="contained" onPress={handleSubmit} style={styles.button} disabled={loading}>
-                    {loading ? <ActivityIndicator size="small" color="#fff" /> : 'Đăng Nhập'}
-                </Button>
-                <Button onPress={() => navigation.navigate('Register')} color="#1E90FF">
-                    Chưa có tài khoản? Đăng Ký
-                </Button>
-            </Animatable.View>
-            <Animatable.View animation="fadeIn" duration={2000} style={styles.footer}>
-                <Text style={styles.footerText}>Welcome to our app</Text>
-            </Animatable.View>
-        </View>
+        <ScrollView contentContainerStyle={styles.container}>
+            <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+            <CustomText style={styles.title}>Welcome Back To</CustomText>
+            <CustomText style={styles.appName}>Jobify</CustomText>
+
+            <Input
+                placeholder="Email Or Phone Number"
+                value={email}
+                onChangeText={setEmail}
+                style={styles.input}
+            />
+
+            <Input
+                placeholder="Password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                style={styles.input}
+            />
+            {error && <Text style={styles.error}>{error}</Text>}
+            <CheckBox
+                label="Remember Me"
+                checked={rememberMe}
+                onToggle={() => setRememberMe(!rememberMe)}
+                style={styles.rememberContainer}
+            />
+
+            <View style={styles.loginOptionsContainer}>
+                <Button title="Login" onPress={handleLogin} />
+
+                <CustomText style={styles.orText}>Or</CustomText>
+
+                <TouchableOpacity style={styles.socialIconContainer}>
+                    <Image source={require('../../../asset/images/img_google.png')} style={styles.socialIcon} />
+                </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
+                <CustomText style={styles.forgotPassword}>Forgot your password?</CustomText>
+            </TouchableOpacity>
+
+            <View style={styles.signupContainer}>
+                <CustomText>Don't Have An Account? </CustomText>
+                <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+                <CustomText style={styles.signupLink}>Sign Up</CustomText>
+                </TouchableOpacity>
+            </View>
+            {loading && <Loading />}
+        </ScrollView>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
-        backgroundColor: '#F0F4F7',
-        justifyContent: 'center',
+        flexGrow: 1,
         alignItems: 'center',
-    },
-    logoContainer: {
-        marginBottom: 30,
-        alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingVertical: 40,
+        backgroundColor: '#FFFFFF',
     },
     logo: {
-        width: 100,
-        height: 100,
-    },
-    formContainer: {
-        width: '80%',
-        backgroundColor: '#ffffff',
-        borderRadius: 20,
-        padding: 20,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 2,
-        elevation: 5,
+        width: 80,
+        height: 80,
+        resizeMode: 'contain',
+        marginBottom: 20,
     },
     title: {
         fontSize: 24,
+        color: '#000',
+        marginBottom: 4,
+    },
+    appName: {
+        fontSize: 32,
         fontWeight: 'bold',
-        textAlign: 'center',
-        marginBottom: 20,
-        color: '#1E90FF',
+        color: '#000',
+        marginBottom: 100,
     },
     input: {
-        marginBottom: 15,
-        backgroundColor: 'white',
+        width: '90%',
+        height: 60,
+        borderColor: '#aaa',
+        borderWidth: 1,
+        borderRadius: 20,
+        paddingHorizontal: 15,
+        marginVertical: 10,
     },
-    errorText: {
-        color: 'red',
-        textAlign: 'center',
+    rememberContainer: {
+        alignSelf: 'center',
+        marginVertical: 10,
+        marginTop: 40,
+        borderWidth: 0
+    },
+    loginOptionsContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-around',
+        width: width * 0.8,
+        marginVertical: 40,
+    },
+    orText: {
+        color: '#aaa',
+        fontSize: 16,
+    },
+    socialIconContainer: {
+        borderWidth: 1, 
+        borderRadius: 20,
+        padding: 12,
+        borderColor: '#ccc',
+    },
+    socialIcon: {
+        width: 30,
+        height: 30,
+    },
+    forgotPassword: {
+        color: '#000959',
+        fontSize: 14,
         marginBottom: 15,
     },
-    button: {
-        marginBottom: 15,
-        backgroundColor: '#1E90FF',
-    },
-    footer: {
-        position: 'absolute',
-        bottom: 20,
+    signupContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
         alignItems: 'center',
     },
-    footerText: {
-        fontSize: 16,
-        color: '#1E90FF',
+    signupLink: {
+        color: '#000959',
+        fontWeight: 'bold',
+    },
+    error: {
+        color: theme.colors.error.dark,  
+        fontSize: 12,  
+        marginTop: 5,  
+        textAlign: 'center',
     },
 });
 

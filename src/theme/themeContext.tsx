@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { ColorSchemeName, useColorScheme } from 'react-native';
 
-// Định nghĩa Theme
 const theme = {
   light: {
     bG: "#ffffff",
@@ -31,17 +30,14 @@ const theme = {
   },
 };
 
-// Định nghĩa kiểu ThemeContext
 interface ThemeContextProps {
   theme: typeof theme.light;
   toggleTheme: () => void;
   isDarkMode: boolean;
 }
 
-// Tạo Context
 const ThemeContext = createContext<ThemeContextProps | undefined>(undefined);
 
-// Provider để bao bọc ứng dụng
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const systemColorScheme: ColorSchemeName = useColorScheme();
   const [isDarkMode, setIsDarkMode] = useState(systemColorScheme === 'dark');
@@ -55,11 +51,34 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   );
 };
 
-// Hook để sử dụng theme trong component
 export const useTheme = () => {
   const context = useContext(ThemeContext);
   if (!context) {
     throw new Error("useTheme must be used within a ThemeProvider");
   }
   return context;
+};
+
+
+const LoadingContext = createContext<{
+  loading: boolean;
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>;
+} | undefined>(undefined); 
+
+export const LoadingProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [loading, setLoading] = useState(false);
+
+  return (
+    <LoadingContext.Provider value ={{ loading, setLoading }}>
+      {children}
+    </LoadingContext.Provider>
+  );
+};
+
+export const useLoading = () => {
+  const context = useContext(LoadingContext);
+  if (!context) {
+    throw new Error("useLoading must be used within a LoadingProvider");
+  }
+  return context; 
 };

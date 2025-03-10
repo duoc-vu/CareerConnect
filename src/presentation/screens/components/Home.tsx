@@ -14,6 +14,8 @@ import storage from '@react-native-firebase/storage';
 import { useFocusEffect } from '@react-navigation/native';
 import JobCard from '../../components/JobCard';
 import SearchBar from '../../components/SearchBar';
+import Loading from "../../components/Loading";
+import { useLoading } from '../../../theme/themeContext';
 
 const fbJob = firestore().collection('tblTinTuyenDung');
 const fbCT = firestore().collection('tblDoanhNghiep');
@@ -24,12 +26,14 @@ const Home = ({ navigation, route }: any) => {
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredJobs, setFilteredJobs] = useState([]);
+  const {loading, setLoading} = useLoading();
 
   const params = route?.params ?? {};
   const userId = params.userId ?? null;
   const userType = params.userType ?? 0;
 
   const fetchJobs = async () => {
+    setLoading(true)
     try {
       const querySnapshot = await fbJob.get();
       const jobList: any = [];
@@ -57,12 +61,6 @@ const Home = ({ navigation, route }: any) => {
               companyLogo = await avatarRef.getDownloadURL();
             }
           } catch(error) {
-            if (error instanceof Error) {
-              // crashlytics().recordError(error);
-            } else {
-              // Handle the case where the error is not of type Error
-              // crashlytics().recordError(new Error('An unknown error occurred'));
-            }
           }
         }
 
@@ -80,15 +78,11 @@ const Home = ({ navigation, route }: any) => {
 
       await Promise.all(promises);
       setJobs(jobList);
-      setFilteredJobs(jobList); // Hiển thị tất cả lúc đầu
+      setFilteredJobs(jobList);
     } catch (error) {
-      if (error instanceof Error) {
-        // crashlytics().recordError(error);
-      } else {
-        // Handle the case where the error is not of type Error
-        // crashlytics().recordError(new Error('An unknown error occurred'));
-      }
       console.error('Error fetching jobs:', error);
+    } finally {
+      setLoading(false)
     }
   };
 
@@ -98,12 +92,9 @@ const Home = ({ navigation, route }: any) => {
     }, [])
   );
 
-
-
-  // 🔍 Tạo hàm filterJobs riêng biệt
   const filterJobs = (query: string) => {
     if (!query.trim()) {
-      setFilteredJobs(jobs); // Nếu không nhập gì, hiển thị tất cả công việc
+      setFilteredJobs(jobs);
       return;
     }
     
@@ -114,29 +105,30 @@ const Home = ({ navigation, route }: any) => {
     setFilteredJobs(filtered);
   };
 
-  // 🔄 Cập nhật danh sách khi `searchQuery` thay đổi
   useEffect(() => {
     filterJobs(searchQuery);
   }, [searchQuery, jobs]);
 
-  const renderItem = ({ item }: any) => (
-    <View style={{ overflow: "hidden" }}>
-      <View key={`job-${item.idJob}`} style={{ backgroundColor: "transparent" }}>
-        <JobCard
-          companyLogo={item.companyLogo}
-          companyName={item.companyName}
-          jobTitle={item.jobTitle}
-          salaryMin={item.salaryMin ? item.salaryMin : 0}
-          salaryMax={item.salaryMax ? item.salaryMax : 0}
-          jobType={item.jobType}
-          location={item.location}
-          onPress={() => 
-            navigation.navigate('JobDetail', { jobId: item.idJob, userId, userType })
-          }
-        />
+  const renderItem = ({ item }: any) => {
+    return (
+      <View style={{ overflow: "hidden" }}>
+        <View style={{ backgroundColor: "transparent" }}>
+          <JobCard
+            companyLogo={item.companyLogo}
+            companyName={item.companyName}
+            jobTitle={item.jobTitle}
+            salaryMin={item.salaryMin ? item.salaryMin : 0}
+            salaryMax={item.salaryMax ? item.salaryMax : 0}
+            jobType={item.jobType}
+            location={item.location}
+            onPress={() => 
+              navigation.navigate('JobDetail', { jobId: item.idJob, userId, userType })
+            }
+          />
+        </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -153,10 +145,8 @@ const Home = ({ navigation, route }: any) => {
       </View>
       
 
-      {/* 🔍 Ô tìm kiếm */}
       <SearchBar value={searchQuery} onChangeText={setSearchQuery} />
 
-      {/* Danh sách công việc */}
       <FlatList
         data={filteredJobs}
         renderItem={renderItem}
@@ -167,6 +157,7 @@ const Home = ({ navigation, route }: any) => {
           <Text style={styles.noJobsText}>Không tìm thấy công việc nào.</Text>
         )}
       />
+      {loading && <Loading />}
     </View>
   );
 };
