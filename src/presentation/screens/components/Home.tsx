@@ -150,7 +150,7 @@ const Home = ({ navigation, route }: any) => {
       <FlatList
         data={filteredJobs}
         renderItem={renderItem}
-        keyExtractor={(item:any) => item.jobId}
+        keyExtractor={(item:any) => item.jobId ? item.jobId.toString() : Math.random().toString()}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={() => (
