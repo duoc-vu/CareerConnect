@@ -45,13 +45,14 @@ const JobCard: React.FC<JobCardProps> = ({
 
       {/* Job Info */}
       <Text style={[styles.jobTitle, { color: theme.surface }]}>{jobTitle}</Text>
-      <Text style={[styles.salary, { color: theme.surface }]}>
-        {salaryMin.toLocaleString()} - {salaryMax.toLocaleString()}đ / tháng
-      </Text>
+      
 
       {/* Footer */}
       <View style={styles.footer}>
-        <View style={[styles.tag, { backgroundColor: theme.primary }]}>
+      <Text style={[styles.salary, { color: theme.surface }]}>
+        {salaryMin.toLocaleString()} - {salaryMax.toLocaleString()}đ / tháng
+      </Text>
+        <View style={[styles.tag, { backgroundColor: 'rgba(195, 216, 244, 0.4)' }]}>
           <Text style={styles.tagText}>{location}</Text>
         </View>
           <Image source={require("../../../asset/images/bookmark_light.png")}></Image>
@@ -67,14 +68,10 @@ const styles = StyleSheet.create({
     marginVertical: 10,
     backgroundColor: theme.colors.card.light,
     borderWidth: 1, 
-    borderColor: "rgba(0, 0, 0, 0.1)", 
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2, 
+    borderColor: "#A2CEF4", 
     minHeight: 150, 
     width: "90%", 
-    alignSelf: "center", // ✅ Giúp card nằm giữa màn hình
+    alignSelf: "center", 
   },
   header: {
     flexDirection: "row",
@@ -99,17 +96,19 @@ const styles = StyleSheet.create({
   jobTitle: {
     fontSize: 16,
     fontWeight: "500",
-    marginVertical: 3,
+    marginVertical: 10,
   },
   salary: {
     fontSize: 12,
-    fontWeight: "400",
-    marginBottom: 8,
+    fontWeight: "bold",
+    color: theme.colors.text.primary
+    // marginBottom: 8,
   },
   footer: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginTop: 12
   },
   tag: {
     borderRadius: 8,
@@ -117,7 +116,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   tagText: {
-    color: "#fff",
+    color: theme.colors.primary.light,
     fontSize: 12,
     fontWeight: "bold",
   },

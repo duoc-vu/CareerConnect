@@ -7,18 +7,23 @@ import {
   FlatList,
   TouchableOpacity,
   StatusBar,
-  Button
 } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
-import { useFocusEffect } from '@react-navigation/native';
 import JobCard from '../../components/JobCard';
 import SearchBar from '../../components/SearchBar';
 import Loading from "../../components/Loading";
 import { useLoading } from '../../../theme/themeContext';
+import Button from '../../components/Button';
+import Pagination from '../../components/Pagination';
+import { theme } from '../../../theme/theme';
+import { Fonts } from '../../../theme/font';
+import UploadButton from '../../components/UploadButton';
 
 const fbJob = firestore().collection('tblTinTuyenDung');
 const fbCT = firestore().collection('tblDoanhNghiep');
+
+const PAGE_SIZE = 5;
 
 const Home = ({ navigation, route }: any) => {
   const [jobs, setJobs] = useState<any>([]);
@@ -26,19 +31,39 @@ const Home = ({ navigation, route }: any) => {
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredJobs, setFilteredJobs] = useState([]);
-  const {loading, setLoading} = useLoading();
+  const { loading, setLoading } = useLoading();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   const params = route?.params ?? {};
   const userId = params.userId ?? null;
   const userType = params.userType ?? 0;
 
-  const fetchJobs = async () => {
-    setLoading(true)
+  useEffect(() => {
+    filterJobs(searchQuery);
+  }, [searchQuery, jobs]);
+
+  useEffect(() => {
+    fetchJobs(currentPage);
+    console.log(userId)
+  }, [currentPage]);
+
+  const handleUploadPress = () => {
+    navigation.navigate("post-job", userId); 
+  };
+
+  const fetchJobs = async (page: number) => {
+    setLoading(true);
     try {
-      const querySnapshot = await fbJob.get();
+      const querySnapshot = await fbJob.where("sCoKhoa", "==", 1).get();
+      setTotalPages(Math.ceil(querySnapshot.size / PAGE_SIZE));
+
       const jobList: any = [];
 
-      const promises = querySnapshot.docs.map(async (doc) => {
+      const promises = querySnapshot.docs.map(async (doc: any) => {
         const jobData = doc.data();
         let companyName = 'Unknown Company';
         let companyLogo = '';
@@ -60,7 +85,8 @@ const Home = ({ navigation, route }: any) => {
               );
               companyLogo = await avatarRef.getDownloadURL();
             }
-          } catch(error) {
+          } catch (error) {
+            console.error("Error fetching company info:", error);
           }
         }
 
@@ -78,26 +104,25 @@ const Home = ({ navigation, route }: any) => {
 
       await Promise.all(promises);
       setJobs(jobList);
-      setFilteredJobs(jobList);
+
+      const totalJobsSnapshot = await fbJob.where("sCoKhoa", "==", 1).get();
+      setTotalPages(Math.ceil(totalJobsSnapshot.size / PAGE_SIZE));
+      console.log("Total jobs with sCoKhoa == 1:", totalJobsSnapshot.size);
+      console.log("Total pages:", Math.ceil(totalJobsSnapshot.size / PAGE_SIZE));
+
     } catch (error) {
       console.error('Error fetching jobs:', error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   };
-
-  useFocusEffect(
-    React.useCallback(() => {
-      fetchJobs();
-    }, [])
-  );
 
   const filterJobs = (query: string) => {
     if (!query.trim()) {
       setFilteredJobs(jobs);
       return;
     }
-    
+
     const filtered = jobs.filter((job: any) =>
       job.jobTitle.toLowerCase().includes(query.toLowerCase()) ||
       job.companyName.toLowerCase().includes(query.toLowerCase())
@@ -105,9 +130,7 @@ const Home = ({ navigation, route }: any) => {
     setFilteredJobs(filtered);
   };
 
-  useEffect(() => {
-    filterJobs(searchQuery);
-  }, [searchQuery, jobs]);
+
 
   const renderItem = ({ item }: any) => {
     return (
@@ -121,7 +144,7 @@ const Home = ({ navigation, route }: any) => {
             salaryMax={item.salaryMax ? item.salaryMax : 0}
             jobType={item.jobType}
             location={item.location}
-            onPress={() => 
+            onPress={() =>
               navigation.navigate('JobDetail', { jobId: item.idJob, userId, userType })
             }
           />
@@ -134,29 +157,44 @@ const Home = ({ navigation, route }: any) => {
     <View style={styles.container}>
       <StatusBar backgroundColor={'#F0F4F7'} />
       <View style={styles.header}>
-        <Image
-          source={userAvatar ? { uri: userAvatar } : require('../../../../asset/images/img_ellipse_3.png')}
-          style={styles.avatar}
-        />
-        <Text style={styles.welcomeText}>Welcome Back, <Text style={styles.userName}>{user || "Guest"}</Text></Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: "space-between" }}>
+          <Image
+            source={userAvatar ? { uri: userAvatar } : require('../../../../asset/images/img_ellipse_3.png')}
+            style={styles.avatar}
+          />
+          <View style={styles.welcomeText}>
+            <Text style={{ fontSize: 20, ...Fonts.semiBold }}>Welcome Back,</Text>
+            <Text style={styles.userName}>{user || "Guest"}</Text>
+          </View>
+
+        </View>
         <TouchableOpacity>
           <Image source={require('../../../../asset/images/img_notification.png')} style={styles.notificationIcon} />
         </TouchableOpacity>
       </View>
-      
+
 
       <SearchBar value={searchQuery} onChangeText={setSearchQuery} />
 
       <FlatList
         data={filteredJobs}
         renderItem={renderItem}
-        keyExtractor={(item:any) => item.jobId ? item.jobId.toString() : Math.random().toString()}
+        keyExtractor={(item: any) => item.jobId ? item.jobId.toString() : Math.random().toString()}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={() => (
           <Text style={styles.noJobsText}>Không tìm thấy công việc nào.</Text>
         )}
       />
+      {/* <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+        style={styles.paginationContainer}
+        buttonStyle={styles.paginationButton}
+        textStyle={styles.paginationText}
+      /> */}
+      <UploadButton onPress={handleUploadPress} />
       {loading && <Loading />}
     </View>
   );
@@ -165,7 +203,7 @@ const Home = ({ navigation, route }: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F0F4F7',
+    backgroundColor: theme.colors.background.light,
     padding: 15,
   },
   header: {
@@ -180,16 +218,18 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   welcomeText: {
-    fontSize: 18,
+    width: "80%",
     color: "#111827",
-    fontWeight: "400",
+    ...Fonts.semiBold,
+    marginLeft: 10
   },
   userName: {
-    fontWeight: "700",
+    fontSize: 20,
+    ...Fonts.semiBold,
   },
   notificationIcon: {
-    width: 26,
-    height: 26,
+    width: 20,
+    height: 20,
   },
   list: {
     paddingBottom: 50,
@@ -199,6 +239,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#6B7280",
     marginTop: 20,
+  },
+  paginationContainer: {
+    marginTop: 20,
+    marginBottom: 50
+  },
+  paginationButton: {
+    backgroundColor: '#f1f1f1',
+  },
+  paginationText: {
+    fontSize: 16,
+    color: '#333',
   },
 });
 

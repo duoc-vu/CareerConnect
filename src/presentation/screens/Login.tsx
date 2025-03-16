@@ -54,7 +54,7 @@ const Login = ({ navigation }: any) => {
                         if (!userInfo.empty) {
                             navigation.navigate('bottom', { userId, userType });
                         } else {
-                            navigation.navigate('CompanyInfo', { userId, userType });
+                            navigation.navigate('company-info', { userId, userType });
                         }
                     }
                     setLoading(false);

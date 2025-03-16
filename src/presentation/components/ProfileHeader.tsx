@@ -1,12 +1,13 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, Image, StyleSheet, Dimensions, StyleProp, TextStyle} from 'react-native';
 
 interface ProfileHeaderProps {
   avatarUrl: string;
   name: string;
-  position: string;
-  university: string;
-  location: string;
+  position?: string;
+  university?: string;
+  location?: string;
+  style?: StyleProp<TextStyle>;
 }
 
 const { width } = Dimensions.get('window');
@@ -17,9 +18,10 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   position,
   university,
   location,
+  style
 }) => {
   return (
-    <View style={styles.cardWrapper}>
+    <View style={[styles.cardWrapper, style]}>
       <View style={styles.card}>
         <View style={styles.avatarContainer}>
           <Image source={{ uri: avatarUrl }} style={styles.avatar} />
