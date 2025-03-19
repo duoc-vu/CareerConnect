@@ -7,7 +7,7 @@ import Input from '../components/Input';
 import Loading from "../components/Loading";
 import UserOption from "../components/UserOption";
 import firestore from '@react-native-firebase/firestore';
-import { useLoading } from '../../theme/themeContext';
+import { useLoading } from '../../context/themeContext';
 import { theme } from '../../theme/theme';
 
 const { width } = Dimensions.get('window');

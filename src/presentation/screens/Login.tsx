@@ -1,5 +1,6 @@
 import React, { useState, useEffect} from "react";
 import { View, StyleSheet, Image, ScrollView, StatusBar, TouchableOpacity, Dimensions, Text } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Button from '../components/Button';
 import CheckBox from '../components/CheckBox';
 import CustomText from '../components/CustomText';
@@ -7,7 +8,10 @@ import Input from '../components/Input';
 import Loading from "../components/Loading";
 import firestore from '@react-native-firebase/firestore';
 import { theme } from '../../theme/theme';
-import { useLoading } from '../../theme/themeContext';
+import { useLoading } from '../../context/themeContext';
+import messaging from '@react-native-firebase/messaging';
+import { useUser } from "../../context/UserContext";
+
 
 const { width } = Dimensions.get('window');
 
@@ -21,12 +25,34 @@ const Login = ({ navigation }: any) => {
     const [rememberMe, setRememberMe] = useState(false);
     const {loading, setLoading} = useLoading();
     const [error, setError] = useState('');
+    const { setUser } = useUser();
 
+    const updateFCMToken = async (userId:any) => {
+        try {
+            const token = await messaging().getToken(); 
+            if (token) {
+                await firestore().collection('tblTaiKhoan')
+                    .where('sMaTaiKhoan', '==', userId) 
+                    .get()
+                    .then(querySnapshot => {
+                        if (!querySnapshot.empty) {
+                            querySnapshot.forEach(doc => {
+                                doc.ref.update({ sFCMToken: token }); 
+                            });
+                        }
+                    });
+    
+                console.log("FCM Token updated:", token);
+            }
+        } catch (error) {
+            console.error("Error updating FCM Token:", error);
+        }
+    };
+    
     const handleLogin = async () => {
         setLoading(true);
         try {
             const normalizedEmail = email.toLowerCase();
-
             const userDoc = await fb.where('sEmailLienHe', '==', normalizedEmail).limit(1).get();
             
             if (!email || !password) {
@@ -34,44 +60,53 @@ const Login = ({ navigation }: any) => {
                 return;
             } else if (!userDoc.empty) {
                 const userData = userDoc.docs[0].data();
-
+                const userId = userData.sMaTaiKhoan;
+    
                 if (userData.sMatKhau === password) {
                     const userType = userData.sLoaiTaiKhoan;
-                    const userId = userData.sMaTaiKhoan;
-
-                    console.log(userType);
-                    console.log(userId);
-
+                    const userEmail = userData.sEmailLienHe;
+    
+                    await updateFCMToken(userId);
+    
+                    let userInfo = null;
                     if (userType === 1) {
-                        const userInfo = await fbInfo.where('sMaUngVien', '==', userId).limit(1).get();
-                        if (!userInfo.empty) {
-                            navigation.navigate('bottom', { userId, userType });
-                        } else {
-                            navigation.navigate('Info', { userId, userType });
+                        const userInfoDoc = await fbInfo.where('sMaUngVien', '==', userId).limit(1).get();
+                        if (!userInfoDoc.empty) {
+                            userInfo = userInfoDoc.docs[0].data();
                         }
                     } else if (userType === 2) {
-                        const userInfo = await fbInfoCom.where('sMaDoanhNghiep', '==', userId).limit(1).get();
-                        if (!userInfo.empty) {
-                            navigation.navigate('bottom', { userId, userType });
-                        } else {
-                            navigation.navigate('company-info', { userId, userType });
+                        const userInfoDoc = await fbInfoCom.where('sMaDoanhNghiep', '==', userId).limit(1).get();
+                        if (!userInfoDoc.empty) {
+                            userInfo = userInfoDoc.docs[0].data();
                         }
                     }
+                    setUser(userId, userType, userInfo, userEmail);
+                    const sessionData = {
+                        userId,
+                        userType,
+                        userInfo,
+                        userEmail,
+                        expiresAt: Date.now() + 3 * 24 * 60 * 60 * 1000, 
+                    };
+                    await AsyncStorage.setItem('session', JSON.stringify(sessionData));
+    
+                    navigation.navigate(userInfo ? 'bottom' : (userType === 1 ? 'Info' : 'company-info'));
                     setLoading(false);
                 } else {
                     setLoading(false);
-                    setError("Sai tài khoản hoặc mật khẩu.")
-            }
+                    setError("Sai tài khoản hoặc mật khẩu.");
+                }
             } else {
                 setLoading(false);
-                setError("Sai tài khoản hoặc mật khẩu.")
+                setError("Sai tài khoản hoặc mật khẩu.");
             }
         } catch (error) {
             console.error('Lỗi khi kiểm tra User:', error);
             setLoading(false);
-            setError("Lỗi khi đăng nhập")
+            setError("Lỗi khi đăng nhập");
         }
     };
+
 
     useEffect(() => {
         const unsubscribe = navigation.addListener('focus', () => {

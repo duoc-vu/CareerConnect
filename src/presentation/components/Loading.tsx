@@ -19,7 +19,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.6)", // Tùy chỉnh background mờ
+    backgroundColor: "rgba(255, 255, 255, 0.95)", 
     position: "absolute",
     top: 0,
     bottom: 0,

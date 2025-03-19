@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, Image, StyleSheet } from "react-native";
-import { useTheme } from "../../theme/themeContext";
+import { useTheme } from "../../context/themeContext";
 import { TouchableOpacity } from "react-native";
 import { theme } from "../../theme/theme";
 
@@ -8,11 +8,13 @@ interface JobCardProps {
   companyLogo: string;
   companyName: string;
   jobTitle: string;
-  location: string,
+  location: string;
   jobType: string;
   salaryMin: number;
   salaryMax: number;
+  deadline?: string;
   onPress: () => void;
+  style?: any;
 }
 
 const JobCard: React.FC<JobCardProps> = ({
@@ -23,13 +25,14 @@ const JobCard: React.FC<JobCardProps> = ({
   salaryMin,
   salaryMax,
   jobType,
+  deadline,
   onPress,
+  style
 }) => {
   const { theme } = useTheme();
 
   return (
-    <TouchableOpacity style={[styles.card, { backgroundColor: theme.card }]} onPress={onPress}  activeOpacity={1}>
-      {/* Header */}
+    <TouchableOpacity style={[styles.card, { backgroundColor: theme.card}, style]} onPress={onPress}  activeOpacity={1}>
       <View style={styles.header}>
       <Image
         source={
@@ -43,19 +46,21 @@ const JobCard: React.FC<JobCardProps> = ({
         <Text style={[styles.jobType, { color: theme.primary }]}>{jobType}</Text>
       </View>
 
-      {/* Job Info */}
       <Text style={[styles.jobTitle, { color: theme.surface }]}>{jobTitle}</Text>
-      
 
-      {/* Footer */}
       <View style={styles.footer}>
-      <Text style={[styles.salary, { color: theme.surface }]}>
-        {salaryMin.toLocaleString()} - {salaryMax.toLocaleString()}đ / tháng
-      </Text>
+        <View>
+          <Text style={[styles.salary, { color: theme.surface }]}>
+            {salaryMin.toLocaleString()} - {salaryMax.toLocaleString()}đ / tháng
+          </Text>
+          {deadline && (
+            <Text style={[styles.deadline, { color: theme.surface }]}>Hạn nộp: {deadline}</Text>
+          )}
+        </View>
         <View style={[styles.tag, { backgroundColor: 'rgba(195, 216, 244, 0.4)' }]}>
           <Text style={styles.tagText}>{location}</Text>
         </View>
-          <Image source={require("../../../asset/images/bookmark_light.png")}></Image>
+        <Image source={require("../../../asset/images/bookmark_light.png")}></Image>
       </View>
     </TouchableOpacity>
   );
@@ -70,8 +75,8 @@ const styles = StyleSheet.create({
     borderWidth: 1, 
     borderColor: "#A2CEF4", 
     minHeight: 150, 
-    width: "90%", 
     alignSelf: "center", 
+    width: "90%"
   },
   header: {
     flexDirection: "row",
@@ -99,16 +104,20 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   salary: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: "bold",
-    color: theme.colors.text.primary
-    // marginBottom: 8,
+    color: theme.colors.text.primary,
+  },
+  deadline: {
+    fontSize: 13,
+    color: theme.colors.text.primary,
+    marginTop: 2,
   },
   footer: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: 12
+    marginTop: 12,
   },
   tag: {
     borderRadius: 8,

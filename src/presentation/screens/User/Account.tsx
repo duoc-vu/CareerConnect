@@ -3,64 +3,86 @@ import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import { useFocusEffect } from '@react-navigation/native';
 import { View, ScrollView, StyleSheet, Dimensions } from 'react-native';
-import ProfileHeader from '../../components/ProfileHeader';
-import Highlights from '../../components/Highlight';
-import WorkExperienceCard from '../../components/WorkExperience';
-import { theme } from '../../../theme/theme';
+import ProfileCard from '../../components/ProfileCard';
+import CustomText from '../../components/CustomText';
+import { Image } from 'react-native-animatable';
+import SkillTags from '../../components/SkillTags';
+import { useUser } from '../../../context/UserContext';
+import { useLoading } from '../../../context/themeContext';
+import Loading from '../../components/Loading';
+import HeaderWithIcons from '../../components/Header';
 
-const { width, height } = Dimensions.get('window');
+const Account = ({ navigation }: any) => {
 
-const Account = ({ navigation, route }: any) => {
-    const [highlights, setHighlights] = useState({
-        text: 'Marian has received Google Certification',
-        subtitle: 'Google Project Management Certificate',
-    });  
-    
-    const [workExperience, setWorkExperience] = useState([
-        { role: 'Project Manager', type: 'Full-time', duration: '10 months' },
-        { role: 'Junior Project Manager', type: 'Full-time', duration: '10 months' },
-        { role: 'Project Manager Intern', type: 'Full-time', duration: '10 months' },
-    ]);
-
-    const [uploading, setUploading] = useState(false);
     const [image, setImage] = useState('');
-    const { userId, userType } = route.params;
+    const { userId, userType } = useUser();
+    const { loading, setLoading } = useLoading();
     const [user, setUser] = useState({
-        avtUri: '',
-        name: '',
-        email: '',
-        birthDate: '',
-        phone: '',
-        address: '',
-        introduction: '',
+        sAnhDaiDien: '',
+        sHoVaTen: '',
+        sEmailLienHe: '',
+        sSoDienThoai: '',
+        sChuyenNganh: '',
+        sKinhNghiem: '',
+        sDiaChi: '',
+        sKiNang: '',
+        sSoThich: '',
+        sMoTaChiTiet: '',
     });
 
     const fetchUserData = async () => {
-        setUploading(true);
+        setLoading(true);
+
+        console.log("User ID gửi sang", userId);
+
         try {
-            const userDoc = await firestore().collection('tblUserInfo').doc(userId).get();
-            if (userDoc.exists) {
-                const userData: any = userDoc.data();
-                const storageRef = storage().ref(`images/${userId}.jpg`);
-                const downloadUrl = await storageRef.getDownloadURL();
+            const userQuery = await firestore()
+                .collection('tblUngVien')
+                .where('sMaUngVien', '==', userId)
+                .get();
+
+            if (!userQuery.empty) {
+                const userData = userQuery.docs[0].data();
+
+                // Lấy email từ bảng tblTaiKhoan
+                const accountQuery = await firestore()
+                    .collection('tblTaiKhoan')
+                    .where('sMaTaiKhoan', '==', userId)
+                    .get();
+
+                let userEmail = 'No Email';
+                if (!accountQuery.empty) {
+                    userEmail = accountQuery.docs[0].data().sEmailLienHe || 'No Email';
+                }
 
                 setUser({
-                    avtUri: userData.avtUri,
-                    name: userData.name,
-                    email: userData.email,
-                    birthDate: userData.birthDate,
-                    phone: userData.phone,
-                    address: userData.address,
-                    introduction: userData.introduction,
+                    sAnhDaiDien: userData.sAnhDaiDien || '',
+                    sHoVaTen: userData.sHoVaTen || '',
+                    sKinhNghiem: userData.sKinhNghiem || '',
+                    sEmailLienHe: userEmail,
+                    sChuyenNganh: userData.sChuyenNganh || '',
+                    sSoDienThoai: userData.sSoDienThoai || '',
+                    sDiaChi: userData.sDiaChi || '',
+                    sMoTaChiTiet: userData.sMoTaChiTiet || '',
+                    sKiNang: userData.sKiNang,
+                    sSoThich: userData.sSoThich
                 });
-                setImage(downloadUrl);
+
+                const storageRef = storage().ref(`tblUngVien/${userId}.png`);
+                try {
+                    const downloadUrl = await storageRef.getDownloadURL();
+                    setImage(downloadUrl);
+                } catch (error) {
+                    console.log('Không tìm thấy ảnh:', error);
+                }
             } else {
-                console.log('Không có bản ghi nào với id', userId);
+                console.log('Không có ứng viên với ID:', userId);
             }
         } catch (error) {
-            console.error('Lỗi khi lấy thông tin người dùng:', error);
+            console.error('Lỗi khi lấy thông tin ứng viên:', error);
+        } finally {
+            setLoading(false);
         }
-        setUploading(false);
     };
 
     useEffect(() => {
@@ -73,165 +95,143 @@ const Account = ({ navigation, route }: any) => {
         }, [userId])
     );
 
-    const handleUpdate = () => {
-        navigation.navigate('If', { userId, userType });
-    };
-
-    const handleLogout = () => {
-        navigation.navigate('Login');
-    };
-
     return (
-        // <View style={styles.container}>
-        //     <Animatable.View key={`profile-${animationKey}`} animation="bounceIn" duration={1500} style={styles.profileContainer}>
-        //         <Image source={image ? { uri: image } : require('../../../../asset/default.png')} style={styles.profileImage} />
-        //         <Text style={styles.name}>{user.name}</Text>
-        //     </Animatable.View>
-        //     <Animatable.View animation="fadeInUp" duration={1500} style={styles.infoContainer}>
-        //         <View style={styles.infoRow}>
-        //             <Text style={styles.infoLabel}>Email:</Text>
-        //             <Text style={styles.infoValue}>{user.email}</Text>
-        //         </View>
-        //         <View style={styles.infoRow}>
-        //             <Text style={styles.infoLabel}>Số điện thoại:</Text>
-        //             <Text style={styles.infoValue}>{user.phone}</Text>
-        //         </View>
-        //         <View style={styles.infoRow}>
-        //             <Text style={styles.infoLabel}>Địa chỉ:</Text>
-        //             <Text style={styles.infoValue}>{user.address}</Text>
-        //         </View>
-        //         <View style={styles.infoRow}>
-        //             <Text style={styles.infoLabel}>Ngày sinh:</Text>
-        //             <Text style={styles.infoValue}>{user.birthDate}</Text>
-        //         </View>
-        //         <View style={styles.infoRow}>
-        //             <Text style={styles.infoLabel}>Giới thiệu:</Text>
-        //             <Text style={styles.infoValue}>{user.introduction}</Text>
-        //         </View>
-        //     </Animatable.View>
-        //     <View style={styles.buttonContainer}>
-        //         <TouchableHighlight
-        //             style={styles.button}
-        //             onPress={handleUpdate}
-        //             underlayColor="#1E90FF"
-        //         >
-        //             <Text style={styles.buttonText}>{uploading ? 'Đang tải...' : 'Cập nhật thông tin'}</Text>
-        //         </TouchableHighlight>
-        //         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        //             <Text style={styles.logoutText}>Đăng xuất</Text>
-        //         </TouchableOpacity>
-        //     </View>
-        // </View>
-        <ScrollView style={styles.container}>
-        <View style={styles.headerBackground} />
-        <View style={styles.contentWrapper}>
-            <ProfileHeader
-                avatarUrl={image || 'https://gratisography.com/wp-content/uploads/2024/11/gratisography-augmented-reality-800x525.jpg'}
-                name={user.name || 'Marian Hart'}
-                position="Director of Project Management GoldenPhase Solar"
-                university="Syracuse University - New York"
-                location="Greater San Diego Area / 500+ connections"
+        <View style={styles.container}>
+            <HeaderWithIcons
+                title='Hồ sơ tài khoản'
+                onBackPress={() => {navigation.goBack()}}
             />
-            <Highlights
-                logoUrl="https://cdn.geekwire.com/wp-content/uploads/2015/09/Screen-Shot-2015-09-01-at-9.03.40-AM.png"
-                title={highlights.text}
-                description={highlights.subtitle}
-            />
-            <WorkExperienceCard
-                experiences={workExperience}
-            />
-        </View>
-    </ScrollView>
+            <ScrollView style={styles.scrollContainer}>
+                <ProfileCard
+                    avatar={image}
+                    name={user.sHoVaTen || 'Unknown User'}
+                    email={user.sEmailLienHe || 'No Email'}
+                    location={user.sDiaChi || 'No Address'}
+                    style={{width:"100%"}}
+                    onPress={() => navigation.navigate('EditProfile', { userId })}
+                />
+                <View style={styles.section}>
+                    <View style={styles.sectionHeader}>
+                        <CustomText style={styles.sectionTitle}>Lĩnh Vực</CustomText>
+                        <Image source={require('../../../../asset/images/img_edit.png')} />
+                    </View>
+                    <CustomText style={styles.description}>{user.sChuyenNganh || 'Chưa có thông tin'}</CustomText>
+                </View>
+
+                <View style={styles.section}>
+                    <View style={styles.sectionHeader}>
+                        <CustomText style={styles.sectionTitle}>Kinh Nghiệm Làm Việc</CustomText>
+                        <Image source={require('../../../../asset/images/img_edit.png')} />
+                    </View>
+                    <CustomText style={styles.description}>{user.sKinhNghiem || 'Chưa có kinh nghiệm'}</CustomText>
+                </View>
+
+                <View style={styles.section}>
+                    <View style={styles.sectionHeader}>
+                        <CustomText style={styles.sectionTitle}>Kĩ năng</CustomText>
+                        <Image source={require('../../../../asset/images/img_edit.png')} />
+                    </View>
+                    <SkillTags
+                        skills={user.sKiNang || 'Không có kĩ năng nào'}
+                        onEdit={() => { }}
+                    />
+                </View>
+
+                <View style={styles.section}>
+                    <View style={styles.sectionHeader}>
+                        <CustomText style={styles.sectionTitle}>Sở Thích</CustomText>
+                        <Image source={require('../../../../asset/images/img_edit.png')} />
+                    </View>
+                    <CustomText style={styles.description}>{user.sSoThich || 'Không có sở thích.'}</CustomText>
+                </View>
+
+                <View style={styles.section}>
+                    <View style={styles.sectionHeader}>
+                        <CustomText style={styles.sectionTitle}>Giới thiệu bản thân</CustomText>
+                        <Image source={require('../../../../asset/images/img_edit.png')} />
+                    </View>
+                    <CustomText style={styles.description}>{user.sMoTaChiTiet || 'Không có mô tả chi tiết nào.'}</CustomText>
+                </View>
+
+                <View style={styles.section}>
+                    <View style={styles.sectionHeader}>
+                        <CustomText style={styles.sectionTitle}>CV</CustomText>
+                        <Image source={require('../../../../asset/images/img_edit.png')} />
+                    </View>
+                    <CustomText style={styles.description}>{user.sChuyenNganh || 'Không có CV nào được đăng tải'}</CustomText>
+                </View>
+            </ScrollView>
+            {loading && <Loading />}
+            </View>
     );
 };
 
 const styles = StyleSheet.create({
-    // container: {
-    //     flex: 1,
-    //     backgroundColor: '#F0F4F7',
-    //     padding: 20,
-    //   },
-    // profileContainer: {
-    //     alignItems: 'center',
-    //     marginBottom: 30,
-    // },
-    // profileImage: {
-    //     width: 100,
-    //     height: 100,
-    //     borderRadius: 50,
-    //     marginBottom: 10,
-    // },
-    // name: {
-    //     fontSize: 24,
-    //     fontWeight: 'bold',
-    // },
-    // infoContainer: {
-    //     borderWidth: 1,
-    //     borderColor: '#ccc',
-    //     borderRadius: 8,
-    //     padding: 20,
-    //     marginTop: 20,
-    //     width: '100%',
-    //     backgroundColor: 'white',
-    // },
-    // infoRow: {
-    //     flexDirection: 'row',
-    //     alignItems: 'center',
-    //     marginBottom: 10,
-    // },
-    // infoLabel: {
-    //     fontSize: 16,
-    //     fontWeight: 'bold',
-    //     marginRight: 10,
-    //     color: '#1E90FF',
-    // },
-    // infoValue: {
-    //     fontSize: 16,
-    //     flex: 1,
-    // },
-    // buttonContainer: {
-    //     width: '100%',
-    //     marginTop: 20,
-    //     alignItems: 'center',
-    // },
-    // button: {
-    //     marginVertical: 10,
-    //     backgroundColor: '#1E90FF',
-    //     borderRadius: 15,
-    //     paddingVertical: 10,
-    //     paddingHorizontal: 20,
-    // },
-    // buttonText: {
-    //     color: 'white',
-    //     fontWeight: 'bold',
-    //     textAlign: 'center',
-    // },
-    // logoutButton: {
-    //     marginTop: 10,
-    // },
-    // logoutText: {
-    //     color: '#1E90FF',
-    //     fontWeight: 'bold',
-    //     fontSize: 16,
-    // },
-
     container: {
+        flex: 1,  // ✅ Đảm bảo View cha có flex: 1
+        backgroundColor: '#FFFFFF',
+    },
+    scrollContainer: {
+        flexGrow: 1,
+        padding: 16,
+    },
+    profileCard: {
+        backgroundColor: '#1E3A8A',
+        padding: 16,
+        borderRadius: 12,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    },
+    avatar: {
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+    },
+    infoContainer: {
         flex: 1,
-        backgroundColor: '#F0F4F7',
+        marginLeft: 12,
     },
-    headerBackground: {
-        position: 'absolute',
-        top: 0,
-        width: width,
-        height: height * 0.3,
-        backgroundColor: theme.colors.primary.dark,
-        borderBottomRightRadius: 100,
+    name: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#fff',
     },
-    contentWrapper: {
-        marginTop: height * 0.15,
-        paddingHorizontal: 20,
-        paddingBottom: 40,
-        alignItems: 'center'
+    email: {
+        fontSize: 10,
+        color: '#ddd',
+    },
+    location: {
+        fontSize: 102,
+        color: '#ddd',
+    },
+    editButton: {
+        backgroundColor: '#fff',
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        borderRadius: 6,
+    },
+    editButtonText: {
+        color: '#1E3A8A',
+        fontWeight: 'bold',
+    },
+    section: {
+        padding: 16,
+        marginBottom: 16,
+    },
+    sectionHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+    },
+    sectionTitle: {
+        color: "#012A74",
+        fontSize: 16,
+        fontWeight: "bold",
+    },
+    description: {
+        fontSize: 14,
+        color: '#333',
     },
 });
 

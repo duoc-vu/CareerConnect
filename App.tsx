@@ -1,4 +1,4 @@
-import React,{useState} from 'react';
+import React,{useEffect, useState} from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Home from './src/presentation/screens/components/Home'
@@ -18,19 +18,24 @@ import AppliedJobs from './src/presentation/screens/User/AppliedJobs';
 import AppDetails from './src/presentation/screens/User/AppDetails';
 import EditJob from './src/presentation/screens/Company/EditJob';
 import PostJob from './src/presentation/screens/Company/PostJob';
-import { LoadingProvider } from './src/theme/themeContext'; 
-import { ThemeProvider } from './src/theme/themeContext';
+import { LoadingProvider } from './src/context/themeContext'; 
+import { ThemeProvider } from './src/context/themeContext';
+import { UserProvider }  from './src/context/UserContext';
 import SettingScreen from './src/presentation/screens/components/SettingScreen';
 import Account from './src/presentation/screens/User/Account';
-
+import { LogBox } from 'react-native';
+import SplashScreen from './src/presentation/screens/components/SplashScreen';
 const Stack = createNativeStackNavigator();
 
 const App = () => {
+  LogBox.ignoreAllLogs();
   return (
+    <UserProvider>
     <ThemeProvider>
       <LoadingProvider>
         <NavigationContainer >
-            <Stack.Navigator>
+            <Stack.Navigator >
+            < Stack.Screen name="splash" component={SplashScreen} options={{ headerShown: false }} />
               <Stack.Screen name='login' component={Login}  options={{ headerShown: false}} />
               <Stack.Screen name="bottom" component={BottomBar} options={{ headerShown: false }} />
               <Stack.Screen name='home' component={Home}  options={{ headerShown: false}}/> 
@@ -53,6 +58,7 @@ const App = () => {
           </NavigationContainer>
         </LoadingProvider>
     </ThemeProvider>
+    </UserProvider>
   )
 }
 

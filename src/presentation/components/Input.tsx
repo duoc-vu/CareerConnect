@@ -9,9 +9,10 @@ interface InputProps {
   onChangeText: (text: string) => void;
   secureTextEntry?: boolean;
   style?: StyleProp<TextStyle>;
+  multiline?: boolean; 
 }
 
-const Input: React.FC<InputProps> = ({ placeholder, value, onChangeText, style, secureTextEntry = false  }) => {
+const Input: React.FC<InputProps> = ({ placeholder, multiline, value, onChangeText, style, secureTextEntry = false  }) => {
   return (
     <TextInput
       style={[styles.input, Fonts.regular, style]}
@@ -19,6 +20,7 @@ const Input: React.FC<InputProps> = ({ placeholder, value, onChangeText, style, 
       value={value}
       onChangeText={onChangeText}
       secureTextEntry={secureTextEntry}
+      multiline = {multiline}
       placeholderTextColor={theme.colors.placeholder.light}
     />
   );
