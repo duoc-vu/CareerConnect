@@ -25,10 +25,41 @@ import SettingScreen from './src/presentation/screens/components/SettingScreen';
 import Account from './src/presentation/screens/User/Account';
 import { LogBox } from 'react-native';
 import SplashScreen from './src/presentation/screens/components/SplashScreen';
+import messaging from '@react-native-firebase/messaging';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import firestore from '@react-native-firebase/firestore';
 const Stack = createNativeStackNavigator();
 
 const App = () => {
   LogBox.ignoreAllLogs();
+  useEffect(() => {
+    const unsubscribe = messaging().onTokenRefresh(async (newToken) => {
+      console.log("New FCM Token:", newToken);
+      await AsyncStorage.setItem('fcmToken', newToken);
+  
+      const storedSession = await AsyncStorage.getItem('session');
+      if (storedSession) {
+        const sessionData = JSON.parse(storedSession);
+        if (sessionData?.userId) {
+          await firestore()
+            .collection('tblTaiKhoan')
+            .where('sMaTaiKhoan', '==', sessionData.userId)
+            .get()
+            .then(querySnapshot => {
+              querySnapshot.forEach(doc => {
+                doc.ref.update({ sFCMToken: newToken });
+              });
+            });
+  
+          sessionData.fcmToken = newToken;
+          await AsyncStorage.setItem('session', JSON.stringify(sessionData));
+        }
+      }
+    });
+  
+    return unsubscribe;
+  }, []);
+
   return (
     <UserProvider>
     <ThemeProvider>
@@ -36,7 +67,7 @@ const App = () => {
         <NavigationContainer >
             <Stack.Navigator >
             < Stack.Screen name="splash" component={SplashScreen} options={{ headerShown: false }} />
-              <Stack.Screen name='login' component={Login}  options={{ headerShown: false}} />
+              <Stack.Screen name='login' component= {Login}  options={{ headerShown: false}} />
               <Stack.Screen name="bottom" component={BottomBar} options={{ headerShown: false }} />
               <Stack.Screen name='home' component={Home}  options={{ headerShown: false}}/> 
               <Stack.Screen name='register' component={Register} options={{ headerShown: false}} />

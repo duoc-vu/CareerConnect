@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 
-const SkillTags = ({ skills, onEdit }: { skills: string; onEdit: () => void }) => {
+const SkillTags = ({ skills }: { skills: string; onEdit: () => void }) => {
     const skillArray = skills
     ? skills.replace(/\\n/g, "\n").split(/\r?\n/).map(skill => skill.trim()).filter(skill => skill !== "")
     : [];
