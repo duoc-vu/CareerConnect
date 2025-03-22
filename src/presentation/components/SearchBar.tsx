@@ -1,6 +1,5 @@
 import React from "react";
 import { View, TextInput, StyleSheet, Image, TouchableOpacity } from "react-native";
-import { theme } from "../../theme/theme";
 
 const SearchBar = ({ value, onChangeText }: any) => {
   return (

@@ -3,11 +3,6 @@ import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Image, TextStyle,
 import { theme } from '../../theme/theme';
 import { Fonts } from '../../theme/font';
 
-const { width } = Dimensions.get('window');
-
-// Đường dẫn đến ảnh mặc định
-const defaultIcon = require('../../../asset/images/right-arrow.png'); 
-
 interface SettingItem {
   id: string;
   title: string;

@@ -4,7 +4,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 interface HeaderProps {
   title: string;
   onBackPress?: () => void;
-  backgroundColor?: string; // Cho phép truyền màu nền
+  backgroundColor?: string; 
   style?: any;
 }
 
@@ -30,7 +30,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     position: "relative",
-    marginTop: 10
+    marginTop: 10,
+    paddingTop:10
   },
   title: {
     fontSize: 18,
