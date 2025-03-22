@@ -53,13 +53,13 @@ const PostJob = ({ navigation, route }: any) => {
             const ngayDang = new Date(formData.sThoiGianDangBai);
             const hanTuyen = new Date(formData.sThoiHanTuyenDung);
 
-            let trangThai = "Chờ đăng"; 
+            let trangThai = "Chờ đăng";
             if (currentDate.getTime() === ngayDang.getTime()) {
                 trangThai = "Đang tuyển";
             } else if (currentDate.getTime() > hanTuyen.getTime()) {
                 trangThai = "Hết hạn";
             }
-    
+
 
             if (isNaN(ngayDang.getTime()) || isNaN(hanTuyen.getTime())) {
                 setError("Ngày đăng hoặc hạn tuyển không hợp lệ!");
@@ -89,32 +89,32 @@ const PostJob = ({ navigation, route }: any) => {
                 setError("Số lượng tuyển và số năm kinh nghiệm phải là số hợp lệ!");
                 return;
             }
-            
-            // await fbJob.add({
-            //     ...formData,
-            //     sMaDoanhNghiep: userId,
-            //     sThoiGianDangBai: formData.sThoiGianDangBai.toISOString().split("T")[0],
-            //     sThoiHanTuyenDung: formData.sThoiHanTuyenDung.toISOString().split("T")[0],
-            //     sTrangThai: trangThai,
-            //     sCoKhoa: 2
-            // });
-            
-            console.log({
-                sMaTinTuyenDung: formData.sMaTinTuyenDung,
-                sDiaChiLamViec: formData.sDiaChiLamViec,
-                sLinhVucTuyenDung: formData.sLinhVucTuyenDung,
-                sViTriTuyenDung: formData.sViTriTuyenDung,
-                sMoTaCongViec: formData.sMoTaCongViec,
-                sMucLuongToiThieu: formData.sMucLuongToiThieu, 
-                sMucLuongToiDa: formData.sMucLuongToiDa,
-                sMucLuongToiThieuRaw: minSalaryRaw,
-                sMucLuongToiDaRaw: maxSalaryRaw,
-                sSoLuongTuyenDung: formData.sSoLuongTuyenDung,
-                sSoNamKinhNghiem: formData.sSoNamKinhNghiem,
+
+            await fbJob.add({
+                ...formData,
+                sMaDoanhNghiep: userId,
                 sThoiGianDangBai: formData.sThoiGianDangBai.toISOString().split("T")[0],
                 sThoiHanTuyenDung: formData.sThoiHanTuyenDung.toISOString().split("T")[0],
-                sTrangThai: trangThai
+                sTrangThai: trangThai,
+                sCoKhoa: 2
             });
+
+            // console.log({
+            //     sMaTinTuyenDung: formData.sMaTinTuyenDung,
+            //     sDiaChiLamViec: formData.sDiaChiLamViec,
+            //     sLinhVucTuyenDung: formData.sLinhVucTuyenDung,
+            //     sViTriTuyenDung: formData.sViTriTuyenDung,
+            //     sMoTaCongViec: formData.sMoTaCongViec,
+            //     sMucLuongToiThieu: formData.sMucLuongToiThieu, 
+            //     sMucLuongToiDa: formData.sMucLuongToiDa,
+            //     sMucLuongToiThieuRaw: minSalaryRaw,
+            //     sMucLuongToiDaRaw: maxSalaryRaw,
+            //     sSoLuongTuyenDung: formData.sSoLuongTuyenDung,
+            //     sSoNamKinhNghiem: formData.sSoNamKinhNghiem,
+            //     sThoiGianDangBai: formData.sThoiGianDangBai.toISOString().split("T")[0],
+            //     sThoiHanTuyenDung: formData.sThoiHanTuyenDung.toISOString().split("T")[0],
+            //     sTrangThai: trangThai
+            // });
 
             resetForm();
             navigation.goBack();
@@ -156,10 +156,10 @@ const PostJob = ({ navigation, route }: any) => {
             <Input placeholder="" value={formData.sSoNamKinhNghiem} onChangeText={text => handleChange('sSoNamKinhNghiem', text)} style={styles.input} />
 
             <CustomText style={styles.label}>Ngày bắt đầu tuyển</CustomText>
-            <DatePicker label="" date={formData.sThoiGianDangBai} setDate={date => handleChange('sThoiGianDangBai', date)} />
+            <DatePicker label="" date={formData.sThoiGianDangBai} setDate={(date: any) => handleChange('sThoiGianDangBai', date)} />
 
             <CustomText style={styles.label}>Hạn tuyển</CustomText>
-            <DatePicker label="" date={formData.sThoiHanTuyenDung} setDate={date => handleChange('sThoiHanTuyenDung', date)} />
+            <DatePicker label="" date={formData.sThoiHanTuyenDung} setDate={(date: any) => handleChange('sThoiHanTuyenDung', date)} />
 
             <CustomText style={styles.label}>Mô tả công việc</CustomText>
             <Input placeholder="" multiline value={formData.sMoTaCongViec} onChangeText={text => handleChange('sMoTaCongViec', text)} style={styles.largeInput} />
