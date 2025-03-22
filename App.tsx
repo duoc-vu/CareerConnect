@@ -1,15 +1,14 @@
 import React,{useEffect, useState} from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Home from './src/presentation/screens/components/Home'
 import Login from './src/presentation/screens/Login';
 import Register from './src/presentation/screens/Register';
 import Info from './src/presentation/screens/User/Info';
 import BottomBar from './src/navigation/BottomBar';
-import UserInfoScreen from './src/presentation/screens/User/UserInfoScreen';
 import CV_Profile from './src/presentation/screens/User/CV_Profile';
 import JobDetail from './src/presentation/screens/components/JobDetail';
-import CompanyInfo from './src/presentation/screens/Company/CompanyInfo';
+import EditEmployerProfile from './src/presentation/screens/Company/EditEmployerProfile';
 import CompanyInfoScreen from './src/presentation/screens/Company/CompanyInfoScreen';
 import ApplyJob from './src/presentation/screens/User/ApplyJob';
 import JobApplyCompany from './src/presentation/screens/Company/JobApplyCompany';
@@ -22,12 +21,14 @@ import { LoadingProvider } from './src/context/themeContext';
 import { ThemeProvider } from './src/context/themeContext';
 import { UserProvider }  from './src/context/UserContext';
 import SettingScreen from './src/presentation/screens/components/SettingScreen';
-import Account from './src/presentation/screens/User/Account';
 import { LogBox } from 'react-native';
 import SplashScreen from './src/presentation/screens/components/SplashScreen';
 import messaging from '@react-native-firebase/messaging';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import firestore from '@react-native-firebase/firestore';
+import EditProfile from './src/presentation/screens/User/EditProfile';
+import ProfileCandidate from './src/presentation/screens/User/ProfileCandidate';
+import ProfileEmployer from './src/presentation/screens/Company/ProfileEmployer';
 const Stack = createNativeStackNavigator();
 
 const App = () => {
@@ -71,11 +72,12 @@ const App = () => {
               <Stack.Screen name="bottom" component={BottomBar} options={{ headerShown: false }} />
               <Stack.Screen name='home' component={Home}  options={{ headerShown: false}}/> 
               <Stack.Screen name='register' component={Register} options={{ headerShown: false}} />
-              <Stack.Screen name='Info' component={Info}  options={{ headerShown: false}}/>
-              <Stack.Screen name='company-user-profile' component={UserInfoScreen}  options={{ headerShown: false}}/>
+              {/* <Stack.Screen name='Info' component={Info}  options={{ headerShown: false}}/> */}
+              <Stack.Screen name='employer-profile' component={ProfileEmployer}  options={{ headerShown: false}}/>
+              <Stack.Screen name='edit-candidate-profile' component={EditProfile}  options={{ headerShown: false}}/>
               <Stack.Screen name='job-detail' component={JobDetail}  options={{ headerShown: false}}/>
-              <Stack.Screen name='company-info' component={CompanyInfo}  options={{ headerShown: false}}/>
-              <Stack.Screen name='CompanyIf' component={CompanyInfoScreen}  options={{ headerShown: false}}/>
+              <Stack.Screen name='edit-employer-profile' component={EditEmployerProfile}  options={{ headerShown: false}}/>
+              {/* <Stack.Screen name='CompanyIf' component={CompanyInfoScreen}  options={{ headerShown: false}}/> */}
               <Stack.Screen name='apply-job' component={ApplyJob}  options={{ headerShown: false}}/>
               <Stack.Screen name='list-apply-job' component={JobApplyCompany}  options={{ headerShown: false}}/>
               <Stack.Screen name='cv-detail' component={CV_Profile} options={{ headerShown: false}}/>
@@ -84,7 +86,7 @@ const App = () => {
               <Stack.Screen name='edit-job' component={EditJob}  options={{ headerShown: false}}/>
               <Stack.Screen name="post-job" component={PostJob}  options={{ headerShown: false }} />
               <Stack.Screen name="setting" component={SettingScreen}  options={{ headerShown: false }} />
-              <Stack.Screen name="user-profile" component={Account}  options={{ headerShown: false }} />
+              <Stack.Screen name="candidate-profile" component={ProfileCandidate}  options={{ headerShown: false }} />
               </Stack.Navigator>
           </NavigationContainer>
         </LoadingProvider>

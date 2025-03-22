@@ -50,13 +50,13 @@ const Login = ({ navigation }: any) => {
     };
     
     const handleLogin = async () => {
-        setLoading(true);
+        if (!loading) setLoading(true);
         try {
             const normalizedEmail = email.toLowerCase();
             const userDoc = await fb.where('sEmailLienHe', '==', normalizedEmail).limit(1).get();
             
             if (!email || !password) {
-                setLoading(false);
+                if (loading) setLoading(false);
                 return;
             } else if (!userDoc.empty) {
                 const userData = userDoc.docs[0].data();
@@ -91,19 +91,20 @@ const Login = ({ navigation }: any) => {
                     await AsyncStorage.setItem('session', JSON.stringify(sessionData));
     
                     navigation.navigate(userInfo ? 'bottom' : (userType === 1 ? 'Info' : 'company-info'));
-                    setLoading(false);
+                    // if (loading) setLoading(false);
                 } else {
-                    setLoading(false);
+                    // if (loading) setLoading(false);
                     setError("Sai tài khoản hoặc mật khẩu.");
                 }
             } else {
-                setLoading(false);
+                // if (loading) setLoading(false);
                 setError("Sai tài khoản hoặc mật khẩu.");
             }
         } catch (error) {
             console.error('Lỗi khi kiểm tra User:', error);
-            setLoading(false);
-            setError("Lỗi khi đăng nhập");
+            // if (loading) setLoading(false);
+        } finally {
+            if (loading) setLoading(false);
         }
     };
 
@@ -112,7 +113,7 @@ const Login = ({ navigation }: any) => {
         const unsubscribe = navigation.addListener('focus', () => {
             setEmail('');
             setPassword('');
-            setLoading(false);
+            // if (loading) setLoading(false);
         });
         return unsubscribe;
     }, [navigation]);
@@ -165,7 +166,6 @@ const Login = ({ navigation }: any) => {
                 <CustomText style={styles.signupLink}>Sign Up</CustomText>
                 </TouchableOpacity>
             </View>
-            {loading && <Loading />}
         </ScrollView>
     );
 };
