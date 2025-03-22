@@ -21,13 +21,6 @@ const JobDetail = ({ route, navigation }: any) => {
   const [image, setImage] = useState<string>("");
   const { loading, setLoading } = useLoading();
   const { userId, userType } = useUser();
-  useEffect(() => {
-    console.log("✅ Cập nhật job:", job);
-  }, [job]);
-  
-  useEffect(() => {
-    console.log("✅ Cập nhật companyDetail:", companyDetail);
-  }, [companyDetail]);
   
   useEffect(() => {
     console.log("📌 sMaTinTuyenDung từ route:", sMaTinTuyenDung);
@@ -35,7 +28,6 @@ const JobDetail = ({ route, navigation }: any) => {
     const getJobDetail = async () => {
       setLoading(true);
       try {
-        // 🔹 Lấy dữ liệu công việc từ Firestore
         const jobQuerySnapshot = await fbJobDetail
           .where("sMaTinTuyenDung", "==", sMaTinTuyenDung)
           .get();
@@ -47,34 +39,25 @@ const JobDetail = ({ route, navigation }: any) => {
           const jobData: any = jobDoc.data();
           setJob(jobData);
   
-          console.log("📌 jobData lấy được:", jobData);
-          console.log("📌 sMaDoanhNghiep:", jobData.sMaDoanhNghiep);
-  
           if (jobData.sMaDoanhNghiep) {
             const companySnapshot = await fbCT
               .where("sMaDoanhNghiep", "==", jobData.sMaDoanhNghiep)
               .get();
   
-            console.log("📌 Firestore trả về companySnapshot:", companySnapshot.empty ? "Không có dữ liệu" : companySnapshot.docs.map(doc => doc.data()));
-  
             if (!companySnapshot.empty) {
               const companyDoc = companySnapshot.docs[0];
               const companyData = companyDoc.data();
               setCompanyDetail(companyData);
-  
-              console.log("✅ Lấy được companyDetail:", companyData);
             } else {
               console.warn("⚠️ Không tìm thấy công ty với mã:", jobData.sMaDoanhNghiep);
             }
           }
   
-          // 🔹 Lấy ảnh công ty nếu có
           if (jobData.sMaDoanhNghiep) {
             try {
               const avatarRef = storage().ref(`Avatar_Cong_Ty/${jobData.sMaDoanhNghiep}.png`);
               const companyLogo = await avatarRef.getDownloadURL();
               setImage(companyLogo);
-              console.log("📌 Avatar URL:", companyLogo);
             } catch (error: any) {
               console.error("🚨 Lỗi tải logo công ty:", error.code, error.message);
             }

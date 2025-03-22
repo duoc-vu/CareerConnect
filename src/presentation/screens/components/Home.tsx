@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   StyleSheet,
@@ -7,114 +7,37 @@ import {
   FlatList,
   TouchableOpacity,
   StatusBar,
+  Alert,
 } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import JobCard from '../../components/JobCard';
 import SearchBar from '../../components/SearchBar';
-import Loading from "../../components/Loading";
-import { useLoading } from '../../../theme/themeContext';
-import Button from '../../components/Button';
+import { useLoading } from '../../../context/themeContext';
 import Pagination from '../../components/Pagination';
 import { theme } from '../../../theme/theme';
 import { Fonts } from '../../../theme/font';
 import UploadButton from '../../components/UploadButton';
-
+import { useUser } from '../../../context/UserContext';
 const fbJob = firestore().collection('tblTinTuyenDung');
 const fbCT = firestore().collection('tblDoanhNghiep');
 
 const PAGE_SIZE = 5;
 
-const Home = ({ navigation, route }: any) => {
-  const [jobs, setJobs] = useState<any>([]);
+const Home = ({jobs, navigation }: any) => {
   const [user, setUser] = useState('');
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredJobs, setFilteredJobs] = useState([]);
-  const { loading, setLoading } = useLoading();
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(0);
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
 
-  const params = route?.params ?? {};
-  const userId = params.userId ?? null;
-  const userType = params.userType ?? 0;
+  const { userId, userType} = useUser();
 
   useEffect(() => {
     filterJobs(searchQuery);
   }, [searchQuery, jobs]);
 
-  useEffect(() => {
-    fetchJobs(currentPage);
-    console.log(userId)
-  }, [currentPage]);
-
   const handleUploadPress = () => {
     navigation.navigate("post-job", userId); 
-  };
-
-  const fetchJobs = async (page: number) => {
-    setLoading(true);
-    try {
-      const querySnapshot = await fbJob.where("sCoKhoa", "==", 1).get();
-      setTotalPages(Math.ceil(querySnapshot.size / PAGE_SIZE));
-
-      const jobList: any = [];
-
-      const promises = querySnapshot.docs.map(async (doc: any) => {
-        const jobData = doc.data();
-        let companyName = 'Unknown Company';
-        let companyLogo = '';
-
-        if (jobData.sMaDoanhNghiep) {
-          try {
-            const companySnapshot = await fbCT.where(
-              'sMaDoanhNghiep',
-              '==',
-              jobData.sMaDoanhNghiep
-            ).get();
-
-            if (!companySnapshot.empty) {
-              const companyDoc = companySnapshot.docs[0];
-              const companyData = companyDoc.data();
-              companyName = companyData?.sTenDoanhNghiep || 'Unknown Company';
-              const avatarRef = storage().ref(
-                `Avatar_Cong_Ty/${jobData.sMaDoanhNghiep}.png`
-              );
-              companyLogo = await avatarRef.getDownloadURL();
-            }
-          } catch (error) {
-            console.error("Error fetching company info:", error);
-          }
-        }
-
-        jobList.push({
-          idJob: jobData.sMaTinTuyenDung,
-          jobTitle: jobData.sViTriTuyenDung,
-          companyName,
-          companyLogo,
-          salaryMin: jobData.sMucLuongToiThieu,
-          salaryMax: jobData.sMucLuongToiDa,
-          jobType: jobData.sTrangThai || 'Full-time',
-          location: jobData.sDiaChiLamViec || 'Remote',
-        });
-      });
-
-      await Promise.all(promises);
-      setJobs(jobList);
-
-      const totalJobsSnapshot = await fbJob.where("sCoKhoa", "==", 1).get();
-      setTotalPages(Math.ceil(totalJobsSnapshot.size / PAGE_SIZE));
-      console.log("Total jobs with sCoKhoa == 1:", totalJobsSnapshot.size);
-      console.log("Total pages:", Math.ceil(totalJobsSnapshot.size / PAGE_SIZE));
-
-    } catch (error) {
-      console.error('Error fetching jobs:', error);
-    } finally {
-      setLoading(false);
-    }
   };
 
   const filterJobs = (query: string) => {
@@ -130,8 +53,6 @@ const Home = ({ navigation, route }: any) => {
     setFilteredJobs(filtered);
   };
 
-
-
   const renderItem = ({ item }: any) => {
     return (
       <View style={{ overflow: "hidden" }}>
@@ -145,7 +66,7 @@ const Home = ({ navigation, route }: any) => {
             jobType={item.jobType}
             location={item.location}
             onPress={() =>
-              navigation.navigate('JobDetail', { jobId: item.idJob, userId, userType })
+              navigation.navigate('job-detail', { sMaTinTuyenDung: item.idJob})
             }
           />
         </View>
@@ -172,8 +93,6 @@ const Home = ({ navigation, route }: any) => {
           <Image source={require('../../../../asset/images/img_notification.png')} style={styles.notificationIcon} />
         </TouchableOpacity>
       </View>
-
-
       <SearchBar value={searchQuery} onChangeText={setSearchQuery} />
 
       <FlatList
@@ -194,8 +113,7 @@ const Home = ({ navigation, route }: any) => {
         buttonStyle={styles.paginationButton}
         textStyle={styles.paginationText}
       /> */}
-      <UploadButton onPress={handleUploadPress} />
-      {loading && <Loading />}
+      {userType === 2 && <UploadButton onPress={handleUploadPress} />}
     </View>
   );
 };
