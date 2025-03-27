@@ -1,13 +1,13 @@
 import React from "react";
 import { View, TextInput, StyleSheet, Image, TouchableOpacity } from "react-native";
 
-const SearchBar = ({ value, onChangeText }: any) => {
+const SearchBar = ({style, value, onChangeText }: any) => {
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       <TextInput
         style={styles.input}
         placeholder="Tìm kiếm việc làm "
-        placeholderTextColor="#6B7280"
+        placeholderTextColor="#1F3C88"
         value={value}
         onChangeText={onChangeText}
       />
@@ -25,13 +25,15 @@ const styles = StyleSheet.create({
     backgroundColor: "#F7F8F9",
     borderRadius: 15,
     paddingHorizontal: 20,
+    borderColor: "#1F3C88",
+    borderWidth: 1,
     marginVertical: 10,
     height: 50,
     elevation: 1,
   },
   input: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 13.5,
     color: "#1F2937",
     fontWeight: "500",
   },

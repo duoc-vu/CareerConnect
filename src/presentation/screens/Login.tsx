@@ -5,7 +5,6 @@ import Button from '../components/Button';
 import CheckBox from '../components/CheckBox';
 import CustomText from '../components/CustomText';
 import Input from '../components/Input';
-import Loading from "../components/Loading";
 import firestore from '@react-native-firebase/firestore';
 import { theme } from '../../theme/theme';
 import { useLoading } from '../../context/themeContext';
@@ -41,8 +40,6 @@ const Login = ({ navigation }: any) => {
                             });
                         }
                     });
-    
-                console.log("FCM Token updated:", token);
             }
         } catch (error) {
             console.error("Error updating FCM Token:", error);

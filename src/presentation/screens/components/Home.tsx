@@ -24,20 +24,18 @@ const fbCT = firestore().collection('tblDoanhNghiep');
 
 const PAGE_SIZE = 5;
 
-const Home = ({jobs, navigation }: any) => {
-  const [user, setUser] = useState('');
-  const [userAvatar, setUserAvatar] = useState<string | null>(null);
+const Home = ({ jobs, navigation }: any) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredJobs, setFilteredJobs] = useState([]);
 
-  const { userId, userType} = useUser();
+  const { userId, userType, userInfo } = useUser();
 
   useEffect(() => {
     filterJobs(searchQuery);
   }, [searchQuery, jobs]);
 
   const handleUploadPress = () => {
-    navigation.navigate("post-job", userId); 
+    navigation.navigate("post-job", userId);
   };
 
   const filterJobs = (query: string) => {
@@ -58,15 +56,14 @@ const Home = ({jobs, navigation }: any) => {
       <View style={{ overflow: "hidden" }}>
         <View style={{ backgroundColor: "transparent" }}>
           <JobCard
-            companyLogo={item.companyLogo}
-            companyName={item.companyName}
-            jobTitle={item.jobTitle}
-            salaryMin={item.salaryMin ? item.salaryMin : 0}
-            salaryMax={item.salaryMax ? item.salaryMax : 0}
-            jobType={item.jobType}
-            location={item.location}
+            companyLogo={item.sAnhDaiDien}
+            companyName={item.sTenDoanhNghiep}
+            jobTitle={item.sViTriTuyenDung}
+            salaryMax={item.sMucLuongToiDa ? item.sMucLuongToiDa : 0}
+            jobType="On-site"
+            location={item.sDiaChiLamViec}
             onPress={() =>
-              navigation.navigate('job-detail', { sMaTinTuyenDung: item.idJob})
+              navigation.navigate('job-detail', { sMaTinTuyenDung: item.sMaTinTuyenDung })
             }
           />
         </View>
@@ -78,22 +75,14 @@ const Home = ({jobs, navigation }: any) => {
     <View style={styles.container}>
       <StatusBar backgroundColor={'#F0F4F7'} />
       <View style={styles.header}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: "space-between" }}>
+        <View style={{ width: "100%" , flexDirection: 'row', alignItems: 'center', justifyContent: "space-evenly" }}>
+          <SearchBar style={{ width: "80%" }} value={searchQuery} onChangeText={setSearchQuery} />
           <Image
-            source={userAvatar ? { uri: userAvatar } : require('../../../../asset/images/img_ellipse_3.png')}
+            source={userInfo?.sAnhDaiDien ? { uri: userInfo?.sAnhDaiDien } : require('../../../../asset/images/img_ellipse_3.png')}
             style={styles.avatar}
           />
-          <View style={styles.welcomeText}>
-            <Text style={{ fontSize: 20, ...Fonts.semiBold }}>Welcome Back,</Text>
-            <Text style={styles.userName}>{user || "Guest"}</Text>
-          </View>
-
         </View>
-        <TouchableOpacity>
-          <Image source={require('../../../../asset/images/img_notification.png')} style={styles.notificationIcon} />
-        </TouchableOpacity>
       </View>
-      <SearchBar value={searchQuery} onChangeText={setSearchQuery} />
 
       <FlatList
         data={filteredJobs}
@@ -113,7 +102,6 @@ const Home = ({jobs, navigation }: any) => {
         buttonStyle={styles.paginationButton}
         textStyle={styles.paginationText}
       /> */}
-      {userType === 2 && <UploadButton onPress={handleUploadPress} />}
     </View>
   );
 };
@@ -121,29 +109,21 @@ const Home = ({jobs, navigation }: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background.light,
+    backgroundColor: "#f2f2f2",
     padding: 15,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 20,
+    // marginBottom: 10,
+    width: "100%"
   },
   avatar: {
     width: 40,
     height: 40,
     borderRadius: 20,
-  },
-  welcomeText: {
-    width: "80%",
-    color: "#111827",
-    ...Fonts.semiBold,
-    marginLeft: 10
-  },
-  userName: {
-    fontSize: 20,
-    ...Fonts.semiBold,
+    marginLeft: 10,
   },
   notificationIcon: {
     width: 20,

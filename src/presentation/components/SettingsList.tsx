@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
     borderBottomColor: theme.colors.primary.light,
   },
   itemText: {
-    fontSize: 16,
+    fontSize: 15,
     color: theme.colors.text.primary,
     flex: 1,
   },

@@ -6,7 +6,7 @@ import { BlurView } from '@react-native-community/blur';
 
 import Home from '../presentation/screens/components/Home';
 import AccountCompany from '../presentation/screens/Company/ProfileEmployer';
-import JobCompany from '../presentation/screens/Company/JobCompany';
+import JobCompany from '../presentation/screens/Company/PostedJobs';
 import AppliedJobs from '../presentation/screens/User/AppliedJobs';
 import { useLoading } from '../context/themeContext';
 import Loading from "../presentation/components/Loading";
@@ -15,51 +15,49 @@ import { useUser } from '../context/UserContext';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import { useNavigation } from '@react-navigation/native';
+import PostedJobs from '../presentation/screens/Company/PostedJobs';
 
 const homeIcon = require('../../asset/images/img_home.png');
 const appliJob = require('../../asset/images/img_bookmark.png');
 const notificationsIcon = require('../../asset/images/img_notification.png');
 const profileIcon = require('../../asset/images/img_profile.png');
+const posted = require('../../asset/images/save_bottom.png');
 
 const Tab = createBottomTabNavigator();
 
 const fbJob = firestore().collection('tblTinTuyenDung');
 const fbCT = firestore().collection('tblDoanhNghiep');
 
-const BottomBar = ({ route }: any) => {
+const BottomBar = () => {
   const { theme } = useTheme();
-  const { userId, userType} = useUser();
+  const { userId, userType } = useUser();
   const { loading, setLoading } = useLoading();
   const [jobs, setJobs] = useState([]);
-  const [companyLogos, setCompanyLogos] = useState<{ [key: string]: string }>({});
   const navigation = useNavigation()
 
   useEffect(() => {
-      fetchData();
+    const loadData = async () => {
+      await updateJobStatus(); 
+      await fetchJobData(); 
+    };
+    loadData();
   }, []);
 
-  const fetchData = async () => {
-
-    setLoading(true);
-  
+  const updateJobStatus = async () => {
     try {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
   
-      const querySnapshot = await fbJob.where("sCoKhoa", "==", 1).get();
-  
-      const jobList: any = [];
+      const querySnapshot = await fbJob.get(); 
       const batch = firestore().batch();
   
-      const promises = querySnapshot.docs.map(async (doc: any) => {
+      const promises = querySnapshot.docs.map(async (doc) => {
         const jobData = doc.data();
-        let companyName = 'Unknown Company';
-        let companyLogo = '';
+        let newStatus = jobData.sTrangThai;
+        let newCoKhoa = jobData.sCoKhoa;
   
         const ngayBatDau = new Date(jobData.sThoiGianDangBai);
         const hanTuyen = new Date(jobData.sThoiHanTuyenDung);
-        let newStatus = jobData.sTrangThai;
-        let newCoKhoa = jobData.sCoKhoa;
   
         if (today > hanTuyen) {
           newStatus = "Hết hạn";
@@ -69,18 +67,36 @@ const BottomBar = ({ route }: any) => {
         }
   
         if (newStatus !== jobData.sTrangThai || newCoKhoa !== jobData.sCoKhoa) {
+          console.log(`Updating job ${jobData.sMaTinTuyenDung}: ${jobData.sTrangThai} -> ${newStatus}`);
           batch.update(doc.ref, { sTrangThai: newStatus, sCoKhoa: newCoKhoa });
         }
+      });
+  
+      await Promise.all(promises);
+      await batch.commit(); 
+      console.log("Job statuses updated successfully");
+    } catch (error) {
+      console.error("Error updating job statuses:", error);
+    }
+  };
+
+  const fetchJobData = async () => {
+    setLoading(true);
+    try {
+      const querySnapshot = await fbJob.where("sCoKhoa", "==", 1).get();
+      const jobList:any = [];
+  
+      const promises = querySnapshot.docs.map(async (doc) => {
+        const jobData = doc.data();
+        let companyName = 'Unknown Company';
+        let companyLogo = '';
   
         if (jobData.sMaDoanhNghiep) {
           try {
             const companySnapshot = await fbCT.where('sMaDoanhNghiep', '==', jobData.sMaDoanhNghiep).get();
-  
             if (!companySnapshot.empty) {
-              const companyDoc = companySnapshot.docs[0];
-              const companyData = companyDoc.data();
+              const companyData = companySnapshot.docs[0].data();
               companyName = companyData?.sTenDoanhNghiep || 'Unknown Company';
-  
               const avatarPath = `Avatar_Cong_Ty/${jobData.sMaDoanhNghiep}.png`;
               const avatarRef = storage().ref(avatarPath);
               try {
@@ -88,7 +104,7 @@ const BottomBar = ({ route }: any) => {
               } catch (error) {
                 console.warn(`⚠️ Không tìm thấy ảnh công ty: ${avatarPath}`);
                 companyLogo = require('../../asset/images/img_splash.png');
-              } 
+              }
             }
           } catch (error) {
             console.error("Error fetching company info:", error);
@@ -96,25 +112,23 @@ const BottomBar = ({ route }: any) => {
         }
   
         jobList.push({
-          idJob: jobData.sMaTinTuyenDung,
-          jobTitle: jobData.sViTriTuyenDung,
-          companyName,
-          companyLogo,
-          salaryMin: jobData.sMucLuongToiThieu,
-          salaryMax: jobData.sMucLuongToiDa,
-          jobType: newStatus,
-          location: jobData.sDiaChiLamViec || 'Remote',
+          sMaTinTuyenDung: jobData.sMaTinTuyenDung,
+          sViTriTuyenDung: jobData.sViTriTuyenDung,
+          sTenDoanhNghiep: companyName,
+          sAnhDaiDien: companyLogo,
+          sMucLuongToiThieu: jobData.sMucLuongToiThieu,
+          sMucLuongToiDa: jobData.sMucLuongToiDa,
+          sTrangThai: jobData.sTrangThai,
+          sDiaChiLamViec: jobData.sDiaChiLamViec || 'Remote',
         });
       });
   
       await Promise.all(promises);
-      await batch.commit();
-  
-      setJobs(jobList);
+      setJobs(jobList); 
     } catch (error) {
       console.error('Error fetching jobs:', error);
     } finally {
-       setLoading(false)
+      setLoading(false);
     }
   };
 
@@ -137,8 +151,11 @@ const BottomBar = ({ route }: any) => {
         case 'Tài khoản':
           iconSource = profileIcon;
           break;
-        case 'Đã đăng tải':
+        case 'Thông báo':
           iconSource = notificationsIcon;
+          break;
+        case 'Đã đăng tải':
+          iconSource = posted;
           break;
         case 'Tài khoản công ty':
           iconSource = profileIcon;
@@ -160,29 +177,29 @@ const BottomBar = ({ route }: any) => {
     detachInactiveScreens: true,
   });
 
-  
+
 
   const tabs = [
-    { name: "Trang chủ", component:<Home jobs={jobs} companyLogos={companyLogos} navigation={navigation}/>  },
-    userType === 1 && { name: "Thông báo", component:<SettingScreen navigation={navigation}/> },
-    userType === 2 && { name: "Cài đặt", component:<SettingScreen navigation={navigation}/> },
-    userType === 2 ? { name: "Tài khoản công ty", component:<SettingScreen navigation={navigation}/> } : { name: "Tài khoản", component: SettingScreen },
-    userType === 0 && { name: "Thông báo", component:<View></View> },
+    { name: "Trang chủ", component: <Home jobs={jobs} navigation={navigation} /> },
+    userType === 1 && { name: "Thông báo", component: <SettingScreen navigation={navigation} /> },
+    userType === 2 && { name: "Đã đăng tải", component: <PostedJobs navigation={navigation} /> },
+    userType === 2 ? { name: "Tài khoản công ty", component: <SettingScreen navigation={navigation} /> } : { name: "Tài khoản", component: SettingScreen },
+    userType === 0 && { name: "Thông báo", component: <View></View> },
   ].filter(Boolean);
 
   return (
     <View style={{ flex: 1 }}>
-       {loading  ? (
+      {loading ? (
         <Loading />
       ) : (
         <Tab.Navigator initialRouteName="Trang chủ" screenOptions={screenOptions}>
           {tabs.map(({ name, component }: any) => (
             <Tab.Screen key={name} name={name} options={{ headerShown: false }}>
-            {() => component}
-          </Tab.Screen>
+              {() => component}
+            </Tab.Screen>
           ))}
         </Tab.Navigator>
-        )}
+      )}
     </View>
   );
 };
@@ -190,7 +207,6 @@ const BottomBar = ({ route }: any) => {
 const styles = StyleSheet.create({
   tabBar: {
     position: 'absolute',
-    bottom: 5,
     left: 0,
     right: 0,
     height: 80,
@@ -198,8 +214,8 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 45,
     borderBottomLeftRadius: 15,
     borderBottomRightRadius: 15,
-    backgroundColor: 'rgba(195, 216, 244, 0.99)', 
-    overflow: 'hidden', 
+    backgroundColor: 'white',
+    overflow: 'hidden',
     elevation: 10,
     shadowColor: "#000",
     shadowOpacity: 0.1,

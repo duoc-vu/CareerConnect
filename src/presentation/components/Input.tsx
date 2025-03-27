@@ -6,13 +6,14 @@ import { Fonts } from "../../theme/font";
 interface InputProps {
   placeholder: string;
   value: string;
-  onChangeText: (text: string) => void;
+  onChangeText?: (text: string) => void;
   secureTextEntry?: boolean;
   style?: StyleProp<TextStyle>;
   multiline?: boolean; 
+  editable?: boolean;
 }
 
-const Input: React.FC<InputProps> = ({ placeholder, multiline, value, onChangeText, style, secureTextEntry = false  }) => {
+const Input: React.FC<InputProps> = ({ placeholder, multiline, value, onChangeText, style, secureTextEntry = false , editable }) => {
   return (
     <TextInput
       style={[styles.input, Fonts.regular, style]}
@@ -22,6 +23,7 @@ const Input: React.FC<InputProps> = ({ placeholder, multiline, value, onChangeTe
       secureTextEntry={secureTextEntry}
       multiline = {multiline}
       placeholderTextColor={theme.colors.placeholder.light}
+      editable = {editable}
     />
   );
 };

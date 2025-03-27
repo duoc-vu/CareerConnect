@@ -21,29 +21,26 @@ const JobDetail = ({ route, navigation }: any) => {
   const [image, setImage] = useState<string>("");
   const { loading, setLoading } = useLoading();
   const { userId, userType } = useUser();
-  
+
   useEffect(() => {
-    console.log("📌 sMaTinTuyenDung từ route:", sMaTinTuyenDung);
-  
     const getJobDetail = async () => {
       setLoading(true);
       try {
         const jobQuerySnapshot = await fbJobDetail
           .where("sMaTinTuyenDung", "==", sMaTinTuyenDung)
           .get();
-  
-        console.log("📌 Firestore trả về jobQuerySnapshot:", jobQuerySnapshot.empty ? "Không có dữ liệu" : jobQuerySnapshot.docs.map(doc => doc.data()));
-  
+
+
         if (!jobQuerySnapshot.empty) {
           const jobDoc = jobQuerySnapshot.docs[0];
           const jobData: any = jobDoc.data();
           setJob(jobData);
-  
+
           if (jobData.sMaDoanhNghiep) {
             const companySnapshot = await fbCT
               .where("sMaDoanhNghiep", "==", jobData.sMaDoanhNghiep)
               .get();
-  
+
             if (!companySnapshot.empty) {
               const companyDoc = companySnapshot.docs[0];
               const companyData = companyDoc.data();
@@ -52,7 +49,7 @@ const JobDetail = ({ route, navigation }: any) => {
               console.warn("⚠️ Không tìm thấy công ty với mã:", jobData.sMaDoanhNghiep);
             }
           }
-  
+
           if (jobData.sMaDoanhNghiep) {
             try {
               const avatarRef = storage().ref(`Avatar_Cong_Ty/${jobData.sMaDoanhNghiep}.png`);
@@ -71,77 +68,83 @@ const JobDetail = ({ route, navigation }: any) => {
         setLoading(false);
       }
     };
-  
+
     getJobDetail();
   }, [sMaTinTuyenDung]);
-  
+
+  const isApplyButtonDisabled = userType === 2;
   const jobDescriptions = job?.sMoTaCongViec?.split("/n") || [];
   return (
     <View style={[styles.wrapper, { backgroundColor: theme.bG }]}>
-    <HeaderWithIcons title="Job Details" onBackPress={() => navigation.goBack()} />
+      <HeaderWithIcons title="Tin tuyển dụng" onBackPress={() => navigation.goBack()} />
 
-    {loading ? (
-      <Loading />
-    ) : !job || !companyDetail || !jobDescriptions ? (
-      <Loading/>
-    ) : (
-      <>
-        <ScrollView style={styles.container}>
-          <View style={styles.card}>
-            <JobCard
-              companyLogo={image}
-              companyName={companyDetail.sTenDoanhNghiep}
-              jobTitle={job.sViTriTuyenDung}
-              jobType="On-site"
-              location={job.sDiaChiLamViec}
-              onPress={() => {}}
-              salaryMax={job.sMucLuongToiThieu}
-              salaryMin={job.sMucLuongToiDa}
-              deadline={job.sThoiHanTuyenDung}
-            />
-          </View>
-
-          <View style={styles.content}>
-            <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: theme.surface }, Fonts.semiBold]}>
-                Mô tả công việc
-              </Text>
-              <Text style={[styles.description, { color: theme.surface }, Fonts.regular]}>
-                {jobDescriptions[0] || "Không có mô tả"}
-              </Text>
+      {loading ? (
+        <Loading />
+      ) : !job || !companyDetail || !jobDescriptions ? (
+        <Loading />
+      ) : (
+        <>
+          <ScrollView style={styles.container}>
+            <View style={styles.card}>
+              <JobCard
+                companyLogo={image}
+                companyName={companyDetail.sTenDoanhNghiep}
+                jobTitle={job.sViTriTuyenDung}
+                jobType="On-site"
+                location={job.sDiaChiLamViec}
+                onPress={() => { }}
+                salaryMax={job.sMucLuongToiThieu}
+                salaryMin={job.sMucLuongToiDa}
+                deadline={job.sThoiHanTuyenDung}
+              />
             </View>
 
-            <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: theme.surface }, Fonts.semiBold]}>
-                Yêu cầu ứng viên
-              </Text>
-              <Text style={[styles.description, { color: theme.surface }, Fonts.regular]}>
-                {jobDescriptions[1] || "Không có yêu cầu cụ thể"}
-              </Text>
-            </View>
+            <View style={styles.content}>
+              <View style={styles.section}>
+                <Text style={[styles.sectionTitle, { color: theme.surface }, Fonts.semiBold]}>
+                  Mô tả công việc
+                </Text>
+                <Text style={[styles.description, { color: theme.surface }, Fonts.regular]}>
+                  {jobDescriptions[0] || "Không có mô tả"}
+                </Text>
+              </View>
 
-            <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: theme.surface }, Fonts.semiBold]}>
-                Quyền lợi
-              </Text>
-              <Text style={[styles.description, { color: theme.surface }, Fonts.regular]}>
-                {jobDescriptions[2] || "Không có thông tin"}
-              </Text>
-            </View>
-          </View>
-        </ScrollView>
+              <View style={styles.section}>
+                <Text style={[styles.sectionTitle, { color: theme.surface }, Fonts.semiBold]}>
+                  Yêu cầu ứng viên
+                </Text>
+                <Text style={[styles.description, { color: theme.surface }, Fonts.regular]}>
+                  {jobDescriptions[1] || "Không có yêu cầu cụ thể"}
+                </Text>
+              </View>
 
-        <TouchableOpacity style={styles.applyButton} onPress={() => navigation.navigate("Home")}>
-          <Text style={styles.applyText}>Ứng tuyển ngay</Text>
-        </TouchableOpacity>
-      </>
-    )}
-  </View>
+              <View style={styles.section}>
+                <Text style={[styles.sectionTitle, { color: theme.surface }, Fonts.semiBold]}>
+                  Quyền lợi
+                </Text>
+                <Text style={[styles.description, { color: theme.surface }, Fonts.regular]}>
+                  {jobDescriptions[2] || "Không có thông tin"}
+                </Text>
+              </View>
+            </View>
+          </ScrollView>
+
+          <TouchableOpacity
+            style={[styles.applyButton, isApplyButtonDisabled && styles.applyButtonDisabled]}
+            disabled={isApplyButtonDisabled}
+            onPress={() => navigation.navigate("apply-job", { sMaTinTuyenDung })}
+          >
+            <Text style={styles.applyText}>Ứng tuyển ngay</Text>
+          </TouchableOpacity>
+        </>
+      )}
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   wrapper: {
+    fontFamily: Fonts.medium.fontFamily,
     flex: 1,
   },
   container: {
@@ -162,6 +165,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   sectionTitle: {
+    fontFamily: Fonts.semiBold.fontFamily,
     fontSize: 16,
   },
   description: {
@@ -184,6 +188,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: "center",
     fontWeight: "bold",
+  },
+  applyButtonDisabled: {
+    backgroundColor: "#A9A9A9",
+    opacity: 0.8,
   },
 });
 

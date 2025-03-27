@@ -1,8 +1,6 @@
 import React from "react";
-import { View, Text, Image, StyleSheet } from "react-native";
-import { useTheme } from "../../context/themeContext";
-import { TouchableOpacity } from "react-native";
-import { theme } from "../../theme/theme";
+import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
+import { Fonts } from "../../theme/font";
 
 interface JobCardProps {
   companyLogo: string;
@@ -10,9 +8,7 @@ interface JobCardProps {
   jobTitle: string;
   location: string;
   jobType: string;
-  salaryMin: number;
   salaryMax: number;
-  deadline?: string;
   onPress: () => void;
   style?: any;
 }
@@ -22,45 +18,60 @@ const JobCard: React.FC<JobCardProps> = ({
   companyName,
   jobTitle,
   location,
-  salaryMin,
   salaryMax,
   jobType,
-  deadline,
   onPress,
-  style
+  style,
 }) => {
-  const { theme } = useTheme();
+  // Định dạng mức lương theo đơn vị Rupiah (Rp)
+  const formatSalary = (max: number) => {
+    return `Up to ${max.toLocaleString()} VND`;
+  };
 
   return (
-    <TouchableOpacity style={[styles.card, { backgroundColor: theme.card}, style]} onPress={onPress}  activeOpacity={1}>
+    <TouchableOpacity
+      style={[styles.card, style]}
+      onPress={onPress}
+      activeOpacity={0.8}
+    >
+      <TouchableOpacity>
+          <Image
+            source={require("../../../asset/images/save_job.png")}
+            style={styles.bookmarkIcon}
+          />
+        </TouchableOpacity>
+      {/* Header */}
       <View style={styles.header}>
-      <Image
-        source={
-          typeof companyLogo === "string" && companyLogo.startsWith("http")
-            ? { uri: companyLogo }
-            : require('../../../asset/images/img_splash.png')
-        }
-        style={styles.logo}
-      />
-        <Text style={[styles.companyName, { color: theme.surface }]}>{companyName}</Text>
-        <Text style={[styles.jobType, { color: theme.primary }]}>{jobType}</Text>
+        <View style={styles.headerLeft}>
+          <Image
+            source={
+              typeof companyLogo === "string" && companyLogo.startsWith("http")
+                ? { uri: companyLogo }
+                : require("../../../asset/images/img_splash.png")
+            }
+            style={styles.logo}
+          />
+          <View>
+            <Text style={styles.jobTitle}>{jobTitle}</Text>
+            <Text style={styles.companyName}>{companyName}</Text>
+          </View>
+        </View>
+        
       </View>
 
-      <Text style={[styles.jobTitle, { color: theme.surface }]}>{jobTitle}</Text>
+      {/* Job Title */}
 
+      {/* Footer */}
       <View style={styles.footer}>
-        <View>
-          <Text style={[styles.salary, { color: theme.surface }]}>
-            {salaryMin.toLocaleString()} - {salaryMax.toLocaleString()}đ / tháng
-          </Text>
-          {deadline && (
-            <Text style={[styles.deadline, { color: theme.surface }]}>Hạn nộp: {deadline}</Text>
-          )}
+        <View style={styles.tag}>
+          <Text style={styles.tagText}>{jobType}</Text>
         </View>
-        <View style={[styles.tag, { backgroundColor: 'rgba(195, 216, 244, 0.4)' }]}>
+        <View style={styles.tag}>
           <Text style={styles.tagText}>{location}</Text>
         </View>
-        <Image source={require("../../../asset/images/bookmark_light.png")}></Image>
+        <View style={styles.tag}>
+          <Text style={styles.tagText}>{formatSalary(salaryMax)}</Text>
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -68,69 +79,71 @@ const JobCard: React.FC<JobCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 20,
+    borderRadius: 10,
     padding: 15,
     marginVertical: 10,
-    backgroundColor: theme.colors.card.light,
-    borderWidth: 1, 
-    borderColor: "#A2CEF4", 
-    minHeight: 150, 
-    alignSelf: "center", 
-    width: "90%"
+    backgroundColor: "#FFFFFF",
+    minHeight: 120,
+    width: "90%",
+    alignSelf: "center",
+    elevation: 2, // Bóng cho Android
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   header: {
     flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 8,
+    marginBottom: 8, 
+  },
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
   },
   logo: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    marginRight: 10,
+    width: 36,
+    height: 36,
+    borderRadius: 20,
+    marginHorizontal: 8, 
+    marginTop:-10
   },
   companyName: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  jobType: {
-    fontSize: 14,
-    fontWeight: "bold",
+    fontSize: 12,
+    ...Fonts.regular, 
+    color: "#000000", 
+    marginBottom: 12, 
   },
   jobTitle: {
-    fontSize: 16,
-    fontWeight: "500",
-    marginVertical: 10,
-  },
-  salary: {
-    fontSize: 13,
-    fontWeight: "bold",
-    color: theme.colors.text.primary,
-  },
-  deadline: {
-    fontSize: 13,
-    color: theme.colors.text.primary,
-    marginTop: 2,
+    fontSize: 14,
+    ...Fonts.semiBold, 
+    color: "#000000",
+    marginTop:8
   },
   footer: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "flex-start",
     alignItems: "center",
-    marginTop: 12,
   },
   tag: {
-    borderRadius: 8,
+    borderRadius: 5,
     paddingVertical: 4,
     paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: "#1F3C88", 
+    backgroundColor: "#FFFFFF", 
+    marginRight: 10, 
   },
   tagText: {
-    color: theme.colors.primary.light,
     fontSize: 12,
-    fontWeight: "bold",
+    ...Fonts.regular,
+    color: "#1F3C88",
   },
-  saveIcon: {
-    fontSize: 16,
+  bookmarkIcon: {
+    position: "absolute",
+    right:8,
+    top: 1,
   },
 });
 

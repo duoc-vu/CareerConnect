@@ -115,12 +115,18 @@ const SettingScreen = ({ navigation }: any) => {
     },
     {
       id: '5',
+      title: 'Phản hồi và góp ý',
+      onPress: () => navigation.navigate("feedback", navigation),
+      icon: require('../../../../asset/images/right-arrow.png')
+    },
+    {
+      id: '6',
       title: 'Về chúng tôi',
       onPress: () => console.log('Go to detail'),
       icon: require('../../../../asset/images/right-arrow.png')
     },
     {
-      id: '6',
+      id: '7',
       title: 'Đổi mật khẩu',
       onPress: () => console.log('Go to Đổi mật khẩu'),
       icon: require('../../../../asset/images/right-arrow.png')
@@ -128,7 +134,7 @@ const SettingScreen = ({ navigation }: any) => {
   ];
   if (userType === 1 || userType === 2) {
     data.push({
-      id: '7',
+      id: '8',
       title: 'Đăng xuất',
       onPress: () => handleLogout(),
       icon: require('../../../../asset/images/logout.png')

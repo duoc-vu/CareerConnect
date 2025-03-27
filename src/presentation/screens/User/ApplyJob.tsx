@@ -1,187 +1,394 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Alert, TouchableOpacity } from 'react-native';
-import { Text, Button, TextInput, ActivityIndicator, Avatar } from 'react-native-paper';
-import DocumentPicker, { DocumentPickerResponse } from 'react-native-document-picker';
+import { StyleSheet, ScrollView, Alert, TouchableOpacity } from 'react-native';
+import RNFS from 'react-native-fs';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
-import Toast from 'react-native-toast-message';
+import DocumentPicker from 'react-native-document-picker';
+import Button from '../../components/Button';
+import Input from '../../components/Input';
+import CustomText from '../../components/CustomText';
+import { useUser } from '../../../context/UserContext';
+import { View } from 'react-native-animatable';
+import HeaderWithIcons from '../../components/Header';
+import { useLoading } from '../../../context/themeContext';
+import Loading from '../../components/Loading';
+import Dialog from '../../components/Dialog';
 
-const ApplyJob = ({ route, navigation }: any) => {
-    const { jobId, userId, userType, idCompany } = route.params;
-    const [intro, setIntro] = useState('');
-    const [pdfUri, setPdfUri] = useState<string | null>(null);
-    const [uploading, setUploading] = useState(false);
-    const [image, setImage] = useState<any>(null);
-    const [tenJob, setTenJob] = useState<any>(null);
+const fbDonUngTuyen = firestore().collection('tblDonUngTuyen');
+const fbTinTuyenDung = firestore().collection('tblTinTuyenDung');
+const fbUngVien = firestore().collection('tblUngVien');
 
-    const fileName = `/${idCompany}/${jobId}/${userId}.pdf`;
+const ApplyJob = ({ route, navigation }:any) => {
+    const { userId } = useUser();
+    const { loading, setLoading } = useLoading();
+    const { sMaTinTuyenDung } = route.params; 
 
-    const fbJobDetail = firestore().collection('tblChiTietJob');
-    const fbCompany = firestore().collection('tblCompany');
-
-    // Function to pick PDF from device's library
-    const pickPdf = async () => {
-        try {
-            const pickerResult = await DocumentPicker.pickSingle({
-                type: [DocumentPicker.types.pdf],
-            });
-            await setPdfUri(pickerResult.uri);
-        } catch (e) {
-            console.log(e);
-        }
+    const initialState = {
+        sMaDonUngTuyen: '', 
+        sMaTinTuyenDung: sMaTinTuyenDung || '',
+        sMaUngVien: userId || '',
+        sNgayTao: '', 
+        sTrangThai: 'Chờ duyệt', 
+        fFileCV: '',
+        sHoVaTen: '',
+        sChuyenNganh: '',
+        sDiaChi: '',
+        sSoDienThoai: '',
+        sKiNang: '',
+        sKinhNghiem: '',
+        sSoThich: '',
+        sMoTaChiTiet: '',
     };
 
-    // Function to upload application with PDF and introduction
-    const uploadFile = async () => {
-        if (userType !== '1') {
-            Alert.alert('Thông báo', 'Bạn không phải là ứng viên');
-            return;
-        }
+    const [formData, setFormData] = useState(initialState);
+    const [sMaDoanhNghiep, setSMaDoanhNghiep] = useState('');
+    const [docId, setDocId] = useState(null);
+    const [showSuccessDialog, setShowSuccessDialog] = useState(false);
 
-        if (!pdfUri) {
-            Alert.alert('Thông báo', 'Vui lòng chọn tệp PDF trước khi nộp đơn.');
-            return;
-        }
-
-        try {
-            setUploading(true); // Start uploading, show uploading indicator
-
-            const storageRef = storage().ref(fileName);
-            await storageRef.putFile(pdfUri); // Upload PDF file
-
-            await firestore().collection('tblAppJob').add({
-                jobId,
-                userId,
-                intro,
-            }); // Save application information to Firestore
-
-            setUploading(false); // Finish uploading, hide uploading indicator
-            Toast.show({
-                type: 'success',
-                text1: 'Thành công',
-                text2: 'Bạn đã ứng tuyển thành công!',
-            });
-            navigation.goBack();
-        } catch (error) {
-            console.error('Lỗi khi tải lên tệp:', error);
-            setUploading(false); // Finish uploading with error, hide uploading indicator
-            Toast.show({
-                type: 'error',
-                text1: 'Thất bại',
-                text2: 'Ứng tuyển thất bại!',
-            });
-        }
-    };
-
-    // Fetch company image based on jobId
     useEffect(() => {
-        const getImageCompany = async () => {
+        const currentDate = new Date();
+        const formattedDate = currentDate.toISOString().split('T')[0];
+        setFormData(prev => ({ ...prev, sNgayTao: formattedDate }));
+
+        const generateApplicationId = async () => {
             try {
-                const jobDoc = await fbJobDetail.doc(jobId).get();
-                if (jobDoc.exists) {
-                    const jobData: any = jobDoc.data();
-                    const companyDoc = await fbCompany.doc(jobData.idCT).get();
-                    setTenJob(jobData.tenJob)
-                    if (companyDoc.exists) {
-                        const companyData: any = companyDoc.data();
-                        const storageRef = storage().ref(`images/${companyData.id}.jpg`);
-                        const downloadUrl: string = await storageRef.getDownloadURL();
-                        setImage(downloadUrl);
-                    } else {
-                        console.log('Không có bản ghi công ty nào với id', jobData.idCT);
-                    }
-                } else {
-                    console.log('Không có bản ghi nào với id', jobId);
-                }
+                setLoading(true);
+                const snapshot = await fbDonUngTuyen.get();
+                const count = snapshot.size + 1;
+                const newId = `DUT${String(count).padStart(3, '0')}`;
+                setFormData(prev => ({ ...prev, sMaDonUngTuyen: newId }));
             } catch (error) {
-                console.error('Lỗi khi lấy thông tin chi tiết công việc:', error);
+                console.error('Lỗi khi tạo mã đơn ứng tuyển:', error);
+                Alert.alert('Lỗi', 'Không thể tạo mã đơn ứng tuyển, vui lòng thử lại.');
+            } finally {
+                setLoading(false);
             }
         };
 
-        getImageCompany();
-    }, [jobId]);
+        const fetchJobData = async () => {
+            try {
+                setLoading(true);
+                const jobQuerySnapshot = await fbTinTuyenDung
+                    .where('sMaTinTuyenDung', '==', sMaTinTuyenDung)
+                    .get();
+
+                if (!jobQuerySnapshot.empty) {
+                    const jobDoc = jobQuerySnapshot.docs[0];
+                    const jobData = jobDoc.data();
+                    setSMaDoanhNghiep(jobData.sMaDoanhNghiep || '');
+                } else {
+                    console.warn('❌ Không tìm thấy tin tuyển dụng với mã:', sMaTinTuyenDung);
+                }
+            } catch (error) {
+                console.error('Lỗi khi lấy dữ liệu tin tuyển dụng:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        const fetchUserData = async () => {
+            try {
+                setLoading(true);
+                const userQuerySnapshot = await fbUngVien
+                    .where('sMaUngVien', '==', userId)
+                    .get();
+
+                if (!userQuerySnapshot.empty) {
+                    const userDoc:any = userQuerySnapshot.docs[0];
+                    setDocId(userDoc.id); 
+                    const userData = userDoc.data();
+                    setFormData(prev => ({
+                        ...prev,
+                        sHoVaTen: userData.sHoVaTen || '',
+                        sChuyenNganh: userData.sChuyenNganh || '',
+                        sDiaChi: userData.sDiaChi || '',
+                        sSoDienThoai: userData.sSoDienThoai || '',
+                        sKiNang: userData.sKiNang || '',
+                        sKinhNghiem: userData.sKinhNghiem || '',
+                        sSoThich: userData.sSoThich || '',
+                        sMoTaChiTiet: userData.sMoTaChiTiet || '',
+                    }));
+                } else {
+                    console.warn('❌ Không tìm thấy ứng viên với mã:', userId);
+                }
+            } catch (error) {
+                console.error('Lỗi khi lấy dữ liệu ứng viên:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        generateApplicationId();
+        fetchJobData();
+        fetchUserData();
+    }, [sMaTinTuyenDung, userId]);
+
+    const handleChange = (key:any, value:any) => {
+        setFormData(prev => ({ ...prev, [key]: value }));
+    };
+
+    const handleChooseFile = async () => {
+        try {
+            const result = await DocumentPicker.pick({
+                type: [DocumentPicker.types.pdf], 
+            });
+
+            if (result && result[0].uri) {
+                const uri = result[0].uri;
+                await uploadFile(uri);
+            }
+        } catch (error) {
+            if (DocumentPicker.isCancel(error)) {
+                console.log('Người dùng hủy chọn file');
+            } else {
+                console.error('Lỗi DocumentPicker:', error);
+            }
+        }
+    };
+
+    const uploadFile = async (uri:any) => {
+        if (!uri || !sMaDoanhNghiep || !sMaTinTuyenDung || !userId) {
+            Alert.alert('Lỗi', 'Thiếu thông tin để upload file. Vui lòng kiểm tra lại.');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const fileName = `tblDoanhNghiep/${sMaDoanhNghiep}/${sMaTinTuyenDung}/${userId}.pdf`;
+            const reference = storage().ref(fileName);
+
+            // Sao chép file vào bộ nhớ tạm
+            const tempPath = `${RNFS.TemporaryDirectoryPath}/${userId}_cv.pdf`;
+            await RNFS.copyFile(uri, tempPath);
+
+            // Upload file từ bộ nhớ tạm
+            await reference.putFile(tempPath);
+            const downloadURL = await reference.getDownloadURL();
+
+            setFormData(prev => ({ ...prev, fFileCV: downloadURL }));
+
+            await RNFS.unlink(tempPath);
+        } catch (error:any) {
+            console.error('Lỗi khi tải file lên:', error);
+            if (error.code === 'storage/unauthorized') {
+                Alert.alert('Lỗi', 'Không có quyền upload file. Vui lòng kiểm tra quyền Firebase Storage.');
+            } else if (error.code === 'storage/unknown') {
+                Alert.alert('Lỗi', 'Lỗi không xác định khi upload file. Vui lòng thử lại.');
+            } else {
+                Alert.alert('Lỗi', 'Không thể tải file lên, vui lòng thử lại.');
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSubmit = async () => {
+        try {
+            setLoading(true);
+
+            await fbDonUngTuyen.add({
+                sMaDonUngTuyen: formData.sMaDonUngTuyen,
+                sMaTinTuyenDung: formData.sMaTinTuyenDung,
+                sMaUngVien: formData.sMaUngVien,
+                 sNgayTao: formData.sNgayTao,
+                sTrangThai: formData.sTrangThai,
+                fFileCV: formData.fFileCV || '',
+            });
+
+            if (docId) {
+                await fbUngVien.doc(docId).update({
+                    sHoVaTen: formData.sHoVaTen,
+                    sChuyenNganh: formData.sChuyenNganh,
+                    sDiaChi: formData.sDiaChi,
+                    sSoDienThoai: formData.sSoDienThoai,
+                    sKiNang: formData.sKiNang,
+                    sKinhNghiem: formData.sKinhNghiem,
+                    sSoThich: formData.sSoThich,
+                    sMoTaChiTiet: formData.sMoTaChiTiet,
+                });
+            }
+            setShowSuccessDialog(true);
+        } catch (error) {
+            console.error('❌ Lỗi khi gửi đơn ứng tuyển:', error);
+            Alert.alert('Lỗi', 'Không thể gửi đơn ứng tuyển, vui lòng thử lại.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
-        <View style={styles.container}>
-            <View style={styles.header}>
-                    <Avatar.Image size={80} source={{ uri: image}} />
-                    <Text style={styles.headerTitle}>Ứng tuyển công việc</Text>
-                    <Text style={styles.headerContent}>{tenJob}</Text>
-                </View>
-            
-
-            <TouchableOpacity onPress={pickPdf}>
-                <View style={styles.pdfContainer}>
-                    <Text>{pdfUri ? "Đã chọn" : 'Chọn file PDF' }</Text>
-                </View>
-            </TouchableOpacity>
-            <TextInput
-                label="Giới thiệu"
-                value={intro}
-                onChangeText={setIntro}
-                style={styles.input}
-                multiline
-                numberOfLines={4}
-                theme={{ colors: { primary: '#1E90FF' } }}
+        <View style={styles.mainContainer}>
+            <HeaderWithIcons
+                title="Ứng tuyển công việc"
+                onBackPress={() => navigation.goBack()}
             />
-            <Button
-                mode="contained"
-                onPress={uploadFile}
-                disabled={!pdfUri || uploading}
-                style={[styles.button, { backgroundColor: !pdfUri || uploading ? '#BDBDBD' : '#1E90FF' }]} // Dynamic background color based on disabled state
-            >
-                {uploading ? 'Đang tải lên...' : 'Nộp đơn'}
-            </Button>
-            {uploading && <ActivityIndicator style={styles.loadingIndicator} />}
+            <ScrollView contentContainerStyle={styles.container}>
+                <CustomText style={styles.sectionTitle}>Thông tin đơn ứng tuyển</CustomText>
+
+                <CustomText style={styles.label}>Họ và tên</CustomText>
+                <Input
+                    placeholder="Họ và tên"
+                    style={styles.input}
+                    value={formData.sHoVaTen}
+                    onChangeText={text => handleChange('sHoVaTen', text)}
+                />
+
+                <CustomText style={styles.label}>Chuyên ngành</CustomText>
+                <Input
+                    placeholder="Chuyên ngành"
+                    style={styles.input}
+                    value={formData.sChuyenNganh}
+                    onChangeText={text => handleChange('sChuyenNganh', text)}
+                />
+
+                <CustomText style={styles.label}>Địa chỉ</CustomText>
+                <Input
+                    placeholder="Địa chỉ"
+                    style={styles.input}
+                    value={formData.sDiaChi}
+                    onChangeText={text => handleChange('sDiaChi', text)}
+                />
+
+                <CustomText style={styles.label}>Số điện thoại</CustomText>
+                <Input
+                    placeholder="Số điện thoại"
+                    style={styles.input}
+                    value={formData.sSoDienThoai}
+                    onChangeText={text => handleChange('sSoDienThoai', text)}
+                />
+
+                <CustomText style={styles.label}>Kỹ năng</CustomText>
+                <Input
+                    placeholder="Kỹ năng"
+                    style={styles.input}
+                    value={formData.sKiNang}
+                    onChangeText={text => handleChange('sKiNang', text)}
+                />
+
+                <CustomText style={styles.label}>Kinh nghiệm</CustomText>
+                <Input
+                    placeholder="Kinh nghiệm"
+                    style={styles.input}
+                    value={formData.sKinhNghiem}
+                    onChangeText={text => handleChange('sKinhNghiem', text)}
+                />
+
+                <CustomText style={styles.label}>Sở thích</CustomText>
+                <Input
+                    placeholder="Sở thích"
+                    style={styles.input}
+                    value={formData.sSoThich}
+                    onChangeText={text => handleChange('sSoThich', text)}
+                />
+
+                <CustomText style={styles.label}>Mô tả chi tiết</CustomText>
+                <Input
+                    placeholder="Mô tả chi tiết"
+                    multiline
+                    style={styles.largeInput}
+                    value={formData.sMoTaChiTiet}
+                    onChangeText={text => handleChange('sMoTaChiTiet', text)}
+                />
+
+                <CustomText style={styles.sectionTitle}>File CV</CustomText>
+
+                <CustomText style={styles.label}>File CV (PDF)</CustomText>
+                <TouchableOpacity style={styles.filePicker} onPress={handleChooseFile}>
+                    <CustomText style={styles.filePickerText}>
+                        {formData.fFileCV ? 'File đã chọn' : 'Chọn file PDF'}
+                    </CustomText>
+                </TouchableOpacity>
+                {formData.fFileCV ? (
+                    <CustomText style={styles.fileLink}>{formData.fFileCV}</CustomText>
+                ) : null}
+            </ScrollView>
+            <View style={styles.buttonContainer}>
+                <Button
+                    title="Gửi đơn ứng tuyển"
+                    onPress={handleSubmit}
+                    disabled={loading || !formData.fFileCV} 
+                />
+            </View>
+            {loading && <Loading />}
+            <Dialog
+                visible={showSuccessDialog}
+                title="Success"
+                content="Your application has been submitted. Our team will review it in the next week, and you can expect a response soon."
+                confirm={{
+                    text: "Close",
+                    onPress: () => {
+                        setShowSuccessDialog(false);
+                        navigation.goBack(); 
+                    },
+                }}
+            />
         </View>
     );
 };
 
 const styles = StyleSheet.create({
-    container: {
+    mainContainer: {
         flex: 1,
-        backgroundColor: '#F0F4F7',
-        padding: 20,
-    },
-    header: {
-        marginBottom: 20,
-        textAlign: 'center',
-        // flexDirection: 'row',
-        alignItems: 'center',
-    },
-    headerTitle: {
-        fontSize: 24,
-        color: '#1E90FF',
-        fontWeight: 'bold',
-    },
-    headerContent:{
-        fontSize: 20,
-    },
-    pdfContainer: {
-        height: 50,
-        borderRadius: 10,
-        borderWidth: 1,
-        borderColor: '#ddd',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 20,
         backgroundColor: '#fff',
     },
-    input: {
-        marginBottom: 20,
-        backgroundColor: 'white',
+    container: {
+        padding: 20,
+        backgroundColor: '#fff',
+        flexGrow: 1,
+        paddingBottom: 130,
     },
-    button: {
-        marginVertical: 20,
-        backgroundColor: '#1E90FF',
-        borderRadius: 15,
-        paddingVertical: 10,
-    },
-    
-    loadingIndicator: {
+    sectionTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#333',
         marginTop: 20,
+        marginBottom: 10,
     },
-    
+    input: {
+        borderColor: '#BEBEBE',
+        backgroundColor: '#EDEDED',
+    },
+    label: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#333',
+        marginTop: 10,
+        marginBottom: 10,
+    },
+    largeInput: {
+        height: 100,
+        textAlignVertical: 'top',
+        marginBottom: 10,
+        borderColor: '#BEBEBE',
+        backgroundColor: '#EDEDED',
+    },
+    filePicker: {
+        borderWidth: 1,
+        borderColor: '#BEBEBE',
+        backgroundColor: '#EDEDED',
+        padding: 10,
+        borderRadius: 5,
+        marginBottom: 10,
+    },
+    filePickerText: {
+        fontSize: 14,
+        color: '#333',
+    },
+    fileLink: {
+        fontSize: 12,
+        color: '#007AFF',
+        marginBottom: 10,
+    },
+    buttonContainer: {
+        position: 'absolute',
+        bottom: 40,
+        left: 0,
+        right: 0,
+        padding: 20,
+        backgroundColor: '#fff',
+        borderTopWidth: 1,
+        borderColor: '#fff',
+    },
 });
 
 export default ApplyJob;

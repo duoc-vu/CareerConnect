@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
+import { Fonts } from "../../theme/font";
 
 interface HeaderProps {
   title: string;
@@ -36,6 +37,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: "bold",
+    fontFamily: Fonts.semiBold.fontFamily,
     color: "black",
     position: "absolute",
     left: "50%",
