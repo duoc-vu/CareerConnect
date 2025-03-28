@@ -88,18 +88,14 @@ const Login = ({ navigation }: any) => {
                     await AsyncStorage.setItem('session', JSON.stringify(sessionData));
     
                     navigation.navigate(userInfo ? 'bottom' : (userType === 1 ? 'Info' : 'company-info'));
-                    // if (loading) setLoading(false);
                 } else {
-                    // if (loading) setLoading(false);
                     setError("Sai tài khoản hoặc mật khẩu.");
                 }
             } else {
-                // if (loading) setLoading(false);
                 setError("Sai tài khoản hoặc mật khẩu.");
             }
         } catch (error) {
             console.error('Lỗi khi kiểm tra User:', error);
-            // if (loading) setLoading(false);
         } finally {
             if (loading) setLoading(false);
         }

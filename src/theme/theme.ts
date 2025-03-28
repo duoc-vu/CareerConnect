@@ -4,6 +4,11 @@ export const theme = {
         primary: '#000000',  
         secondary: '#666666',  
       },
+      titleJob: {
+        primary: '#1E1E1E', 
+        secondary: '#FAFAFA',
+        third: '#1F3C88',
+      },
       background: {
         light: '#ffffff',
         dark: '#25272a',
@@ -54,5 +59,12 @@ export const theme = {
         dark: "rgba(162, 206, 244, 0.1)"
       },
     },
-  };
+    template: {
+      biru: "#1F3C88",
+      abu: "#F2F2F2",
+      oranye: "#EE6F57",
+      putih: "#FAFAFA",
+      biru2: "#BEC8E3",
+    }
+};
   

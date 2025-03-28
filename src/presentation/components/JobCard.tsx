@@ -23,7 +23,6 @@ const JobCard: React.FC<JobCardProps> = ({
   onPress,
   style,
 }) => {
-  // Định dạng mức lương theo đơn vị Rupiah (Rp)
   const formatSalary = (max: number) => {
     return `Up to ${max.toLocaleString()} VND`;
   };
@@ -37,10 +36,9 @@ const JobCard: React.FC<JobCardProps> = ({
       <TouchableOpacity>
           <Image
             source={require("../../../asset/images/save_job.png")}
-            style={styles.bookmarkIcon}
+            style={styles.saveIcon}
           />
         </TouchableOpacity>
-      {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Image
@@ -52,16 +50,12 @@ const JobCard: React.FC<JobCardProps> = ({
             style={styles.logo}
           />
           <View>
-            <Text style={styles.jobTitle}>{jobTitle}</Text>
-            <Text style={styles.companyName}>{companyName}</Text>
+            <Text style={styles.jobTitle} numberOfLines={1} ellipsizeMode="tail">{jobTitle}</Text>
+            <Text style={styles.companyName} numberOfLines={1} ellipsizeMode="tail">{companyName}</Text>
           </View>
         </View>
         
       </View>
-
-      {/* Job Title */}
-
-      {/* Footer */}
       <View style={styles.footer}>
         <View style={styles.tag}>
           <Text style={styles.tagText}>{jobType}</Text>
@@ -84,9 +78,9 @@ const styles = StyleSheet.create({
     marginVertical: 10,
     backgroundColor: "#FFFFFF",
     minHeight: 120,
-    width: "90%",
+    width: "100%",
     alignSelf: "center",
-    elevation: 2, // Bóng cho Android
+    elevation: 2,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
@@ -119,7 +113,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     ...Fonts.semiBold, 
     color: "#000000",
-    marginTop:8
+    marginTop:8,
+    width: 220,
   },
   footer: {
     flexDirection: "row",
@@ -140,8 +135,9 @@ const styles = StyleSheet.create({
     ...Fonts.regular,
     color: "#1F3C88",
   },
-  bookmarkIcon: {
+  saveIcon: {
     position: "absolute",
+    resizeMode: "contain",
     right:8,
     top: 1,
   },

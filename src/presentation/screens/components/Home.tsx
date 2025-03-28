@@ -1,107 +1,136 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   StyleSheet,
   Image,
   Text,
   FlatList,
-  TouchableOpacity,
   StatusBar,
-  Alert,
+  ScrollView
 } from 'react-native';
-import firestore from '@react-native-firebase/firestore';
-import storage from '@react-native-firebase/storage';
+// import firestore from '@react-native-firebase/firestore';
 import JobCard from '../../components/JobCard';
 import SearchBar from '../../components/SearchBar';
-import { useLoading } from '../../../context/themeContext';
-import Pagination from '../../components/Pagination';
+// import Pagination from '../../components/Pagination';
 import { theme } from '../../../theme/theme';
 import { Fonts } from '../../../theme/font';
-import UploadButton from '../../components/UploadButton';
 import { useUser } from '../../../context/UserContext';
-const fbJob = firestore().collection('tblTinTuyenDung');
-const fbCT = firestore().collection('tblDoanhNghiep');
+// const fbJob = firestore().collection('tblTinTuyenDung');
+// const fbCT = firestore().collection('tblDoanhNghiep');
 
-const PAGE_SIZE = 5;
+// const PAGE_SIZE = 5;
 
-const Home = ({ jobs, navigation }: any) => {
+const Home = ({ bestJobs, recommendedJobs, navigation }: any) => {
+  const { userInfo } = useUser();
   const [searchQuery, setSearchQuery] = useState('');
-  const [filteredJobs, setFilteredJobs] = useState([]);
+  const [filteredBestJobs, setFilteredBestJobs] = useState(bestJobs || []);
+  const [filteredRecommendedJobs, setFilteredRecommendedJobs] = useState(recommendedJobs || []);
 
-  const { userId, userType, userInfo } = useUser();
-
+  const chunkArray = (array: any[], size: number) => {
+    const chunked = [];
+    for (let i = 0; i < array.length; i += size) {
+      chunked.push(array.slice(i, i + size));
+    }
+    return chunked;
+  };
+  const groupedRecommendedJobs = chunkArray(filteredRecommendedJobs || [], 2);
   useEffect(() => {
     filterJobs(searchQuery);
-  }, [searchQuery, jobs]);
-
-  const handleUploadPress = () => {
-    navigation.navigate("post-job", userId);
-  };
+  }, [searchQuery, bestJobs, recommendedJobs]);
 
   const filterJobs = (query: string) => {
     if (!query.trim()) {
-      setFilteredJobs(jobs);
+      setFilteredBestJobs(bestJobs);
+      setFilteredRecommendedJobs(recommendedJobs);
       return;
     }
 
-    const filtered = jobs.filter((job: any) =>
-      job.jobTitle.toLowerCase().includes(query.toLowerCase()) ||
-      job.companyName.toLowerCase().includes(query.toLowerCase())
-    );
-    setFilteredJobs(filtered);
+    const filter = (jobs: any[]) =>
+      jobs.filter((job: any) =>
+        job.sViTriTuyenDung.toLowerCase().includes(query.toLowerCase()) ||
+        job.sTenDoanhNghiep.toLowerCase().includes(query.toLowerCase())
+      );
+
+    setFilteredBestJobs(filter(bestJobs));
+    setFilteredRecommendedJobs(filter(recommendedJobs));
   };
 
-  const renderItem = ({ item }: any) => {
-    return (
-      <View style={{ overflow: "hidden" }}>
-        <View style={{ backgroundColor: "transparent" }}>
-          <JobCard
-            companyLogo={item.sAnhDaiDien}
-            companyName={item.sTenDoanhNghiep}
-            jobTitle={item.sViTriTuyenDung}
-            salaryMax={item.sMucLuongToiDa ? item.sMucLuongToiDa : 0}
-            jobType="On-site"
-            location={item.sDiaChiLamViec}
-            onPress={() =>
-              navigation.navigate('job-detail', { sMaTinTuyenDung: item.sMaTinTuyenDung })
-            }
-          />
-        </View>
-      </View>
-    );
-  };
+  const renderHorizontalItem = ({ item }: any) => (
+    <View style={{ flexDirection: 'column', justifyContent: 'space-between', marginHorizontal: 5 }}>
+      {item.map((job: any, index: number) => (
+        <JobCard
+          key={index}
+          companyLogo={job.sAnhDaiDien}
+          companyName={job.sTenDoanhNghiep}
+          jobTitle={job.sViTriTuyenDung}
+          salaryMax={job.sMucLuongToiDa || 0}
+          jobType="On-site"
+          location={job.sDiaChiLamViec}
+          onPress={() => navigation.navigate('job-detail', { sMaTinTuyenDung: job.sMaTinTuyenDung })}
+        />
+      ))}
+    </View>
+  );
+  const renderVerticalItem = ({ item }: any) => (
+    <JobCard
+      companyLogo={item.sAnhDaiDien}
+      companyName={item.sTenDoanhNghiep}
+      jobTitle={item.sViTriTuyenDung}
+      salaryMax={item.sMucLuongToiDa || 0}
+      jobType="On-site"
+      location={item.sDiaChiLamViec}
+      onPress={() => navigation.navigate('job-detail', { sMaTinTuyenDung: item.sMaTinTuyenDung })}
+      style={{ marginVertical: 10 }}
+    />
+  );
 
   return (
     <View style={styles.container}>
       <StatusBar backgroundColor={'#F0F4F7'} />
       <View style={styles.header}>
-        <View style={{ width: "100%" , flexDirection: 'row', alignItems: 'center', justifyContent: "space-evenly" }}>
-          <SearchBar style={{ width: "80%" }} value={searchQuery} onChangeText={setSearchQuery} />
-          <Image
-            source={userInfo?.sAnhDaiDien ? { uri: userInfo?.sAnhDaiDien } : require('../../../../asset/images/img_ellipse_3.png')}
-            style={styles.avatar}
+        <SearchBar style={{ width: "80%" }} value={searchQuery} onChangeText={setSearchQuery} />
+        <Image
+          source={userInfo?.sAnhDaiDien ? { uri: userInfo?.sAnhDaiDien } : require('../../../../asset/images/img_ellipse_3.png')}
+          style={styles.avatar}
+        />
+      </View>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={{ height: groupedRecommendedJobs.length > 0 ? 350 : 100 }}>
+          <Text style={styles.sectionTitle}>Việc làm dành cho bạn</Text>
+          <FlatList
+            data={(groupedRecommendedJobs)}
+            renderItem={renderHorizontalItem}
+            keyExtractor={(item, index) => `group-${index}`}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 10 }}
+            nestedScrollEnabled={true}
+            ListEmptyComponent={() => (
+              <Text style={styles.noJobsText}>Không tìm thấy công việc nào.</Text>
+            )}
           />
         </View>
-      </View>
 
-      <FlatList
-        data={filteredJobs}
-        renderItem={renderItem}
-        keyExtractor={(item: any) => item.jobId ? item.jobId.toString() : Math.random().toString()}
-        contentContainerStyle={styles.list}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={() => (
-          <Text style={styles.noJobsText}>Không tìm thấy công việc nào.</Text>
-        )}
-      />
-      {/* <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={handlePageChange}
-        style={styles.paginationContainer}
-        buttonStyle={styles.paginationButton}
-        textStyle={styles.paginationText}
-      /> */}
+        <View>
+          <Text style={styles.sectionTitle}>Việc làm tốt nhất</Text>
+          <FlatList
+            data={filteredBestJobs}
+            renderItem={renderVerticalItem}
+            keyExtractor={(item: any) => item.sMaTinTuyenDung}
+            showsVerticalScrollIndicator={false}
+            initialNumToRender={5}
+            contentContainerStyle={{ paddingHorizontal: 10 }}
+            nestedScrollEnabled={true}
+            windowSize={10}
+            scrollEnabled={false}
+            ListEmptyComponent={() => (
+              <Text style={styles.noJobsText}>Không tìm thấy công việc nào.</Text>
+            )}
+          />
+        </View>
+      </ScrollView>
     </View>
   );
 };
@@ -110,45 +139,37 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f2f2f2",
-    padding: 15,
+    paddingVertical: 15,
+    paddingHorizontal: 10,
+    marginBottom: 70,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    // marginBottom: 10,
-    width: "100%"
+    width: "100%",
   },
   avatar: {
     width: 40,
     height: 40,
     borderRadius: 20,
+    marginHorizontal: 10,
+  },
+  sectionTitle: {
+    fontFamily: Fonts.medium.fontFamily,
+    fontSize: 18,
+    color: theme.colors.titleJob.third,
+    marginVertical: 10,
     marginLeft: 10,
-  },
-  notificationIcon: {
-    width: 20,
-    height: 20,
-  },
-  list: {
-    paddingBottom: 50,
   },
   noJobsText: {
     textAlign: "center",
-    fontSize: 16,
-    color: "#6B7280",
-    marginTop: 20,
-  },
-  paginationContainer: {
-    marginTop: 20,
-    marginBottom: 50
-  },
-  paginationButton: {
-    backgroundColor: '#f1f1f1',
-  },
-  paginationText: {
-    fontSize: 16,
-    color: '#333',
-  },
+    marginHorizontal: 0,
+    fontSize: 14,
+    color: theme.colors.titleJob.primary,
+    marginTop: 10,
+    justifyContent: "center",
+    alignItems: "center",
+    },
 });
-
 export default Home;

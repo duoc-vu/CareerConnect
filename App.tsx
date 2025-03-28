@@ -31,6 +31,8 @@ import ProfileCandidate from './src/presentation/screens/User/ProfileCandidate';
 import ProfileEmployer from './src/presentation/screens/Company/ProfileEmployer';
 import FeedbackScreen from './src/presentation/screens/components/FeedbackScreen';
 import ApplicantsScreen from './src/presentation/screens/Company/ApplicantsScreen';
+import { KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
+
 const Stack = createNativeStackNavigator();
 
 const App = () => {
@@ -69,7 +71,6 @@ const App = () => {
         <LoadingProvider>
           <NavigationContainer >
             <Stack.Navigator >
-            
               < Stack.Screen name="splash" component={SplashScreen} options={{ headerShown: false }} />
               <Stack.Screen name='login' component={Login} options={{ headerShown: false }} />
               <Stack.Screen name="bottom" component={BottomBar} options={{ headerShown: false }} />

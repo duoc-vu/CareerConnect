@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
 import { useLoading, useTheme } from "../../../context/themeContext";
 import firestore from "@react-native-firebase/firestore";
-import storage from "@react-native-firebase/storage";
 import { Fonts } from "../../../theme/font";
 import JobCard from "../../components/JobCard";
 import Loading from "../../components/Loading";
@@ -18,7 +17,6 @@ const JobDetail = ({ route, navigation }: any) => {
 
   const [job, setJob] = useState<any>(null);
   const [companyDetail, setCompanyDetail] = useState<any>(null);
-  const [image, setImage] = useState<string>("");
   const { loading, setLoading } = useLoading();
   const { userId, userType } = useUser();
 
@@ -49,16 +47,6 @@ const JobDetail = ({ route, navigation }: any) => {
               console.warn("⚠️ Không tìm thấy công ty với mã:", jobData.sMaDoanhNghiep);
             }
           }
-
-          if (jobData.sMaDoanhNghiep) {
-            try {
-              const avatarRef = storage().ref(`Avatar_Cong_Ty/${jobData.sMaDoanhNghiep}.png`);
-              const companyLogo = await avatarRef.getDownloadURL();
-              setImage(companyLogo);
-            } catch (error: any) {
-              console.error("🚨 Lỗi tải logo công ty:", error.code, error.message);
-            }
-          }
         } else {
           console.warn("⚠️ Không tìm thấy tin tuyển dụng với mã:", sMaTinTuyenDung);
         }
@@ -87,7 +75,7 @@ const JobDetail = ({ route, navigation }: any) => {
           <ScrollView style={styles.container}>
             <View style={styles.card}>
               <JobCard
-                companyLogo={image}
+                companyLogo={companyDetail.sAnhDaiDien || ""}
                 companyName={companyDetail.sTenDoanhNghiep}
                 jobTitle={job.sViTriTuyenDung}
                 jobType="On-site"
@@ -129,13 +117,24 @@ const JobDetail = ({ route, navigation }: any) => {
             </View>
           </ScrollView>
 
-          <TouchableOpacity
-            style={[styles.applyButton, isApplyButtonDisabled && styles.applyButtonDisabled]}
-            disabled={isApplyButtonDisabled}
-            onPress={() => navigation.navigate("apply-job", { sMaTinTuyenDung })}
-          >
-            <Text style={styles.applyText}>Ứng tuyển ngay</Text>
-          </TouchableOpacity>
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={styles.saveButton}
+              onPress={() => console.log("Lưu công việc")}
+            >
+              <Image
+                source={require("../../../../asset/images/img_save_bottom.png")}
+                style={styles.saveIcon}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.applyButton, isApplyButtonDisabled && styles.applyButtonDisabled]}
+              disabled={isApplyButtonDisabled}
+              onPress={() => navigation.navigate("apply-job", { sMaTinTuyenDung })}
+            >
+              <Text style={styles.applyText}>Ứng tuyển ngay</Text>
+            </TouchableOpacity>
+          </View>
         </>
       )}
     </View>
@@ -175,13 +174,38 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: "center",
   },
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    alignContent: "center",
+    marginTop: 20,
+    paddingHorizontal: 20,
+  },
+  saveButton: {
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#002366",
+    borderRadius: 12,
+    padding: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 10,
+    width: 50,
+    height: 50,
+  },
+  saveIcon: {
+    width: 24,
+    height: 24,
+    resizeMode: "contain",
+  },
   applyButton: {
     backgroundColor: "#002366",
     borderRadius: 12,
     paddingVertical: 12,
-    marginTop: 20,
-    alignSelf: "center",
-    width: "90%",
+    alignItems: "center",
+    justifyContent: "center",
+    flex: 1,
   },
   applyText: {
     color: "#FFFFFF",

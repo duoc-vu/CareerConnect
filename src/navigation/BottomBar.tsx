@@ -17,11 +17,15 @@ import storage from '@react-native-firebase/storage';
 import { useNavigation } from '@react-navigation/native';
 import PostedJobs from '../presentation/screens/Company/PostedJobs';
 
+const homeIconActive = require('../../asset/images/img_home_active.png');
 const homeIcon = require('../../asset/images/img_home.png');
-const appliJob = require('../../asset/images/img_bookmark.png');
-const notificationsIcon = require('../../asset/images/img_notification.png');
-const profileIcon = require('../../asset/images/img_profile.png');
-const posted = require('../../asset/images/save_bottom.png');
+const searchIcon = require('../../asset/images/img_search_bottom.png');
+const searchIconActive = require('../../asset/images/img_search_bottom_active.png');
+const saveIcon = require('../../asset/images/img_save_bottom.png');
+const saveIconActive = require('../../asset/images/img_save_bottom_active.png');
+const profileIcon = require('../../asset/images/img_user_bottom.png');
+const profileIconActive = require('../../asset/images/img_user_bottom_active.png');
+// const posted = require('../../asset/images/save_bottom.png');
 
 const Tab = createBottomTabNavigator();
 
@@ -30,15 +34,21 @@ const fbCT = firestore().collection('tblDoanhNghiep');
 
 const BottomBar = () => {
   const { theme } = useTheme();
-  const { userId, userType } = useUser();
+  const { userId, userType, userInfo } = useUser();
   const { loading, setLoading } = useLoading();
-  const [jobs, setJobs] = useState([]);
-  const navigation = useNavigation()
+  const [bestJobs, setBestJobs] = useState();
+  const [recommendedJobs, setRecommendedJobs] = useState();
 
+  const navigation = useNavigation()
+  const PAGE_SIZE = 10;
+  const [lastVisible, setLastVisible] = useState(null); 
+  const [loadingMore, setLoadingMore] = useState(false); 
+  const [hasMore, setHasMore] = useState(true); 
+  
   useEffect(() => {
     const loadData = async () => {
-      await updateJobStatus(); 
-      await fetchJobData(); 
+      await updateJobStatus();
+      await fetchJobData();
     };
     loadData();
   }, []);
@@ -47,33 +57,33 @@ const BottomBar = () => {
     try {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-  
-      const querySnapshot = await fbJob.get(); 
+
+      const querySnapshot = await fbJob.get();
       const batch = firestore().batch();
-  
+
       const promises = querySnapshot.docs.map(async (doc) => {
         const jobData = doc.data();
         let newStatus = jobData.sTrangThai;
         let newCoKhoa = jobData.sCoKhoa;
-  
+
         const ngayBatDau = new Date(jobData.sThoiGianDangBai);
         const hanTuyen = new Date(jobData.sThoiHanTuyenDung);
-  
+
         if (today > hanTuyen) {
           newStatus = "Hết hạn";
           newCoKhoa = 4;
         } else if (today >= ngayBatDau) {
           newStatus = "Đang tuyển";
         }
-  
+
         if (newStatus !== jobData.sTrangThai || newCoKhoa !== jobData.sCoKhoa) {
           console.log(`Updating job ${jobData.sMaTinTuyenDung}: ${jobData.sTrangThai} -> ${newStatus}`);
           batch.update(doc.ref, { sTrangThai: newStatus, sCoKhoa: newCoKhoa });
         }
       });
-  
+
       await Promise.all(promises);
-      await batch.commit(); 
+      await batch.commit();
       console.log("Job statuses updated successfully");
     } catch (error) {
       console.error("Error updating job statuses:", error);
@@ -84,34 +94,28 @@ const BottomBar = () => {
     setLoading(true);
     try {
       const querySnapshot = await fbJob.where("sCoKhoa", "==", 1).get();
-      const jobList:any = [];
-  
+      const bestJob: any = [];
+      const recommendedJob: any = [];
+
       const promises = querySnapshot.docs.map(async (doc) => {
         const jobData = doc.data();
         let companyName = 'Unknown Company';
         let companyLogo = '';
-  
+
         if (jobData.sMaDoanhNghiep) {
           try {
             const companySnapshot = await fbCT.where('sMaDoanhNghiep', '==', jobData.sMaDoanhNghiep).get();
             if (!companySnapshot.empty) {
               const companyData = companySnapshot.docs[0].data();
               companyName = companyData?.sTenDoanhNghiep || 'Unknown Company';
-              const avatarPath = `Avatar_Cong_Ty/${jobData.sMaDoanhNghiep}.png`;
-              const avatarRef = storage().ref(avatarPath);
-              try {
-                companyLogo = await avatarRef.getDownloadURL();
-              } catch (error) {
-                console.warn(`⚠️ Không tìm thấy ảnh công ty: ${avatarPath}`);
-                companyLogo = require('../../asset/images/img_splash.png');
-              }
+              companyLogo = companyData?.sAnhDaiDien || '';
             }
           } catch (error) {
             console.error("Error fetching company info:", error);
           }
         }
-  
-        jobList.push({
+
+        const jobItem = {
           sMaTinTuyenDung: jobData.sMaTinTuyenDung,
           sViTriTuyenDung: jobData.sViTriTuyenDung,
           sTenDoanhNghiep: companyName,
@@ -120,11 +124,18 @@ const BottomBar = () => {
           sMucLuongToiDa: jobData.sMucLuongToiDa,
           sTrangThai: jobData.sTrangThai,
           sDiaChiLamViec: jobData.sDiaChiLamViec || 'Remote',
-        });
+          sLinhVucTuyenDung: jobData.sLinhVucTuyenDung,
+        };
+        if (userInfo?.sLinhVuc && userInfo.sLinhVuc === jobData.sLinhVucTuyenDung) {
+          recommendedJob.push(jobItem);
+        } else {
+          bestJob.push(jobItem);
+        }
       });
-  
+
       await Promise.all(promises);
-      setJobs(jobList); 
+      setBestJobs(bestJob);
+      setRecommendedJobs(recommendedJob);
     } catch (error) {
       console.error('Error fetching jobs:', error);
     } finally {
@@ -137,38 +148,40 @@ const BottomBar = () => {
     lazy: false,
     tabBarIcon: ({ focused }: any) => {
       let iconSource;
-      let iconSize = focused ? 22 : 20;
-      let iconOpacity = focused ? 1 : 0.5;
-      let underlineColor = focused ? theme.primary : 'transparent';
-
+  
       switch (route.name) {
         case 'Trang chủ':
-          iconSource = homeIcon;
+          iconSource = focused ? homeIconActive : homeIcon;
           break;
-        case 'Đã ứng tuyển':
-          iconSource = appliJob;
+        case 'Tìm kiếm':
+          iconSource = focused ? searchIconActive : searchIcon;
           break;
         case 'Tài khoản':
-          iconSource = profileIcon;
+          iconSource = focused ? profileIconActive : profileIcon;
           break;
-        case 'Thông báo':
-          iconSource = notificationsIcon;
+        case 'Lưu công việc':
+          iconSource = focused ? saveIconActive : saveIcon;
           break;
         case 'Đã đăng tải':
-          iconSource = posted;
+          iconSource = focused ? saveIconActive : saveIcon;
           break;
         case 'Tài khoản công ty':
-          iconSource = profileIcon;
+          iconSource = focused ? profileIconActive : profileIcon;
           break;
         default:
-          iconSource = homeIcon;
+          iconSource = focused ? homeIconActive : homeIcon;
       }
-
+  
       return (
-        <View style={styles.iconWrapper}>
-          <Image source={iconSource} style={{ width: iconSize, height: iconSize, opacity: iconOpacity }} />
-          <View style={[styles.underline, { backgroundColor: underlineColor }]} />
-        </View>
+        <Image
+          source={iconSource}
+          style={{
+            width: 22,
+            height: 22,
+            opacity: 1, 
+            resizeMode: 'contain', 
+          }}
+        />
       );
     },
     tabBarActiveTintColor: theme.primary,
@@ -177,14 +190,14 @@ const BottomBar = () => {
     detachInactiveScreens: true,
   });
 
-
-
   const tabs = [
-    { name: "Trang chủ", component: <Home jobs={jobs} navigation={navigation} /> },
-    userType === 1 && { name: "Thông báo", component: <SettingScreen navigation={navigation} /> },
+    { name: "Trang chủ", component: <Home bestJobs={bestJobs} recommendedJobs={recommendedJobs} navigation={navigation} /> },
+    userType === 1 && { name: "Tìm kiếm", component: <View></View> },
+    userType === 1 && { name: "Lưu công việc", component: <View></View> },
     userType === 2 && { name: "Đã đăng tải", component: <PostedJobs navigation={navigation} /> },
-    userType === 2 ? { name: "Tài khoản công ty", component: <SettingScreen navigation={navigation} /> } : { name: "Tài khoản", component: SettingScreen },
-    userType === 0 && { name: "Thông báo", component: <View></View> },
+    userType === 2 ? { name: "Tài khoản công ty", component: <SettingScreen navigation={navigation} /> } : { name: "Tài khoản", component: <SettingScreen navigation={navigation} /> },
+    userType === 0 && { name: "Tìm kiếm", component: <View></View> },
+    userType === 0 && { name: "Tìm kiếm", component: <View></View> },
   ].filter(Boolean);
 
   return (
@@ -210,10 +223,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 80,
-    borderTopLeftRadius: 45,
-    borderTopRightRadius: 45,
-    borderBottomLeftRadius: 15,
-    borderBottomRightRadius: 15,
+    borderTopLeftRadius: 25,
+    borderTopRightRadius: 25,
     backgroundColor: 'white',
     overflow: 'hidden',
     elevation: 10,

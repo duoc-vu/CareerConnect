@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons'; // Vẫn giữ lại cho mũi tên mở rộng/thu gọn
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const ApplicantCard = ({
-  applicantId, // ID của đơn ứng tuyển (dùng để xác định khi cập nhật)
-  applicantCode, // sMaUngVien
-  applicationDate, // sNgayTao
-  status, // sTrangThai
-  cvUrl, // fFileCV
-  onViewCV, // Callback để xem CV
-  onAccept, // Callback để chấp nhận
-  onReject, // Callback để từ chối
+  applicantId,
+  applicantCode, 
+  applicationDate, 
+  status,
+  cvUrl, 
+  onViewCV, 
+  onAccept, 
+  onReject, 
 }:any) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -18,15 +18,14 @@ const ApplicantCard = ({
     setIsExpanded(!isExpanded);
   };
 
-  // Hàm xử lý màu sắc trạng thái
-  const getStatusStyle = (status) => {
+  const getStatusStyle = (status:any) => {
     switch (status) {
       case 'Chờ duyệt':
-        return { dotColor: '#F59E0B', textColor: '#F59E0B' }; // Màu vàng
+        return { dotColor: '#F59E0B', textColor: '#F59E0B' }; 
       case 'Đã duyệt':
-        return { dotColor: '#22C55E', textColor: '#22C55E' }; // Màu xanh
+        return { dotColor: '#22C55E', textColor: '#22C55E' };
       case 'Từ chối':
-        return { dotColor: '#EF4444', textColor: '#EF4444' }; // Màu đỏ
+        return { dotColor: '#EF4444', textColor: '#EF4444' }; 
       default:
         return { dotColor: '#6B7280', textColor: '#6B7280' };
     }
@@ -36,7 +35,6 @@ const ApplicantCard = ({
 
   return (
     <View style={styles.card}>
-      {/* Header: Tiêu đề và mũi tên */}
       <TouchableOpacity style={styles.header} onPress={toggleExpand}>
         <Text style={styles.applicantName}>Ứng viên {applicantCode}</Text>
         <Icon
@@ -46,7 +44,6 @@ const ApplicantCard = ({
         />
       </TouchableOpacity>
 
-      {/* Phần chi tiết: Chỉ hiển thị khi isExpanded = true */}
       {isExpanded && (
         <View style={styles.details}>
           <View style={styles.detailRow}>
