@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
 import { Fonts } from "../../theme/font";
+import { theme } from "../../theme/theme";
 
 interface JobCardProps {
   companyLogo: string;
@@ -11,6 +12,7 @@ interface JobCardProps {
   salaryMax: number;
   onPress: () => void;
   style?: any;
+  sCoKhoa?: number;
 }
 
 const JobCard: React.FC<JobCardProps> = ({
@@ -22,10 +24,27 @@ const JobCard: React.FC<JobCardProps> = ({
   jobType,
   onPress,
   style,
+  sCoKhoa,
 }) => {
   const formatSalary = (max: number) => {
     return `Up to ${max.toLocaleString()} VND`;
   };
+
+  const getStatusText = (sCoKhoa: number | undefined) => {
+    switch (sCoKhoa) {
+      case 1:
+        return "Đã duyệt"; 
+      case 2:
+        return "Chờ duyệt"; 
+      case 3:
+        return "Từ chối"; 
+      case 4:
+        return "Hết hạn"; 
+      default:
+        return ""; 
+    }
+  };
+
 
   return (
     <TouchableOpacity
@@ -33,12 +52,16 @@ const JobCard: React.FC<JobCardProps> = ({
       onPress={onPress}
       activeOpacity={0.8}
     >
-      <TouchableOpacity>
+      {sCoKhoa ? (
+        <Text style={styles.statusText}>{getStatusText(sCoKhoa)}</Text>
+      ) : (
+        <TouchableOpacity>
           <Image
             source={require("../../../asset/images/save_job.png")}
             style={styles.saveIcon}
           />
         </TouchableOpacity>
+      )}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Image
@@ -140,6 +163,14 @@ const styles = StyleSheet.create({
     resizeMode: "contain",
     right:8,
     top: 1,
+  },
+  statusText: {
+    position: "absolute",
+    right: 10,
+    top: 16,
+    fontSize: 12,
+    color: theme.template.biru,
+    ...Fonts.medium,
   },
 });
 

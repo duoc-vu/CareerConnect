@@ -1,247 +1,281 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Dimensions, ActivityIndicator, Alert } from 'react-native';
-import { Avatar, Card, IconButton } from 'react-native-paper';
-import { TextInput, Button, Text } from 'react-native-paper';
+import React, { useCallback, useEffect, useState } from 'react';
 import firestore from '@react-native-firebase/firestore';
-import storage from '@react-native-firebase/storage';
-import Pdf from 'react-native-pdf';
-import Markdown from 'react-native-markdown-display';
-import * as Animatable from 'react-native-animatable';
+import { useFocusEffect } from '@react-navigation/native';
+import { View, ScrollView, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
+import ProfileCard from '../../components/ProfileCard';
+import CustomText from '../../components/CustomText';
+import { Image } from 'react-native-animatable';
+import SkillTags from '../../components/SkillTags';
+import HeaderWithIcons from '../../components/Header';
+import { useLoading } from '../../../context/themeContext';
+import Loading from '../../components/Loading';
 
-const { width, height } = Dimensions.get('window');
-const ApplicationDetails = ({ route, navigation }: any) => {
-    const { userId, idCT, idJob, avt ,cmt } = route.params;
-    const [applicantInfo, setApplicantInfo] = useState<any>(null);
-    const [pdfUrl, setPdfUrl] = useState<string | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [comment, setComment] = useState<string>('');
-    const [sendingComment, setSendingComment] = useState<boolean>(false);
+const ApplicantionDetail = ({ route, navigation }: any) => {
+    const { sMaUngVien } = route.params;
+    const { loading, setLoading } = useLoading();
+    const [user, setUser] = useState({
+        sAnhDaiDien: '',
+        sHoVaTen: '',
+        sEmailLienHe: '',
+        sSoDienThoai: '',
+        sChuyenNganh: '',
+        sKinhNghiem: '',
+        sDiaChi: '',
+        sKiNang: '',
+        sSoThich: '',
+        sMoTaChiTiet: '',
+        introduction: '',
+        cvName: '',
+        sNgayTao: '',
+        fFileCV: ''
+    });
+    const fetchUserData = async () => {
+        setLoading(true);
+        try {
+            const userQuery = await firestore()
+                .collection('tblUngVien')
+                .where('sMaUngVien', '==', sMaUngVien)
+                .get();
 
-    useEffect(() => {
-        const fetchApplicantInfo = async () => {
-            console.log(cmt);
-            try {
-                setLoading(true);
+            if (!userQuery.empty) {
+                const userData = userQuery.docs[0].data();
 
-                // Fetch applicant info from tblAppJob
-                const appJobRef = firestore().collection('tblAppJob');
-                const querySnapshot = await appJobRef.where('userId', '==', userId).where('jobId', '==', idJob).get();
+                const accountQuery = await firestore()
+                    .collection('tblTaiKhoan')
+                    .where('sMaTaiKhoan', '==', sMaUngVien)
+                    .get();
 
-                if (!querySnapshot.empty) {
-                    const doc = querySnapshot.docs[0];
-                    const appJobData = doc.data();
-
-                    // Fetch user info from tblUserInfo
-                    const userInfoRef = firestore().collection('tblUserInfo');
-                    const userDoc = await userInfoRef.doc(userId).get();
-                    const userData: any = userDoc.data();
-
-                    // Fetch PDF file URL from storage
-                    const storageRef = storage().ref(`/${idCT}/${idJob}/${userId}.pdf`);
-                    const url = await storageRef.getDownloadURL();
-
-                    setApplicantInfo({ avatar: avt, intro: appJobData.intro, name: userData?.name || 'Unknown' });
-                    setPdfUrl(url);
-                } else {
-                    console.log('Không tìm thấy đơn ứng tuyển cho userId:', userId, 'và jobId:', idJob);
+                let userEmail = 'No Email';
+                if (!accountQuery.empty) {
+                    userEmail = accountQuery.docs[0].data().sEmailLienHe || 'No Email';
                 }
 
-                setLoading(false);
-            } catch (error) {
-                console.error('Lỗi khi lấy chi tiết đơn ứng tuyển:', error);
-                setLoading(false);
-            }
-        };
+                const applicationQuery = await firestore()
+                    .collection('tblDonUngTuyen')
+                    .where('sMaUngVien', '==', sMaUngVien)
+                    .where('sMaTinTuyenDung', '==', route.params.sMaTinTuyenDung)
+                    .get();
 
-        fetchApplicantInfo();
-    }, [userId, idCT, idJob]);
+                let fFileCV = '';
+                let introduction = '';
+                let sNgayTao = null;
+                if (!applicationQuery.empty) {
+                    const applicationData = applicationQuery.docs[0].data();
+                    fFileCV = applicationData.fFileCV || 'Không có CV nào được đăng tải';
+                    introduction = applicationData.sGioiThieu || 'Không có lời giới thiệu.';
+                    sNgayTao = applicationData.sNgayTao || null; // Lấy ngày tạo
+                }
 
-    const handleCommentSubmit = async () => {
-        try {
-            setSendingComment(true);
-            const appJobRef = firestore().collection('tblAppJob');
-            const querySnapshot = await appJobRef.where('userId', '==', userId).where('jobId', '==', idJob).get();
-
-            if (!querySnapshot.empty) {
-                const doc = querySnapshot.docs[0];
-                await doc.ref.update({ comment });
-                Alert.alert('Nhận xét đã được gửi');
-                setComment('');
+                const cvName = fFileCV.split('/').pop() || 'Không có tên CV';
+                setUser({
+                    sAnhDaiDien: userData.sAnhDaiDien || '',
+                    sHoVaTen: userData.sHoVaTen || '',
+                    sKinhNghiem: userData.sKinhNghiem || '',
+                    sEmailLienHe: userEmail,
+                    sChuyenNganh: userData.sChuyenNganh || '',
+                    sSoDienThoai: userData.sSoDienThoai || '',
+                    sDiaChi: userData.sDiaChi || '',
+                    sMoTaChiTiet: userData.sMoTaChiTiet || '',
+                    sKiNang: userData.sKiNang,
+                    sSoThich: userData.sSoThich,
+                    introduction,
+                    fFileCV,
+                    cvName,
+                    sNgayTao,
+                });
             } else {
-                console.log('Không tìm thấy đơn ứng tuyển để cập nhật');
+                console.log('Không có ứng viên với ID:', sMaUngVien);
             }
         } catch (error) {
-            console.error('Lỗi khi gửi nhận xét:', error);
+            console.error('Lỗi khi lấy thông tin ứng viên:', error);
         } finally {
-            setSendingComment(false);
+            setLoading(false);
         }
     };
 
-    if (loading) {
-        return (
-            <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#1E90FF" />
-                <Text>Đang tải...</Text>
-            </View>
-        ); // Xử lý trạng thái loading
-    }
+    useEffect(() => {
+        fetchUserData();
+    }, [sMaUngVien]);
 
-    if (!applicantInfo || !pdfUrl) {
-        return <Text>Lỗi khi lấy chi tiết đơn ứng tuyển</Text>; // Xử lý trạng thái lỗi
-    }
+    useFocusEffect(
+        useCallback(() => {
+            fetchUserData();
+        }, [sMaUngVien])
+    );
 
     return (
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
-            <View style={styles.headerContainer}>
-                <IconButton
-                    icon="arrow-left"
-                    iconColor="#1E90FF"
-                    size={30}
-                    onPress={() => navigation.goBack()}
-                    style={{ position: 'absolute', left: 0, top: 20 }}
+        <View style={styles.container}>
+            <HeaderWithIcons
+                title='Thông tin ứng viên'
+                onBackPress={() => { navigation.goBack() }}
+            />
+            <ScrollView style={styles.scrollContainer}>
+                <ProfileCard
+                    avatar={user.sAnhDaiDien}
+                    name={user.sHoVaTen || 'Unknown User'}
+                    email={user.sEmailLienHe || 'No Email'}
+                    location={user.sDiaChi || 'No Address'}
+                    style={{ width: "100%" }}
                 />
-                <Text style={styles.header}>Chi tiết ứng tuyển</Text>
-            </View>
-            <Animatable.View animation="fadeInUp" duration={1500} style={styles.container}>
-                <View style={styles.headeravt}>
-                    <Avatar.Image size={80} source={{ uri: applicantInfo.avatar }} />
-                    <Text style={styles.applicantName}>{applicantInfo.name}</Text>
+                <View style={styles.section}>
+                    <View style={styles.sectionHeader}>
+                        <CustomText style={styles.sectionTitle}>Lĩnh Vực</CustomText>
+                        <Image source={require('../../../../asset/images/img_edit.png')} />
+                    </View>
+                    <CustomText style={styles.description}>{user.sChuyenNganh || 'Chưa có thông tin'}</CustomText>
                 </View>
-                <Card style={styles.card}>
-                    <Card.Title title="Thư giới thiệu" />
-                    <Card.Content>
-                        <Markdown
-                            style={{
-                                body: {
-                                    fontSize: 16,
-                                    lineHeight: 24,
-                                    color: '#333',
-                                },
-                            }}
-                        >
-                            {applicantInfo.intro}
-                        </Markdown>
-                    </Card.Content>
-                </Card>
-                <View style={styles.pdfContainer}>
-                    <Pdf
-                        trustAllCerts={false}
-                        source={{
-                            uri: pdfUrl,
-                            cache: true,
-                        }}
-                        onLoadComplete={(numberOfPages, filePath) => {
-                            console.log(`Number of pages: ${numberOfPages}`);
-                        }}
-                        onPageChanged={(page, numberOfPages) => {
-                            console.log(`Current page: ${page}`);
-                        }}
-                        onError={error => {
-                            console.log(error);
-                        }}
-                        onPressLink={uri => {
-                            console.log(`Link pressed: ${uri}`);
-                        }}
-                        style={styles.pdf}
+
+                <View style={styles.section}>
+                    <View style={styles.sectionHeader}>
+                        <CustomText style={styles.sectionTitle}>Kinh Nghiệm Làm Việc</CustomText>
+                        <Image source={require('../../../../asset/images/img_edit.png')} />
+                    </View>
+                    <CustomText style={styles.description}>{user.sKinhNghiem || 'Chưa có kinh nghiệm'}</CustomText>
+                </View>
+
+                <View style={styles.section}>
+                    <View style={styles.sectionHeader}>
+                        <CustomText style={styles.sectionTitle}>Kĩ năng</CustomText>
+
+                        <Image source={require('../../../../asset/images/img_edit.png')} />
+                    </View>
+                    <SkillTags
+                        skills={user.sKiNang || 'Không có kĩ năng nào'}
+                        onEdit={() => { }}
                     />
                 </View>
-                <TextInput
-                    style={styles.textInput}
-                    placeholder="Nhận xét"
-                    value={cmt}
-                    onChangeText={setComment}
-                    editable={!sendingComment}
-                    mode="outlined"
-                    outlineColor="#1E90FF"
-                    activeOutlineColor="#1E90FF"
-                    theme={{ roundness: 8 }}
-                />
-                <Button
-                    mode="contained"
-                    style={styles.button}
-                    onPress={handleCommentSubmit}
-                    disabled={sendingComment}
-                    labelStyle={{ color: 'white', fontWeight: 'bold' }}
-                    contentStyle={{ height: 50 }}
-                >
-                    Gửi nhận xét
-                </Button>
-            </Animatable.View>
-        </ScrollView>
+
+                <View style={styles.section}>
+                    <View style={styles.sectionHeader}>
+                        <CustomText style={styles.sectionTitle}>Sở Thích</CustomText>
+                        <Image source={require('../../../../asset/images/img_edit.png')} />
+                    </View>
+                    <CustomText style={styles.description}>{user.sSoThich || 'Không có sở thích.'}</CustomText>
+                </View>
+
+                <View style={styles.section}>
+                    <View style={styles.sectionHeader}>
+                        <CustomText style={styles.sectionTitle}>Giới thiệu bản thân</CustomText>
+                        <Image source={require('../../../../asset/images/img_edit.png')} />
+                    </View>
+                    <CustomText style={styles.description}>{user.sMoTaChiTiet || 'Không có mô tả chi tiết nào.'}</CustomText>
+                </View>
+
+                <View style={styles.section}>
+                    <View style={styles.sectionHeader}>
+                        <CustomText style={styles.sectionTitle}>Lời giới thiệu</CustomText>
+                        <Image source={require('../../../../asset/images/img_edit.png')} />
+                    </View>
+                    <CustomText style={styles.description}>{user.introduction || 'Không có lời giới thiệu.'}</CustomText>
+                </View>
+
+                <View style={styles.section}>
+                    <View style={styles.sectionHeader}>
+                        <CustomText style={styles.sectionTitle}>Đơn ứng tuyển</CustomText>
+                        <Image source={require('../../../../asset/images/img_edit.png')} />
+                    </View>
+                    {user.fFileCV.startsWith('http') ? (
+                        <TouchableOpacity
+                            onPress={() =>
+                                navigation.navigate('cv-preview', { cvUrl: user.fFileCV })
+                            }
+                            style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10 }}
+                        >
+                            <Image
+                                source={require('../../../../asset/images/img_CV.png')}
+                                style={{ width: 24, height: 24, marginRight: 10 }}
+                            />
+                            <View>
+                                <CustomText style={styles.cvName}>CV</CustomText>
+                                <CustomText style={styles.cvDate}>{user.sNgayTao}</CustomText>
+                            </View>
+                        </TouchableOpacity>
+                    ) : (
+                        <CustomText style={styles.description}>Không có CV nào được đăng tải</CustomText>
+                    )}
+                </View>
+            </ScrollView>
+            {loading && <Loading />}
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: '#FFFFFF',
+    },
     scrollContainer: {
         flexGrow: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingBottom:20
+        padding: 16,
     },
-    headerContainer: {
-        width: '100%',
-        height: height * 0.115,
-        justifyContent: 'center',
+    profileCard: {
+        backgroundColor: '#1E3A8A',
+        padding: 16,
+        borderRadius: 12,
+        flexDirection: 'row',
         alignItems: 'center',
-        borderBottomLeftRadius: 20,
-        borderBottomRightRadius: 20,
+        justifyContent: 'space-between',
     },
-    container: {
-        width: '100%',
-        alignItems: 'center',
-        paddingHorizontal: 20,
+    avatar: {
+        width: 60,
+        height: 60,
+        borderRadius: 30,
     },
-    loadingContainer: {
+    infoContainer: {
         flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
+        marginLeft: 12,
     },
-    header: {
-        fontSize: 24,
+    name: {
+        fontSize: 18,
         fontWeight: 'bold',
-        color: '#1E90FF',
-        textAlign: 'center',
-        flex: 1,
-        marginTop: 30,
+        color: '#fff',
     },
-    headeravt: {
-        flexDirection: 'column',
-        alignItems: 'center',
+    email: {
+        fontSize: 10,
+        color: '#ddd',
     },
-    applicantName: {
-        marginVertical: 10,
-        fontSize: 20,
+    location: {
+        fontSize: 102,
+        color: '#ddd',
+    },
+    editButton: {
+        backgroundColor: '#fff',
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        borderRadius: 6,
+    },
+    editButtonText: {
+        color: '#1E3A8A',
         fontWeight: 'bold',
     },
-    card: {
-        width: '100%',
-        marginBottom: 20,
-        borderRadius: 8,
-        elevation: 4,
+    section: {
+        padding: 16,
+        marginBottom: 16,
     },
-    pdfContainer: {
-        width: '100%',
-        height: Dimensions.get('window').height / 2,
-        marginBottom: 20,
+    sectionHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
     },
-    pdf: {
-        flex: 1,
-        borderRadius: 8,
-    },
-    textInput: {
-        width: '100%',
-        height: 50,
-        marginBottom: 20,
-        backgroundColor: 'white',
+    sectionTitle: {
+        color: "#012A74",
         fontSize: 16,
+        fontWeight: "bold",
     },
-    button: {
-        width: '100%',
-        height: 50,
-        backgroundColor: '#1E90FF',
-        justifyContent: 'center',
-        borderRadius: 8,
+    description: {
+        fontSize: 14,
+        color: '#333',
+    },
+    cvName: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: '#012A74',
+    },
+    cvDate: {
+        fontSize: 12,
+        color: '#6B7280',
     },
 });
 
-export default ApplicationDetails;
+export default ApplicantionDetail;

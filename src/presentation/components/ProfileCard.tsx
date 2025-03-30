@@ -86,9 +86,11 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ avatar, name, email, location
             </View>
           )}
         </View>
-        <TouchableOpacity style={styles.editButton} onPress={onPress}>
-          <Text style={styles.editButtonText}>{isGuest ? "Login" : "Edit profile"}</Text>
-        </TouchableOpacity>
+        {onPress && (
+          <TouchableOpacity style={styles.editButton} onPress={onPress}>
+            <Text style={styles.editButtonText}>{isGuest ? "Login" : "Edit profile"}</Text>
+          </TouchableOpacity>
+        )}
       </View>
     );
 };

@@ -12,7 +12,7 @@ import EditEmployerProfile from './src/presentation/screens/Company/EditEmployer
 import CompanyInfoScreen from './src/presentation/screens/Company/CompanyInfoScreen';
 import ApplyJob from './src/presentation/screens/User/ApplyJob';
 import JobApplyCompany from './src/presentation/screens/Company/ApplicantsScreen';
-import ApplicationDetails from './src/presentation/screens/Company/ApplicationDetails';
+import ApplicationDetail from './src/presentation/screens/Company/ApplicationDetails';
 import AppliedJobs from './src/presentation/screens/User/AppliedJobs';
 import AppDetails from './src/presentation/screens/User/AppDetails';
 import EditJob from './src/presentation/screens/Company/EditJob';
@@ -32,6 +32,7 @@ import ProfileEmployer from './src/presentation/screens/Company/ProfileEmployer'
 import FeedbackScreen from './src/presentation/screens/components/FeedbackScreen';
 import ApplicantsScreen from './src/presentation/screens/Company/ApplicantsScreen';
 import { KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import CVPreview from './src/presentation/screens/components/CVPreview';
 
 const Stack = createNativeStackNavigator();
 
@@ -85,7 +86,7 @@ const App = () => {
               <Stack.Screen name='apply-job' component={ApplyJob} options={{ headerShown: false }} />
               <Stack.Screen name='list-apply-job' component={JobApplyCompany} options={{ headerShown: false }} />
               <Stack.Screen name='cv-detail' component={CV_Profile} options={{ headerShown: false }} />
-              <Stack.Screen name='application-detail' component={ApplicationDetails} options={{ headerShown: false }} />
+              <Stack.Screen name='application-detail' component={ApplicationDetail} options={{ headerShown: false }} />
               <Stack.Screen name='app-detail' component={AppDetails} options={{ headerShown: false }} />
               <Stack.Screen name='edit-job' component={EditJob} options={{ headerShown: false }} />
               <Stack.Screen name="post-job" component={PostJob} options={{ headerShown: false }} />
@@ -93,6 +94,7 @@ const App = () => {
               <Stack.Screen name="candidate-profile" component={ProfileCandidate} options={{ headerShown: false }} />
               <Stack.Screen name="applicant-list" component={ApplicantsScreen} options={{ headerShown: false }} />
               <Stack.Screen name='feedback' component={FeedbackScreen} options={{ headerShown: false }} />
+              <Stack.Screen name='cv-preview' component={CVPreview} options={{ headerShown: false }} />
             </Stack.Navigator>
           </NavigationContainer>
         </LoadingProvider>

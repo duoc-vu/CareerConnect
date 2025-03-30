@@ -6,12 +6,14 @@ import {
   Text,
   FlatList,
   StatusBar,
+  TouchableOpacity,
 } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import JobCard from '../../components/JobCard';
 import SearchBar from '../../components/SearchBar';
 import { useUser } from '../../../context/UserContext';
 import UploadButton from '../../components/UploadButton';
+import FilterDialog from '../../components/FilterDialog';
 
 const fbJob = firestore().collection('tblTinTuyenDung');
 
@@ -21,6 +23,8 @@ const PostedJobs = ({ navigation }:any) => {
   const [filteredJobs, setFilteredJobs] = useState([]);
   const { userId, userInfo } = useUser();
   const [loading, setLoading] = useState(true);
+  const [filterVisible, setFilterVisible] = useState(false); 
+  const [isFilterActive, setIsFilterActive] = useState(false); 
 
   useEffect(() => {
     const subscriber = fbJob
@@ -67,6 +71,22 @@ const PostedJobs = ({ navigation }:any) => {
     navigation.navigate("post-job", { userId });
   };
 
+  const handleApplyFilters = (filters: any) => {
+    const { jobType } = filters; 
+    const filtered = postedJobs.filter((job: any) => {
+      const matchesStatus = jobType
+        ? (job.sCoKhoa === 1 && jobType === 'Đã duyệt') ||
+          (job.sCoKhoa === 2 && jobType === 'Chờ duyệt') ||
+          (job.sCoKhoa === 3 && jobType === 'Từ chối') ||
+          (job.sCoKhoa === 4 && jobType === 'Hết hạn')
+        : true; 
+      return matchesStatus;
+    });
+  
+    setFilteredJobs(filtered);
+    setIsFilterActive(true); 
+  };
+
   const renderItem = ({ item }:any) => (
     <View style={{ overflow: 'hidden' }}>
       <View style={{ backgroundColor: 'transparent' }}>
@@ -77,6 +97,7 @@ const PostedJobs = ({ navigation }:any) => {
           salaryMax={item.sMucLuongToiDa || 0}
           jobType="On-site"
           location={item.sDiaChiLamViec}
+          sCoKhoa={item.sCoKhoa}
           onPress={() =>
             navigation.navigate('applicant-list', { sMaTinTuyenDung: item.sMaTinTuyenDung })
           }
@@ -91,15 +112,23 @@ const PostedJobs = ({ navigation }:any) => {
       <View style={styles.header}>
         <View style={{ width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-evenly' }}>
           <SearchBar 
-            style={{ width: '80%' }} 
+            style={{ width: '85%' }} 
             value={searchQuery} 
             onChangeText={setSearchQuery} 
             placeholder="Tìm kiếm công việc đã đăng..."
           />
-          <Image
-            source={userInfo?.sAnhDaiDien ? { uri: userInfo?.sAnhDaiDien } : require('../../../../asset/images/img_ellipse_3.png')}
-            style={styles.avatar}
-          />
+          <TouchableOpacity
+            onPress={() => setFilterVisible(true)} 
+          >
+            <Image
+              source={
+                isFilterActive
+                  ? require('../../../../asset/images/img_filter_active.png') 
+                  : require('../../../../asset/images/img_filter.png') 
+              }
+              style={styles.filter}
+            />
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -116,6 +145,11 @@ const PostedJobs = ({ navigation }:any) => {
         )}
       />
       <UploadButton onPress={handleUploadPress} />
+      <FilterDialog
+        visible={filterVisible}
+        onClose={() => setFilterVisible(false)} 
+        onApply={handleApplyFilters} 
+      />
     </View>
   );
 };
@@ -132,11 +166,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     width: '100%',
   },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  filter: {
+    width: 45,
+    height: 45,
     marginLeft: 10,
+    resizeMode: 'contain', 
   },
   list: {
     paddingBottom: 50,

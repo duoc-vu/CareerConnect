@@ -15,6 +15,7 @@ import SearchBar from '../../components/SearchBar';
 import { useUser } from '../../../context/UserContext';
 import { theme } from '../../../theme/theme';
 import { Fonts } from '../../../theme/font';
+import HeaderWithIcons from '../../components/Header';
 
 const fbDonUngTuyen = firestore().collection('tblDonUngTuyen');
 
@@ -25,7 +26,6 @@ const ApplicantsScreen = ({ route, navigation }: any) => {
   const [filteredApplicants, setFilteredApplicants] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const { userId, userInfo } = useUser();
 
   useEffect(() => {
     const subscriber = fbDonUngTuyen
@@ -66,17 +66,6 @@ const ApplicantsScreen = ({ route, navigation }: any) => {
       applicant.sMaUngVien?.toLowerCase().includes(query.toLowerCase())
     );
     setFilteredApplicants(filtered);
-  };
-
-  // Hàm xử lý xem CV
-  const handleViewCV = (cvUrl: any) => {
-    if (cvUrl) {
-      Linking.openURL(cvUrl).catch((err) =>
-        console.error('Error opening CV:', err)
-      );
-    } else {
-      Alert.alert('Thông báo', 'Không tìm thấy file CV.');
-    }
   };
 
   const updateStatus = async (applicantId: any, newStatus: any) => {
@@ -135,7 +124,7 @@ const ApplicantsScreen = ({ route, navigation }: any) => {
           applicationDate={item.sNgayTao}
           status={item.sTrangThai}
           cvUrl={item.fFileCV}
-          onViewCV={handleViewCV}
+          onViewCV={() => {navigation.navigate('application-detail', { sMaUngVien: item.sMaUngVien , sMaTinTuyenDung: sMaTinTuyenDung })}}  
           onAccept={handleAccept}
           onReject={handleReject}
         />
@@ -146,25 +135,11 @@ const ApplicantsScreen = ({ route, navigation }: any) => {
   return (
     <View style={styles.container}>
       <StatusBar backgroundColor={'#F0F4F7'} />
-      <View style={styles.header}>
-        <View style={{ width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-evenly' }}>
-          <SearchBar
-            style={{ width: '80%' }}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholder="Tìm kiếm ứng viên..."
-          />
-          <Image
-            source={
-              userInfo?.sAnhDaiDien
-                ? { uri: userInfo?.sAnhDaiDien }
-                : require('../../../../asset/images/img_ellipse_3.png')
-            }
-            style={styles.avatar}
-          />
-        </View>
-      </View>
-
+      <HeaderWithIcons
+       title='Quản lý tin tuyển dụng '
+       backgroundColor='#f2f2f2'
+       onBackPress={() => navigation.goBack()}
+      />
       <FlatList
         data={filteredApplicants}
         renderItem={renderItem}
