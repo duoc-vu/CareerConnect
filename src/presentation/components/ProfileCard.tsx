@@ -10,9 +10,10 @@ interface ProfileCardProps {
   isGuest?: boolean;
   onPress?: () => void;
   style?: any;
+  buttonType?: "edit" | "create-appointment";
 }
 
-const ProfileCard: React.FC<ProfileCardProps> = ({ avatar, name, email, location, onPress, style, isGuest }) => {
+const ProfileCard: React.FC<ProfileCardProps> = ({ avatar, name, email, location, onPress, style, isGuest, buttonType = "edit", }) => {
   const navigation: any = useNavigation();
   const avatarSource =
     avatar && avatar.startsWith("http")
@@ -63,7 +64,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ avatar, name, email, location
   )
     : (
       <View style={[styles.card, style]} >
-        {onPress && (
+        {onPress && buttonType === "edit" && (
           <Image source={require("../../../asset/images/img_setting.png")} style={styles.settingIcon} />
         )}
         <View style={styles.avatarContainer}>
@@ -88,7 +89,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ avatar, name, email, location
         </View>
         {onPress && (
           <TouchableOpacity style={styles.editButton} onPress={onPress}>
-            <Text style={styles.editButtonText}>{isGuest ? "Login" : "Edit profile"}</Text>
+            <Text style={styles.editButtonText}>{buttonType === "create-appointment" ? "Tạo lịch hẹn" : "Chỉnh sửa hồ sơ"}</Text>
           </TouchableOpacity>
         )}
       </View>

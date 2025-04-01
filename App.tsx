@@ -33,6 +33,7 @@ import FeedbackScreen from './src/presentation/screens/components/FeedbackScreen
 import ApplicantsScreen from './src/presentation/screens/Company/ApplicantsScreen';
 import { KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import CVPreview from './src/presentation/screens/components/CVPreview';
+import JobDetailEmployerScreen from './src/presentation/screens/Company/JobDetailEmployer';
 
 const Stack = createNativeStackNavigator();
 
@@ -95,7 +96,8 @@ const App = () => {
               <Stack.Screen name="applicant-list" component={ApplicantsScreen} options={{ headerShown: false }} />
               <Stack.Screen name='feedback' component={FeedbackScreen} options={{ headerShown: false }} />
               <Stack.Screen name='cv-preview' component={CVPreview} options={{ headerShown: false }} />
-            </Stack.Navigator>
+              <Stack.Screen name='job-detail-employer' component={JobDetailEmployerScreen} options={{ headerShown: false }} />
+              </Stack.Navigator>
           </NavigationContainer>
         </LoadingProvider>
       </ThemeProvider>

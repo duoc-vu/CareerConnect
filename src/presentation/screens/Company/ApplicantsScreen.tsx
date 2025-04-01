@@ -2,55 +2,67 @@ import React, { useState, useEffect } from 'react';
 import {
   View,
   StyleSheet,
-  Image,
   Text,
   FlatList,
-  StatusBar,
   Alert,
-  Linking,
 } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import ApplicantCard from '../../components/ApplicantCard';
-import SearchBar from '../../components/SearchBar';
-import { useUser } from '../../../context/UserContext';
-import { theme } from '../../../theme/theme';
-import { Fonts } from '../../../theme/font';
 import HeaderWithIcons from '../../components/Header';
+import { useUser } from '../../../context/UserContext';
+import Loading from '../../components/Loading';
+import { useLoading } from '../../../context/themeContext';
 
 const fbDonUngTuyen = firestore().collection('tblDonUngTuyen');
 
-const ApplicantsScreen = ({ route, navigation }: any) => {
-  const { sMaTinTuyenDung } = route.params;
+const ApplicantsScreen = ({ navigation }: any) => {
+  const {userId} = useUser();
   const [searchQuery, setSearchQuery] = useState('');
   const [applicants, setApplicants] = useState([]);
   const [filteredApplicants, setFilteredApplicants] = useState([]);
-  const [loading, setLoading] = useState(true);
-
+  const {loading, setLoading} = useLoading();
 
   useEffect(() => {
-    const subscriber = fbDonUngTuyen
-      .where('sMaTinTuyenDung', '==', sMaTinTuyenDung)
-      .onSnapshot(
-        (querySnapshot) => {
-          const applicantsList: any = [];
-          querySnapshot.forEach((documentSnapshot) => {
-            applicantsList.push({
-              ...documentSnapshot.data(),
-              id: documentSnapshot.id,
-            });
-          });
-          setApplicants(applicantsList);
-          setFilteredApplicants(applicantsList);
+    const fetchApplicants = async () => {
+      setLoading(true);
+      try {
+        const jobQuerySnapshot = await firestore()
+          .collection('tblTinTuyenDung')
+          .where('sMaDoanhNghiep', '==', userId)
+          .get();
+  
+        const jobIds = jobQuerySnapshot.docs.map(doc => doc.data().sMaTinTuyenDung);
+  
+        if (jobIds.length === 0) {
+          setApplicants([]);
+          setFilteredApplicants([]);
           setLoading(false);
-        },
-        (error) => {
-          console.error('Error fetching applicants:', error);
-          setLoading(false);
+          return;
         }
-      );
-
-    return () => subscriber();
-  }, [sMaTinTuyenDung]);
+  
+        const applicantQuerySnapshot = await fbDonUngTuyen
+          .where('sMaTinTuyenDung', 'in', jobIds)
+          .get();
+  
+        const applicantsList: any = [];
+        applicantQuerySnapshot.forEach(doc => {
+          applicantsList.push({
+            ...doc.data(),
+            id: doc.id,
+          });
+        });
+  
+        setApplicants(applicantsList);
+        setFilteredApplicants(applicantsList);
+      } catch (error) {
+        console.error('Error fetching applicants:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    fetchApplicants();
+  }, [userId]);
 
   useEffect(() => {
     filterApplicants(searchQuery);
@@ -117,24 +129,28 @@ const ApplicantsScreen = ({ route, navigation }: any) => {
 
   const renderItem = ({ item }: any) => (
     <View style={{ overflow: 'hidden' }}>
-      <View style={{ backgroundColor: 'transparent' }}>
-        <ApplicantCard
-          applicantId={item.id}
-          applicantCode={item.sMaUngVien}
-          applicationDate={item.sNgayTao}
-          status={item.sTrangThai}
-          cvUrl={item.fFileCV}
-          onViewCV={() => {navigation.navigate('application-detail', { sMaUngVien: item.sMaUngVien , sMaTinTuyenDung: sMaTinTuyenDung })}}  
-          onAccept={handleAccept}
-          onReject={handleReject}
-        />
-      </View>
+        <View style={{ backgroundColor: 'transparent' }}>
+            <ApplicantCard
+                applicantId={item.id}
+                applicantCode={item.sMaUngVien} 
+                applicationDate={item.sNgayTao}
+                status={item.sTrangThai}
+                cvUrl={item.fFileCV}
+                onViewCV={() =>
+                    navigation.navigate('application-detail', {
+                        sMaUngVien: item.sMaUngVien,
+                        sMaTinTuyenDung: item.sMaTinTuyenDung,
+                    })
+                }
+                onAccept={handleAccept}
+                onReject={handleReject}
+            />
+        </View>
     </View>
-  );
+);
 
   return (
     <View style={styles.container}>
-      <StatusBar backgroundColor={'#F0F4F7'} />
       <HeaderWithIcons
        title='Quản lý tin tuyển dụng '
        backgroundColor='#f2f2f2'
@@ -152,6 +168,7 @@ const ApplicantsScreen = ({ route, navigation }: any) => {
           </Text>
         )}
       />
+      {loading && <Loading />}
     </View>
   );
 };

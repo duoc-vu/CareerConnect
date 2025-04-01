@@ -94,13 +94,13 @@ const SettingScreen = ({ navigation }: any) => {
       title: userType === 1
         ? 'Công việc đã lưu'
         : userType === 2
-          ? 'Quản lý tin tuyển dụng'
+          ? 'Quản lý đơn ứng tuyển'
           : 'Công việc đã lưu',
       onPress: () => {
         if (userType === 1) {
           navigation.navigate("");
         } else if (userType === 2) {
-          navigation.navigate("");
+          navigation.navigate("applicant-list");
         } else {
           navigation.navigate("login");
         }

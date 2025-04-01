@@ -5,21 +5,36 @@ import { Fonts } from "../../theme/font";
 interface HeaderProps {
   title: string;
   onBackPress?: () => void;
-  backgroundColor?: string; 
+  backgroundColor?: string;
   style?: any;
+  rightIcon?: any;
+  onRightPress?: () => void;
 }
 
-const HeaderWithIcons: React.FC<HeaderProps> = ({ title, onBackPress, backgroundColor = "#fff", style }) => {
+const HeaderWithIcons: React.FC<HeaderProps> = ({
+  title,
+  onBackPress,
+  backgroundColor = "#fff",
+  style,
+  rightIcon = null,
+  onRightPress, }) => {
   return (
     <View style={[styles.header, { backgroundColor }, style]}>
       <TouchableOpacity onPress={onBackPress} style={styles.iconContainer}>
         <Image source={require("../../../asset/images/img_arrow_left.png")} style={styles.icon} />
       </TouchableOpacity>
-      
+
       <Text style={styles.title}>{title}</Text>
-      
-      <View style={styles.iconPlaceholder} /> 
+
+      {rightIcon ? (
+        <TouchableOpacity onPress={onRightPress} style={styles.iconContainer}>
+          <Image source={rightIcon} style={styles.icon} />
+        </TouchableOpacity>
+      ) : (
+        <View style={styles.iconPlaceholder} /> 
+      )}
     </View>
+    
   );
 };
 
@@ -32,7 +47,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     position: "relative",
     marginTop: 10,
-    paddingTop:10
+    paddingTop: 10
   },
   title: {
     fontSize: 18,
@@ -41,18 +56,20 @@ const styles = StyleSheet.create({
     color: "black",
     position: "absolute",
     left: "50%",
-    transform: [{ translateX: -100 }], 
+    transform: [{ translateX: -100 }],
   },
   icon: {
     width: 24,
     height: 24,
   },
   iconContainer: {
-    width: 40, 
+    width: 40,
     alignItems: "flex-start",
   },
   iconPlaceholder: {
-    width: 40, 
+    width: 40,
+  },
+  iconRight: {
   },
 });
 

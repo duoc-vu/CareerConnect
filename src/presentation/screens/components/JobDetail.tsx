@@ -82,8 +82,8 @@ const JobDetail = ({ route, navigation }: any) => {
                 location={job.sDiaChiLamViec}
                 onPress={() => { }}
                 salaryMax={job.sMucLuongToiThieu}
-                salaryMin={job.sMucLuongToiDa}
-                deadline={job.sThoiHanTuyenDung}
+                // salaryMin={job.sMucLuongToiDa}
+                // deadline={job.sThoiHanTuyenDung}
               />
             </View>
 

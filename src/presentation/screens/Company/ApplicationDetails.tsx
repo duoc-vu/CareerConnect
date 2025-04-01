@@ -63,7 +63,7 @@ const ApplicantionDetail = ({ route, navigation }: any) => {
                     const applicationData = applicationQuery.docs[0].data();
                     fFileCV = applicationData.fFileCV || 'Không có CV nào được đăng tải';
                     introduction = applicationData.sGioiThieu || 'Không có lời giới thiệu.';
-                    sNgayTao = applicationData.sNgayTao || null; // Lấy ngày tạo
+                    sNgayTao = applicationData.sNgayTao || null; 
                 }
 
                 const cvName = fFileCV.split('/').pop() || 'Không có tên CV';
@@ -115,6 +115,10 @@ const ApplicantionDetail = ({ route, navigation }: any) => {
                     name={user.sHoVaTen || 'Unknown User'}
                     email={user.sEmailLienHe || 'No Email'}
                     location={user.sDiaChi || 'No Address'}
+                    buttonType="create-appointment" 
+                    onPress={() =>
+                        navigation.navigate("create-appointment", { sMaUngVien })
+                    } 
                     style={{ width: "100%" }}
                 />
                 <View style={styles.section}>

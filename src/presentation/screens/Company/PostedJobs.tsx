@@ -77,7 +77,7 @@ const PostedJobs = ({ navigation }:any) => {
       const matchesStatus = jobType
         ? (job.sCoKhoa === 1 && jobType === 'Đã duyệt') ||
           (job.sCoKhoa === 2 && jobType === 'Chờ duyệt') ||
-          (job.sCoKhoa === 3 && jobType === 'Từ chối') ||
+          (job.sCoKhoa === 3 && jobType === 'Bị khóa') ||
           (job.sCoKhoa === 4 && jobType === 'Hết hạn')
         : true; 
       return matchesStatus;
@@ -99,7 +99,7 @@ const PostedJobs = ({ navigation }:any) => {
           location={item.sDiaChiLamViec}
           sCoKhoa={item.sCoKhoa}
           onPress={() =>
-            navigation.navigate('applicant-list', { sMaTinTuyenDung: item.sMaTinTuyenDung })
+            navigation.navigate('job-detail-employer', { sMaTinTuyenDung: item.sMaTinTuyenDung })
           }
         />
       </View>

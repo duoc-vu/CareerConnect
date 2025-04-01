@@ -5,8 +5,6 @@ import {
   Image,
   Text,
   FlatList,
-  StatusBar,
-  ScrollView,
 } from 'react-native';
 import JobCard from '../../components/JobCard';
 import SearchBar from '../../components/SearchBar';
@@ -81,10 +79,8 @@ const Home = ({ fetchJobData, bestJobs, recommendedJobs, navigation }: any) => {
       style={styles.verticalJobCard}
     />
   );
-
-  return (
-    <View style={styles.container}>
-      <StatusBar backgroundColor="#F0F4F7" />
+  const renderHeader = () => (
+    <View>
       <View style={styles.header}>
         <SearchBar style={styles.searchBar} value={searchQuery} onChangeText={setSearchQuery} />
         <Image
@@ -92,41 +88,40 @@ const Home = ({ fetchJobData, bestJobs, recommendedJobs, navigation }: any) => {
           style={styles.avatar}
         />
       </View>
-      <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollView}>
-        {userType === 1 && (
-          <View style={styles.recommendedJobsContainer}>
-            <Text style={styles.recommendedJobsTitle}>Việc làm dành cho bạn</Text>
-            <FlatList
-              data={groupedRecommendedJobs}
-              renderItem={renderHorizontalItem}
-              keyExtractor={(item, index) => `group-${index}`}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.horizontalList}
-              nestedScrollEnabled
-              ListEmptyComponent={() => <Text style={styles.noJobsText}>Không tìm thấy công việc nào.</Text>}
-            />
-          </View>
-        )}
-
-        <View>
-          <Text style={styles.sectionTitle}>Việc làm tốt nhất</Text>
+      {userType === 1 && (
+        <View style={styles.recommendedJobsContainer}>
+          <Text style={styles.recommendedJobsTitle}>Việc làm dành cho bạn</Text>
           <FlatList
-            data={filteredBestJobs}
-            renderItem={renderVerticalItem}
-            keyExtractor={(item: any) => item.sMaTinTuyenDung}
-            showsVerticalScrollIndicator={false}
-            initialNumToRender={5}
-            contentContainerStyle={styles.verticalList}
-            nestedScrollEnabled={false}
-            onEndReached={() => fetchJobData(true)}
-            onEndReachedThreshold={0.9}
+            data={groupedRecommendedJobs}
+            renderItem={renderHorizontalItem}
+            keyExtractor={(item, index) => `group-${index}`}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.horizontalList}
+            nestedScrollEnabled
             ListEmptyComponent={() => <Text style={styles.noJobsText}>Không tìm thấy công việc nào.</Text>}
           />
         </View>
-      </ScrollView>
+      )}
+      <Text style={styles.sectionTitle}>Việc làm tốt nhất</Text>
     </View>
   );
+  return (
+      <FlatList
+        data={filteredBestJobs} 
+        renderItem={renderVerticalItem} 
+        keyExtractor={(item: any) => item.sMaTinTuyenDung}
+        showsVerticalScrollIndicator={false}
+        initialNumToRender={5} 
+        contentContainerStyle={styles.verticalList}
+        onEndReached={() => fetchJobData(true)}
+        onEndReachedThreshold={0.9} 
+        ListEmptyComponent={() => (
+          <Text style={styles.noJobsText}>Không tìm thấy công việc nào.</Text>
+        )} 
+        ListHeaderComponent={renderHeader} 
+      />
+    );
 };
 
 const styles = StyleSheet.create({
