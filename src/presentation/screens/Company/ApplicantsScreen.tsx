@@ -16,11 +16,11 @@ import { useLoading } from '../../../context/themeContext';
 const fbDonUngTuyen = firestore().collection('tblDonUngTuyen');
 
 const ApplicantsScreen = ({ navigation }: any) => {
-  const {userId} = useUser();
+  const { userId } = useUser();
   const [searchQuery, setSearchQuery] = useState('');
   const [applicants, setApplicants] = useState([]);
   const [filteredApplicants, setFilteredApplicants] = useState([]);
-  const {loading, setLoading} = useLoading();
+  const { loading, setLoading } = useLoading();
 
   useEffect(() => {
     const fetchApplicants = async () => {
@@ -30,20 +30,20 @@ const ApplicantsScreen = ({ navigation }: any) => {
           .collection('tblTinTuyenDung')
           .where('sMaDoanhNghiep', '==', userId)
           .get();
-  
+
         const jobIds = jobQuerySnapshot.docs.map(doc => doc.data().sMaTinTuyenDung);
-  
+
         if (jobIds.length === 0) {
           setApplicants([]);
           setFilteredApplicants([]);
           setLoading(false);
           return;
         }
-  
+
         const applicantQuerySnapshot = await fbDonUngTuyen
           .where('sMaTinTuyenDung', 'in', jobIds)
           .get();
-  
+
         const applicantsList: any = [];
         applicantQuerySnapshot.forEach(doc => {
           applicantsList.push({
@@ -51,7 +51,7 @@ const ApplicantsScreen = ({ navigation }: any) => {
             id: doc.id,
           });
         });
-  
+
         setApplicants(applicantsList);
         setFilteredApplicants(applicantsList);
       } catch (error) {
@@ -60,7 +60,7 @@ const ApplicantsScreen = ({ navigation }: any) => {
         setLoading(false);
       }
     };
-  
+
     fetchApplicants();
   }, [userId]);
 
@@ -129,32 +129,32 @@ const ApplicantsScreen = ({ navigation }: any) => {
 
   const renderItem = ({ item }: any) => (
     <View style={{ overflow: 'hidden' }}>
-        <View style={{ backgroundColor: 'transparent' }}>
-            <ApplicantCard
-                applicantId={item.id}
-                applicantCode={item.sMaUngVien} 
-                applicationDate={item.sNgayTao}
-                status={item.sTrangThai}
-                cvUrl={item.fFileCV}
-                onViewCV={() =>
-                    navigation.navigate('application-detail', {
-                        sMaUngVien: item.sMaUngVien,
-                        sMaTinTuyenDung: item.sMaTinTuyenDung,
-                    })
-                }
-                onAccept={handleAccept}
-                onReject={handleReject}
-            />
-        </View>
+      <View style={{ backgroundColor: 'transparent' }}>
+        <ApplicantCard
+          // applicantId={item.id}
+          applicantCode={item.sMaDonUngTuyen}
+          applicationDate={item.sNgayTao}
+          status={item.sTrangThai}
+          cvUrl={item.fFileCV}
+          onViewCV={() =>
+            navigation.navigate('application-detail', {
+              sMaUngVien: item.sMaUngVien,
+              sMaTinTuyenDung: item.sMaTinTuyenDung,
+            })
+          }
+          onAccept={handleAccept}
+          onReject={handleReject}
+        />
+      </View>
     </View>
-);
+  );
 
   return (
     <View style={styles.container}>
       <HeaderWithIcons
-       title='Quản lý tin tuyển dụng '
-       backgroundColor='#f2f2f2'
-       onBackPress={() => navigation.goBack()}
+        title='Quản lý tin tuyển dụng '
+        backgroundColor='#f2f2f2'
+        onBackPress={() => navigation.goBack()}
       />
       <FlatList
         data={filteredApplicants}

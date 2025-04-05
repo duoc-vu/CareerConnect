@@ -5,9 +5,6 @@ const SkillTags = ({ skills }: { skills: string; onEdit: () => void }) => {
     const skillArray = skills
     ? skills.replace(/\\n/g, "\n").split(/\r?\n/).map(skill => skill.trim()).filter(skill => skill !== "")
     : [];
-
-    console.log("Chuỗi đầu vào:", skills);
-    console.log("Chuỗi sau khi split:", skills.split(/\r?\n/));
     
     return (
         <View style={styles.container}>

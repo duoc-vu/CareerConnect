@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View, Text, TouchableOpacity, Platform, StyleSheet } from "react-native";
 import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 
-const DatePicker = ({ label, date, setDate }:any) => {
+const DatePicker = ({ label, date, setDate ,style}:any) => {
     const showDatePicker = () => {
         DateTimePickerAndroid.open({
             value: date,
@@ -17,7 +17,7 @@ const DatePicker = ({ label, date, setDate }:any) => {
     };
 
     return (
-        <View style={styles.datePickerContainer}>
+        <View style={[styles.datePickerContainer, style]}>
             <TouchableOpacity onPress={showDatePicker} style={styles.dateInput}>
                 <Text>{date.toDateString()}</Text>
             </TouchableOpacity>

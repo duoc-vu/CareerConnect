@@ -6,13 +6,13 @@ import {
   TouchableOpacity,
   Text,
 } from "react-native";
-import Input from "./Input"; 
+import Input from "./Input";
 import DatePicker from "./DatePicker";
 
 interface DialogInterviewProps {
   visible: boolean;
   onClose: () => void;
-  onConfirm: (data: { date: Date; message: string }) => void;
+  onConfirm: (data: { date: Date; location: String, message: string }) => void;
 }
 
 const DialogInterview: React.FC<DialogInterviewProps> = ({
@@ -22,9 +22,10 @@ const DialogInterview: React.FC<DialogInterviewProps> = ({
 }) => {
   const [date, setDate] = useState(new Date());
   const [message, setMessage] = useState("");
+  const [location, setLocation] = useState("");
 
   const handleConfirm = () => {
-    onConfirm({ date, message });
+    onConfirm({ date, location, message });
     onClose();
   };
 
@@ -40,7 +41,16 @@ const DialogInterview: React.FC<DialogInterviewProps> = ({
           <Text style={styles.title}>Tạo lịch hẹn phỏng vấn</Text>
 
           <Text style={styles.label}>Chọn ngày</Text>
-          <DatePicker date={date} setDate={setDate} />
+          <DatePicker date={date} setDate={setDate} style={styles.datePicker} />
+
+          <Text style={styles.label}>Địa điểm</Text>
+          <Input
+            placeholder="Nhập địa điểm"
+            value={location}
+            onChangeText={setLocation}
+            multiline
+            style={styles.location}
+          />
 
           <Text style={styles.label}>Lời nhắn</Text>
           <Input
@@ -92,6 +102,14 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
     marginBottom: 8,
   },
+  location: {
+    width: "100%",
+    height: "auto",
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    marginBottom: 20,
+  },
   input: {
     width: "100%",
     height: 80,
@@ -100,6 +118,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 10,
     textAlignVertical: "top",
+    marginBottom: 20,
+  },
+  datePicker: {
+    width: "100%",
     marginBottom: 20,
   },
   buttonContainer: {

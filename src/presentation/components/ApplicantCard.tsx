@@ -36,7 +36,7 @@ const ApplicantCard = ({
   return (
     <View style={styles.card}>
       <TouchableOpacity style={styles.header} onPress={toggleExpand}>
-        <Text style={styles.applicantName}>Ứng viên {applicantCode}</Text>
+        <Text style={styles.applicantName}>Đơn ứng tuyển {applicantCode}</Text>
         <Icon
           name={isExpanded ? 'keyboard-arrow-up' : 'keyboard-arrow-down'}
           size={24}

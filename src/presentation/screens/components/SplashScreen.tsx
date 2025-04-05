@@ -12,7 +12,7 @@ const SplashScreen = () => {
       try {
         await new Promise(resolve => setTimeout(resolve, 500));
         const storedSession = await AsyncStorage.getItem('session');
-        console.log("🔹 Session after delay:", storedSession);
+        // console.log("🔹 Session after delay:", storedSession);
   
         if (storedSession) {
           const sessionData = JSON.parse(storedSession);

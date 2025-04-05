@@ -9,10 +9,22 @@ import SkillTags from '../../components/SkillTags';
 import HeaderWithIcons from '../../components/Header';
 import { useLoading } from '../../../context/themeContext';
 import Loading from '../../components/Loading';
+import DialogInterview from '../../components/DialogInterview';
+import Dialog from '../../components/Dialog';
+import { useUser } from '../../../context/UserContext';
+import axios from 'axios';
 
 const ApplicantionDetail = ({ route, navigation }: any) => {
-    const { sMaUngVien } = route.params;
+    const { sMaUngVien, sMaTinTuyenDung } = route.params;
+    const API_URL = 'http://192.168.31.242:3000/api/send-email';
+    const userInfo = useUser();
     const { loading, setLoading } = useLoading();
+    const [dialogVisible, setDialogVisible] = useState(false);
+    const [dialogInterviewVisible, setDialogInterviewVisible] = useState(false);
+    const [dialogContent, setDialogContent] = useState({
+        title: "",
+        message: "",
+    });
     const [user, setUser] = useState({
         sAnhDaiDien: '',
         sHoVaTen: '',
@@ -63,7 +75,7 @@ const ApplicantionDetail = ({ route, navigation }: any) => {
                     const applicationData = applicationQuery.docs[0].data();
                     fFileCV = applicationData.fFileCV || 'Không có CV nào được đăng tải';
                     introduction = applicationData.sGioiThieu || 'Không có lời giới thiệu.';
-                    sNgayTao = applicationData.sNgayTao || null; 
+                    sNgayTao = applicationData.sNgayTao || null;
                 }
 
                 const cvName = fFileCV.split('/').pop() || 'Không có tên CV';
@@ -93,6 +105,83 @@ const ApplicantionDetail = ({ route, navigation }: any) => {
         }
     };
 
+    const handleConfirmInterview = async (data: { date: Date; message: string }) => {
+        try {
+            const scheduleSnapshot = await firestore().collection('tblLichHenPhongVan').get();
+            const newScheduleId = `LH${(scheduleSnapshot.size + 1).toString().padStart(3, '0')}`;
+
+            const jobSnapshot = await firestore()
+                .collection('tblTinTuyenDung')
+                .where('sMaTinTuyenDung', '==', sMaTinTuyenDung)
+                .get();
+
+            if (jobSnapshot.empty) {
+                setDialogContent({
+                    title: "Lỗi",
+                    message: "Không tìm thấy thông tin tin tuyển dụng.",
+                });
+                setDialogVisible(true);
+                return;
+            }
+
+            const jobData = jobSnapshot.docs[0].data();
+            const sTieuDe = jobData.sViTriTuyenDung || "Không có tiêu đề";
+
+            await firestore().collection('tblLichHenPhongVan').doc(newScheduleId).set({
+                sMaLichHenPhongVan: newScheduleId,
+                sMaDoanhNghiep: userInfo?.userId,
+                sMaUngVien: sMaUngVien,
+                sMaTinTuyenDung: sMaTinTuyenDung,
+                sDiaDiem: user.sDiaChi || "TP.HCM",
+                sThoiGianPhongVan: data.date.toISOString(),
+                sLoiNhan: data.message,
+                sTieuDe: sTieuDe,
+            });
+
+            const accountQuery = await firestore()
+                .collection('tblTaiKhoan')
+                .where('sMaTaiKhoan', '==', sMaUngVien)
+                .get();
+
+            if (accountQuery.empty) {
+                setDialogContent({
+                    title: "Lỗi",
+                    message: "Không tìm thấy email của ứng viên.",
+                });
+                setDialogVisible(true);
+                return;
+            }
+
+            const accountData = accountQuery.docs[0].data();
+            const sEmailLienHe = accountData.sEmailLienHe || "Không có email";
+
+            // Gửi email qua API
+            const emailPayload = {
+                to: sEmailLienHe,
+                subject: `Lịch hẹn phỏng vấn - ${sTieuDe}`,
+                message: data.message,
+                candidateName: user.sHoVaTen || "Ứng viên",
+                scheduleTime: data.date.toISOString(),
+                location: user.sDiaChi || "TP.HCM",
+            };
+
+            await axios.post(API_URL, emailPayload);
+
+            setDialogContent({
+                title: "Thành công",
+                message: "Đã gửi lời mời phỏng vấn thành công và email đã được gửi.",
+            });
+            setDialogVisible(true);
+        } catch (error) {
+            console.error("Lỗi khi lưu lịch hẹn phỏng vấn:", error);
+            setDialogContent({
+                title: "Lỗi",
+                message: "Không thể lưu lịch hẹn phỏng vấn. Vui lòng thử lại.",
+            });
+            setDialogInterviewVisible(true);
+        }
+    };
+
     useEffect(() => {
         fetchUserData();
     }, [sMaUngVien]);
@@ -115,10 +204,8 @@ const ApplicantionDetail = ({ route, navigation }: any) => {
                     name={user.sHoVaTen || 'Unknown User'}
                     email={user.sEmailLienHe || 'No Email'}
                     location={user.sDiaChi || 'No Address'}
-                    buttonType="create-appointment" 
-                    onPress={() =>
-                        navigation.navigate("create-appointment", { sMaUngVien })
-                    } 
+                    buttonType="create-appointment"
+                    onPress={() => setDialogInterviewVisible(true)}
                     style={{ width: "100%" }}
                 />
                 <View style={styles.section}>
@@ -199,6 +286,19 @@ const ApplicantionDetail = ({ route, navigation }: any) => {
                     )}
                 </View>
             </ScrollView>
+            <DialogInterview
+                visible={dialogInterviewVisible}
+                onClose={() => setDialogInterviewVisible(false)}
+                onConfirm={handleConfirmInterview}
+            />
+            <Dialog
+                visible={dialogVisible}
+                title={dialogContent.title}
+                content={dialogContent.message}
+                dismiss={{
+                    text: "Đóng",
+                    onPress: () => setDialogVisible(false),
+                }} />
             {loading && <Loading />}
         </View>
     );
