@@ -312,8 +312,8 @@ const ApplyJob = ({ route, navigation }:any) => {
             {loading && <Loading />}
             <Dialog
                 visible={showSuccessDialog}
-                title="Success"
-                content="Your application has been submitted. Our team will review it in the next week, and you can expect a response soon."
+                title="Thành công!"
+                content="Đơn ứng tuyển của bạn đã được gửi đến cho nhà tuyển dụng. Kết quả sẽ được trả lại qua email hoặc số điện thoại mà bạn đã cung cấp."
                 confirm={{
                     text: "Close",
                     onPress: () => {

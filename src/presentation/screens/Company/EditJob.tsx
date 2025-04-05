@@ -80,6 +80,7 @@ const EditJob = ({ navigation, route }: any) => {
                     ...formData,
                     sThoiGianDangBai: formData.sThoiGianDangBai.toISOString().split('T')[0],
                     sThoiHanTuyenDung: formData.sThoiHanTuyenDung.toISOString().split('T')[0],
+                    sCoKhoa: 2,
                 });
 
                 setConfirmDialogVisible(false);
@@ -195,6 +196,7 @@ const EditJob = ({ navigation, route }: any) => {
                 visible={confirmDialogVisible}
                 title="Xác nhận cập nhật"
                 content="Bạn có chắc chắn muốn cập nhật tin tuyển dụng này không?"
+                request={true}
                 confirm={{
                     text: 'Cập nhật',
                     onPress: handleSave,
@@ -207,6 +209,7 @@ const EditJob = ({ navigation, route }: any) => {
 
             <Dialog
                 visible={successDialogVisible}
+                request={false}
                 title="Thành công"
                 content="Tin tuyển dụng đã được cập nhật thành công!"
                 confirm={{

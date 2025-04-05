@@ -14,9 +14,10 @@ import Dialog from '../../components/Dialog';
 import { useUser } from '../../../context/UserContext';
 import axios from 'axios';
 
+const API_URL = 'http://192.168.31.242:3000/api/send-email';
+
 const ApplicantionDetail = ({ route, navigation }: any) => {
     const { sMaUngVien, sMaTinTuyenDung } = route.params;
-    const API_URL = 'http://192.168.31.242:3000/api/send-email';
     const userInfo = useUser();
     const { loading, setLoading } = useLoading();
     const [dialogVisible, setDialogVisible] = useState(false);
@@ -24,6 +25,7 @@ const ApplicantionDetail = ({ route, navigation }: any) => {
     const [dialogContent, setDialogContent] = useState({
         title: "",
         message: "",
+        failure: false,
     });
     const [user, setUser] = useState({
         sAnhDaiDien: '',
@@ -106,37 +108,68 @@ const ApplicantionDetail = ({ route, navigation }: any) => {
     };
 
     const handleConfirmInterview = async (data: { date: Date; message: string }) => {
+        setLoading(true);
+        var sTieuDe = '';
         try {
-            const scheduleSnapshot = await firestore().collection('tblLichHenPhongVan').get();
-            const newScheduleId = `LH${(scheduleSnapshot.size + 1).toString().padStart(3, '0')}`;
-
-            const jobSnapshot = await firestore()
-                .collection('tblTinTuyenDung')
-                .where('sMaTinTuyenDung', '==', sMaTinTuyenDung)
+            const existingScheduleQuery = await firestore()
+                .collection('tblLichHenPhongVan')
+                .where('sMaDoanhNghiep', '==', userInfo?.userId)
+                .where('sMaUngVien', '==', sMaUngVien)
                 .get();
 
-            if (jobSnapshot.empty) {
+            if (!existingScheduleQuery.empty) {
+                const scheduleDocId = existingScheduleQuery.docs[0].id;
+                await firestore().collection('tblLichHenPhongVan').doc(scheduleDocId).update({
+                    sThoiGianPhongVan: data.date.toISOString(),
+                    sLoiNhan: data.message,
+                });
+
                 setDialogContent({
-                    title: "Lỗi",
-                    message: "Không tìm thấy thông tin tin tuyển dụng.",
+                    title: "Cập nhật thành công",
+                    message: "Lịch hẹn phỏng vấn đã được cập nhật thành công.",
+                    failure: false,
                 });
                 setDialogVisible(true);
-                return;
+            } else {
+                const scheduleSnapshot = await firestore().collection('tblLichHenPhongVan').get();
+                const newScheduleId = `LH${(scheduleSnapshot.size + 1).toString().padStart(3, '0')}`;
+
+                const jobSnapshot = await firestore()
+                    .collection('tblTinTuyenDung')
+                    .where('sMaTinTuyenDung', '==', sMaTinTuyenDung)
+                    .get();
+
+                if (jobSnapshot.empty) {
+                    setDialogContent({
+                        title: "Lỗi",
+                        message: "Không tìm thấy thông tin tin tuyển dụng.",
+                        failure: true,
+                    });
+                    setDialogVisible(true);
+                    return;
+                }
+
+                const jobData = jobSnapshot.docs[0].data();
+                sTieuDe = jobData.sViTriTuyenDung || "Không có tiêu đề";
+
+                await firestore().collection('tblLichHenPhongVan').doc(newScheduleId).set({
+                    sMaLichHenPhongVan: newScheduleId,
+                    sMaDoanhNghiep: userInfo?.userId,
+                    sMaUngVien: sMaUngVien,
+                    sMaTinTuyenDung: sMaTinTuyenDung,
+                    sDiaDiem: user.sDiaChi || "TP.HCM",
+                    sThoiGianPhongVan: data.date.toISOString(),
+                    sLoiNhan: data.message,
+                    sTieuDe: sTieuDe,
+                });
+
+                setDialogContent({
+                    title: "Thành công",
+                    message: "Đã gửi lời mời phỏng vấn thành công và email đã được gửi.",
+                    failure: false,
+                });
+                setDialogVisible(true);
             }
-
-            const jobData = jobSnapshot.docs[0].data();
-            const sTieuDe = jobData.sViTriTuyenDung || "Không có tiêu đề";
-
-            await firestore().collection('tblLichHenPhongVan').doc(newScheduleId).set({
-                sMaLichHenPhongVan: newScheduleId,
-                sMaDoanhNghiep: userInfo?.userId,
-                sMaUngVien: sMaUngVien,
-                sMaTinTuyenDung: sMaTinTuyenDung,
-                sDiaDiem: user.sDiaChi || "TP.HCM",
-                sThoiGianPhongVan: data.date.toISOString(),
-                sLoiNhan: data.message,
-                sTieuDe: sTieuDe,
-            });
 
             const accountQuery = await firestore()
                 .collection('tblTaiKhoan')
@@ -147,6 +180,7 @@ const ApplicantionDetail = ({ route, navigation }: any) => {
                 setDialogContent({
                     title: "Lỗi",
                     message: "Không tìm thấy email của ứng viên.",
+                    failure: true,
                 });
                 setDialogVisible(true);
                 return;
@@ -155,7 +189,6 @@ const ApplicantionDetail = ({ route, navigation }: any) => {
             const accountData = accountQuery.docs[0].data();
             const sEmailLienHe = accountData.sEmailLienHe || "Không có email";
 
-            // Gửi email qua API
             const emailPayload = {
                 to: sEmailLienHe,
                 subject: `Lịch hẹn phỏng vấn - ${sTieuDe}`,
@@ -170,6 +203,7 @@ const ApplicantionDetail = ({ route, navigation }: any) => {
             setDialogContent({
                 title: "Thành công",
                 message: "Đã gửi lời mời phỏng vấn thành công và email đã được gửi.",
+                failure: false,
             });
             setDialogVisible(true);
         } catch (error) {
@@ -177,8 +211,11 @@ const ApplicantionDetail = ({ route, navigation }: any) => {
             setDialogContent({
                 title: "Lỗi",
                 message: "Không thể lưu lịch hẹn phỏng vấn. Vui lòng thử lại.",
+                failure: true,
             });
-            setDialogInterviewVisible(true);
+            setDialogVisible(true);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -295,6 +332,7 @@ const ApplicantionDetail = ({ route, navigation }: any) => {
                 visible={dialogVisible}
                 title={dialogContent.title}
                 content={dialogContent.message}
+                failure={dialogContent.failure}
                 dismiss={{
                     text: "Đóng",
                     onPress: () => setDialogVisible(false),
@@ -355,7 +393,6 @@ const styles = StyleSheet.create({
     },
     section: {
         padding: 16,
-        marginBottom: 16,
     },
     sectionHeader: {
         flexDirection: "row",

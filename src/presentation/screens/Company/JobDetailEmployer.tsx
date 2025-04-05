@@ -193,6 +193,7 @@ const JobDetailEmployerScreen = ({ route, navigation }: any) => {
             <Dialog
                 visible={confirmDialogVisible}
                 title="Xác nhận khóa tin"
+                request={true}
                 content="Bạn có chắc chắn muốn khóa tin tuyển dụng này không?"
                 confirm={{
                     text: 'Khóa tin',
@@ -206,6 +207,7 @@ const JobDetailEmployerScreen = ({ route, navigation }: any) => {
 
             <Dialog
                 visible={successDialogVisible}
+                request={false}
                 title="Thành công"
                 content="Tin tuyển dụng đã bị khóa!"
                 confirm={{

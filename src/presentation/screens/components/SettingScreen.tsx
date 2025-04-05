@@ -109,19 +109,19 @@ const SettingScreen = ({ navigation }: any) => {
     },
     {
       id: '4',
-      title: 'Chính sách',
-      onPress: () => console.log('Go to Change Password'),
+      title: 'Quản lý lịch hẹn phỏng vấn',
+      onPress: () => navigation.navigate("appointments"),
       icon: require('../../../../asset/images/right-arrow.png')
     },
     {
       id: '5',
-      title: 'Phản hồi và góp ý',
+      title: 'Chính sách',
       onPress: () => navigation.navigate("feedback", navigation),
       icon: require('../../../../asset/images/right-arrow.png')
     },
     {
       id: '6',
-      title: 'Về chúng tôi',
+      title: 'Phản hồi và góp ý',
       onPress: () => console.log('Go to detail'),
       icon: require('../../../../asset/images/right-arrow.png')
     },

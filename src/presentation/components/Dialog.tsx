@@ -4,10 +4,12 @@ import CustomText from './CustomText';
 
 const Dialog = ({
     visible,
+    request = false,
     title,
     content,
     confirm,
     dismiss,
+    failure = false,
 }: any) => {
     return (
         <Modal
@@ -18,14 +20,14 @@ const Dialog = ({
         >
             <View style={styles.overlay}>
                 <View style={styles.dialogContainer}>
-                    <View style={styles.iconContainer}>
+                    {request ? <View></View> : <View style={styles.iconContainer}>
                         <Image
-                            source={require('../../../asset/images/img_success.png')}
+                            source={failure ? require('../../../asset/images/img_failer.png') : require('../../../asset/images/img_success.png')}
                             style={styles.icon}
                             resizeMode="contain"
                         />
                     </View>
-
+                    }
                     <CustomText style={styles.title}>{title}</CustomText>
 
                     <CustomText style={styles.content}>{content}</CustomText>
@@ -78,7 +80,6 @@ const styles = StyleSheet.create({
         shadowRadius: 4,
     },
     iconContainer: {
-        backgroundColor: '#E6F0FA',
         borderRadius: 50,
         width: 80,
         height: 80,
@@ -87,8 +88,8 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
     icon: {
-        width: 50,
-        height: 50,
+        width: 80,
+        height: 80,
     },
     title: {
         fontSize: 20,

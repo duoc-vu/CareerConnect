@@ -79,7 +79,6 @@ const PostJob = ({ navigation, route }: any) => {
             const minSalaryRaw = formData.sMucLuongToiThieu.replace(/\./g, "").trim();
             const maxSalaryRaw = formData.sMucLuongToiDa.replace(/\./g, "").trim();
 
-            // Kiểm tra giá trị sau khi xóa dấu chấm
             if (!isNumber(minSalaryRaw) || !isNumber(maxSalaryRaw)) {
                 setError("Mức lương phải là số hợp lệ!");
                 return;
