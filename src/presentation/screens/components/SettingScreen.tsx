@@ -110,7 +110,7 @@ const SettingScreen = ({ navigation }: any) => {
     {
       id: '4',
       title: 'Quản lý lịch hẹn phỏng vấn',
-      onPress: () => navigation.navigate("appointments"),
+      onPress: () => userType === 1 ? navigation.navigate("appointments-candidate") : navigation.navigate("appointments"),
       icon: require('../../../../asset/images/right-arrow.png')
     },
     {

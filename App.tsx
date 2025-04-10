@@ -35,6 +35,8 @@ import { KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } fr
 import CVPreview from './src/presentation/screens/components/CVPreview';
 import JobDetailEmployerScreen from './src/presentation/screens/Company/JobDetailEmployer';
 import AppointmentsScreen from './src/presentation/screens/Company/AppointmentsScreen';
+import AppointmentsCandidateScreen from './src/presentation/screens/User/AppointmentsCandidateScreen';
+import CompanyDetail from './src/presentation/screens/User/CompanyDetail';
 
 const Stack = createNativeStackNavigator();
 
@@ -99,7 +101,10 @@ const App = () => {
               <Stack.Screen name='cv-preview' component={CVPreview} options={{ headerShown: false }} />
               <Stack.Screen name='job-detail-employer' component={JobDetailEmployerScreen} options={{ headerShown: false }} />
               <Stack.Screen name='appointments' component={AppointmentsScreen} options={{ headerShown: false }} />
+              <Stack.Screen name='appointments-candidate' component={AppointmentsCandidateScreen} options={{ headerShown: false }} />
+              <Stack.Screen name='company-detail-candidate' component={CompanyDetail} options={{ headerShown: false }} />
               </Stack.Navigator>
+              
           </NavigationContainer>
         </LoadingProvider>
       </ThemeProvider>

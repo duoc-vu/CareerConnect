@@ -10,8 +10,9 @@ import { theme } from '../../theme/theme';
 import { useLoading } from '../../context/themeContext';
 import messaging from '@react-native-firebase/messaging';
 import { useUser } from "../../context/UserContext";
+import axios from 'axios';
 
-
+const API_URL = 'http://192.168.1.30:3000/api/notify';
 const { width } = Dimensions.get('window');
 
 const fb = firestore().collection('tblTaiKhoan');
@@ -25,7 +26,6 @@ const Login = ({ navigation }: any) => {
     const {loading, setLoading} = useLoading();
     const [error, setError] = useState('');
     const { setUser } = useUser();
-
     const updateFCMToken = async (userId:any) => {
         try {
             const token = await messaging().getToken(); 
@@ -41,6 +41,11 @@ const Login = ({ navigation }: any) => {
                         }
                     });
             }
+            await axios.post(API_URL, {
+                fcmToken: token,
+                title: 'Đăng nhập thành công!',
+                body: `Chào mừng bạn quay lại Jobify 👋`,
+            });
         } catch (error) {
             console.error("Error updating FCM Token:", error);
         }

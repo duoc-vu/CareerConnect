@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Modal,
   View,
@@ -7,25 +7,46 @@ import {
   Text,
 } from "react-native";
 import Input from "./Input";
-import DatePicker from "./DatePicker";
+import DateTimePicker, { firestoreTimestampToDate } from "./DateTimePicker";
 
 interface DialogInterviewProps {
   visible: boolean;
+  sThoiGianPhongVan?: Date,
+  sDiaDiem?: string,
+  sLoiNhan?: string,
   onClose: () => void;
-  onConfirm: (data: { date: Date; location: String, message: string }) => void;
+  onConfirm: (data: { date: Date; location: String, message: string }, appointment?: any) => void;
+  appointment?: any;
 }
 
 const DialogInterview: React.FC<DialogInterviewProps> = ({
   visible,
+  sThoiGianPhongVan,
+  sDiaDiem,
+  sLoiNhan,
   onClose,
   onConfirm,
+  appointment,
 }) => {
   const [date, setDate] = useState(new Date());
   const [message, setMessage] = useState("");
   const [location, setLocation] = useState("");
 
+  useEffect(() => {
+    if (visible) {
+      const validDate = sThoiGianPhongVan instanceof Date
+        ? sThoiGianPhongVan
+        : firestoreTimestampToDate(sThoiGianPhongVan);
+      setDate(validDate || new Date());
+      setLocation(sDiaDiem || "");
+      setMessage(sLoiNhan || "");
+    }
+  }, [visible, sThoiGianPhongVan, sDiaDiem, sLoiNhan]);
+
+
   const handleConfirm = () => {
-    onConfirm({ date, location, message });
+    // const timestamp = dateToFirestoreTimestamp(date);
+    onConfirm({ date, location, message }, appointment);
     onClose();
   };
 
@@ -40,8 +61,8 @@ const DialogInterview: React.FC<DialogInterviewProps> = ({
         <View style={styles.dialogContainer}>
           <Text style={styles.title}>Tạo lịch hẹn phỏng vấn</Text>
 
-          <Text style={styles.label}>Chọn ngày</Text>
-          <DatePicker date={date} setDate={setDate} style={styles.datePicker} />
+          <Text style={styles.label}>Chọn ngày và giờ</Text>
+          <DateTimePicker date={date} setDate={setDate} style={styles.datePicker} showSeconds={false} />
 
           <Text style={styles.label}>Địa điểm</Text>
           <Input

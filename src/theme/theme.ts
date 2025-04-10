@@ -60,11 +60,14 @@ export const theme = {
       },
     },
     template: {
+      text: "#ffffff",
       biru: "#1F3C88",
       abu: "#F2F2F2",
       oranye: "#EE6F57",
       putih: "#FAFAFA",
       biru2: "#BEC8E3",
+      edit: "#ffcf30",
+      delete: "#EF4444",
     }
 };
   
