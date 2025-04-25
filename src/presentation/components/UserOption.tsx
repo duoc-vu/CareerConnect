@@ -3,8 +3,8 @@ import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { theme } from "../../theme/theme";  
 
 interface UserType {
-  selected: string;
-  onSelect: (value: string) => void;
+  selected: any;
+  onSelect: (value: any) => void;
 }
 
 const UserOption: React.FC<UserType> = ({ selected, onSelect }) => {
@@ -14,28 +14,28 @@ const UserOption: React.FC<UserType> = ({ selected, onSelect }) => {
   return (
     <View style={styles.container}>
       <TouchableOpacity 
-        style={[styles.button, selected === "applicant" && styles.selectedButton, selected !== "applicant" && styles.deselectedButton]} 
-        onPress={() => onSelect("applicant")}
+        style={[styles.button, selected == 1 && styles.selectedButton, selected !== 1 && styles.deselectedButton]} 
+        onPress={() => onSelect(1)}
       >
         <View style={styles.iconContainer}>
           {basicIcon}
         </View>
         <View style={styles.textContainer}>
-          <Text style={[styles.label, selected === "applicant" && styles.selectedText]}>
+          <Text style={[styles.label, selected === 1 && styles.selectedText]}>
             Ứng viên
           </Text>
         </View>
       </TouchableOpacity>
 
       <TouchableOpacity 
-        style={[styles.button, selected === "recruiter" && styles.selectedButton, selected !== "recruiter" && styles.deselectedButton]} 
-        onPress={() => onSelect("recruiter")}
+        style={[styles.button, selected === 2 && styles.selectedButton, selected !== 2 && styles.deselectedButton]} 
+        onPress={() => onSelect(2)}
       >
         <View style={styles.iconContainer}>
           {completeIcon}
         </View>
         <View style={styles.textContainer}>
-          <Text style={[styles.label, selected === "recruiter" && styles.selectedText]}>
+          <Text style={[styles.label, selected === 2 && styles.selectedText]}>
             Doanh nghiệp
           </Text>
         </View>

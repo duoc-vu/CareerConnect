@@ -12,7 +12,7 @@ import messaging from '@react-native-firebase/messaging';
 import { useUser } from "../../context/UserContext";
 import axios from 'axios';
 
-const API_URL = 'http://192.168.1.30:3000/api/notify';
+const API_URL = 'http://192.168.102.24:3000/api/notify';
 const { width } = Dimensions.get('window');
 
 const fb = firestore().collection('tblTaiKhoan');
@@ -67,7 +67,8 @@ const Login = ({ navigation }: any) => {
                 if (userData.sMatKhau === password) {
                     const userType = userData.sLoaiTaiKhoan;
                     const userEmail = userData.sEmailLienHe;
-    
+                    const userStatus = userData.sTrangThai;
+
                     await updateFCMToken(userId);
     
                     let userInfo = null;
@@ -82,6 +83,8 @@ const Login = ({ navigation }: any) => {
                             userInfo = userInfoDoc.docs[0].data();
                         }
                     }
+                    userInfo = { ...userInfo, sTrangThai: userStatus };
+
                     setUser(userId, userType, userInfo, userEmail);
                     const sessionData = {
                         userId,
@@ -92,7 +95,7 @@ const Login = ({ navigation }: any) => {
                     };
                     await AsyncStorage.setItem('session', JSON.stringify(sessionData));
     
-                    navigation.navigate(userInfo ? 'bottom' : (userType === 1 ? 'Info' : 'company-info'));
+                    navigation.navigate("bottom");
                 } else {
                     setError("Sai tài khoản hoặc mật khẩu.");
                 }
@@ -111,7 +114,6 @@ const Login = ({ navigation }: any) => {
         const unsubscribe = navigation.addListener('focus', () => {
             setEmail('');
             setPassword('');
-            // if (loading) setLoading(false);
         });
         return unsubscribe;
     }, [navigation]);
@@ -120,7 +122,7 @@ const Login = ({ navigation }: any) => {
         <ScrollView contentContainerStyle={styles.container}>
             <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
             <CustomText style={styles.title}>Welcome Back To</CustomText>
-            <CustomText style={styles.appName}>Jobify</CustomText>
+            <CustomText style={styles.appName}>Career Connect</CustomText>
 
             <Input
                 placeholder="Email Or Phone Number"
@@ -155,16 +157,17 @@ const Login = ({ navigation }: any) => {
             </View>
 
             <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
-                <CustomText style={styles.forgotPassword}>Forgot your password?</CustomText>
+                <CustomText style={styles.forgotPassword}>Quên mật khẩu?</CustomText>
             </TouchableOpacity>
 
             <View style={styles.signupContainer}>
-                <CustomText>Don't Have An Account? </CustomText>
-                <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-                <CustomText style={styles.signupLink}>Sign Up</CustomText>
+                <CustomText>Bạn chưa có tài khoản? </CustomText>
+                <TouchableOpacity onPress={() => navigation.navigate('register')}>
+                <CustomText style={styles.signupLink}>Đăng ký</CustomText>
                 </TouchableOpacity>
             </View>
         </ScrollView>
+        
     );
 };
 

@@ -9,6 +9,7 @@ import UserOption from "../components/UserOption";
 import firestore from '@react-native-firebase/firestore';
 import { useLoading } from '../../context/themeContext';
 import { theme } from '../../theme/theme';
+import Dialog from "../components/Dialog";
 
 const { width } = Dimensions.get('window');
 
@@ -21,85 +22,98 @@ const Register = ({ navigation }: any) => {
     const [error, setError] = useState('');
     const { loading, setLoading } = useLoading();
     const [rememberMe, setRememberMe] = useState(false);
-    const [selectedOption, setSelectedOption] = useState<string>(''); 
+    const [selectedOption, setSelectedOption] = useState<string>('');
+    const [dialogVisible, setDialogVisible] = useState(false);
+    const [dialogContent, setDialogContent] = useState({
+        title: "",
+        message: "",
+        failure: false,
+        isAccept: false
+    });
 
     const handleSelectOption = (value: string) => {
-        setSelectedOption(value);  
+        setSelectedOption(value);
     };
 
     const handleRegister = async () => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-    
+
         if (!emailRegex.test(email)) {
             setError('Địa chỉ email không hợp lệ');
             return;
         }
-    
+
         if (!passwordRegex.test(password)) {
             setError('Mật khẩu phải có ít nhất 8 ký tự, bao gồm ít nhất một chữ hoa, một chữ thường, một chữ số và một ký tự đặc biệt');
             return;
         }
-    
+
         if (password !== confirmPassword) {
             setError('Mật khẩu không khớp');
             return;
         }
-    
-        const normalizedEmail = email.toLowerCase(); 
+
+        const normalizedEmail = email.toLowerCase();
         const emailExists = await fb.where('sEmailLienHe', '==', normalizedEmail).get();
         if (!emailExists.empty) {
             setError('Email này đã được đăng ký, vui lòng chọn email khác');
             return;
         }
-    
+
         setLoading(true);
-    
+
         try {
             const usersSnapshot = await fb.get();
             const userCount = usersSnapshot.size;
-    
+
             const newAccountNumber = `TK${(userCount + 1).toString().padStart(3, '0')}`;
-    
-            const newUserRef = await fb.add({
-                sEmailLienHe: normalizedEmail,  
+            const accountStatus = selectedOption === 'Doanh nghiệp' ? false : true;
+
+            await fb.doc(newAccountNumber).set({
+                sEmailLienHe: normalizedEmail,
                 sLoaiTaiKhoan: selectedOption,
-                sMaTaiKhoan: newAccountNumber, 
+                sMaTaiKhoan: newAccountNumber,
                 sMatKhau: password,
-                sTrangThai: 'Kích hoạt',
+                sTrangThai: accountStatus,
             });
-    
-            const newUserId = newUserRef.id;
-    
-            await newUserRef.update({
-                id: newUserId
+
+            setDialogContent({
+                title: "Thành công",
+                message: "Đăng ký thành công!",
+                failure: false,
+                isAccept: true
             });
-    
-            console.log('Đã tạo user mới với ID:', newUserId);
-            navigation.navigate('Login');
+            setDialogVisible(true)
         } catch (error) {
             console.error('Lỗi khi tạo user:', error);
-            setError('Đã xảy ra lỗi');
+            setDialogContent({
+                title: "Lỗi",
+                message: "Đã xảy ra lỗi khi đăng ký. Vui lòng thử lại sau.",
+                failure: true,
+                isAccept: false
+            });
+            setDialogVisible(true)
         }
-    
+
         setLoading(false);
     };
 
     return (
         <ScrollView contentContainerStyle={styles.container}>
             <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-            <CustomText style={styles.title}>Welcome Back To</CustomText>
+            <CustomText style={styles.title}>Chào mừng trở lại</CustomText>
             <CustomText style={styles.appName}>Jobify</CustomText>
 
             <Input
-                placeholder="Email Or Phone Number"
+                placeholder="Email"
                 value={email}
                 onChangeText={setEmail}
                 style={styles.input}
             />
 
             <Input
-                placeholder="Password"
+                placeholder="Mật khẩu"
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
@@ -107,7 +121,7 @@ const Register = ({ navigation }: any) => {
             />
 
             <Input
-                placeholder="Confirm Password"
+                placeholder="Xác nhận mật khẩu"
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 secureTextEntry
@@ -119,32 +133,43 @@ const Register = ({ navigation }: any) => {
 
 
             <CheckBox
-                label="Remember Me"
+                label="Nhớ mật khẩu"
                 checked={rememberMe}
                 onToggle={() => setRememberMe(!rememberMe)}
                 style={styles.rememberContainer}
             />
 
             <View style={styles.loginOptionsContainer}>
-                <Button title="Sign In" onPress={handleRegister} />
+                <Button title="Đăng ký" onPress={handleRegister} />
 
-                <CustomText style={styles.orText}>Or</CustomText>
+                <CustomText style={styles.orText}>Hoặc</CustomText>
 
                 <TouchableOpacity style={styles.socialIconContainer}>
                     <Image source={require('../../../asset/images/img_google.png')} style={styles.socialIcon} />
                 </TouchableOpacity>
             </View>
 
-            <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
-                <CustomText style={styles.forgotPassword}>Forgot your password?</CustomText>
-            </TouchableOpacity>
 
             <View style={styles.signupContainer}>
-                <CustomText>Don't Have An Account? </CustomText>
-                <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-                <CustomText style={styles.signupLink}>Sign Up</CustomText>
+                <CustomText>Bạn đã có tài khoản? </CustomText>
+                <TouchableOpacity onPress={() => navigation.replace('login')}>
+                    <CustomText style={styles.signupLink}>Đăng nhập</CustomText>
                 </TouchableOpacity>
             </View>
+            <Dialog
+                visible={dialogVisible}
+                title={dialogContent.title}
+                content={dialogContent.message}
+                confirm={{
+                    text: "Đóng",
+                    onPress: () => {
+                        setDialogVisible(false);
+                        if (dialogContent.isAccept) {
+                            navigation.navigate('login'); 
+                        }
+                    },
+                }}
+            />
             {loading && <Loading />}
         </ScrollView>
     );
@@ -201,7 +226,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
     },
     socialIconContainer: {
-        borderWidth: 1, 
+        borderWidth: 1,
         borderRadius: 20,
         padding: 12,
         borderColor: '#ccc',
@@ -225,9 +250,9 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     error: {
-        color: theme.colors.error.dark,  
-        fontSize: 12,  
-        marginTop: 5,  
+        color: theme.colors.error.dark,
+        fontSize: 12,
+        marginTop: 5,
         textAlign: 'center',
     },
 });

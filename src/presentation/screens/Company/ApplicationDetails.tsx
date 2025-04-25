@@ -14,7 +14,7 @@ import Dialog from '../../components/Dialog';
 import { useUser } from '../../../context/UserContext';
 import axios from 'axios';
 
-const API_URL = 'http://192.168.31.242:3000/api/send-email';
+const API_URL = 'http://192.168.102.24:3000/api/send-email';
 
 const ApplicantionDetail = ({ route, navigation }: any) => {
     const { sMaUngVien, sMaTinTuyenDung } = route.params;
@@ -123,13 +123,6 @@ const ApplicantionDetail = ({ route, navigation }: any) => {
                     sThoiGianPhongVan: data.date.toISOString(),
                     sLoiNhan: data.message,
                 });
-
-                setDialogContent({
-                    title: "Cập nhật thành công",
-                    message: "Lịch hẹn phỏng vấn đã được cập nhật thành công.",
-                    failure: false,
-                });
-                setDialogVisible(true);
             } else {
                 const scheduleSnapshot = await firestore().collection('tblLichHenPhongVan').get();
                 const newScheduleId = `LH${(scheduleSnapshot.size + 1).toString().padStart(3, '0')}`;

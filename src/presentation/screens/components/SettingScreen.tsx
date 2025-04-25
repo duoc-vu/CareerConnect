@@ -80,7 +80,7 @@ const SettingScreen = ({ navigation }: any) => {
           : 'Đăng ký thông tin',
       onPress: () => {
         if (userType === 1) {
-          navigation.navigate("edit-user-profile", navigation);
+          navigation.navigate("edit-candidate-profile", navigation);
         } else if (userType === 2) {
           navigation.navigate("edit-employer-profile", navigation);
         } else {
@@ -116,13 +116,13 @@ const SettingScreen = ({ navigation }: any) => {
     {
       id: '5',
       title: 'Chính sách',
-      onPress: () => navigation.navigate("feedback", navigation),
+      onPress: () => console.log("Go to Chính sách"),
       icon: require('../../../../asset/images/right-arrow.png')
     },
     {
       id: '6',
       title: 'Phản hồi và góp ý',
-      onPress: () => console.log('Go to detail'),
+      onPress: () => navigation.navigate("feedback"),
       icon: require('../../../../asset/images/right-arrow.png')
     },
     {

@@ -18,17 +18,17 @@ const fbDonUngTuyen = firestore().collection('tblDonUngTuyen');
 const fbTinTuyenDung = firestore().collection('tblTinTuyenDung');
 const fbUngVien = firestore().collection('tblUngVien');
 
-const ApplyJob = ({ route, navigation }:any) => {
+const ApplyJob = ({ route, navigation }: any) => {
     const { userId } = useUser();
     const { loading, setLoading } = useLoading();
-    const { sMaTinTuyenDung } = route.params; 
+    const { sMaTinTuyenDung } = route.params;
 
     const initialState = {
-        sMaDonUngTuyen: '', 
+        sMaDonUngTuyen: '',
         sMaTinTuyenDung: sMaTinTuyenDung || '',
         sMaUngVien: userId || '',
-        sNgayTao: '', 
-        sTrangThai: 'Chờ duyệt', 
+        sNgayTao: '',
+        sTrangThai: 2,
         fFileCV: '',
         sHoVaTen: '',
         sChuyenNganh: '',
@@ -38,6 +38,7 @@ const ApplyJob = ({ route, navigation }:any) => {
         sKinhNghiem: '',
         sSoThich: '',
         sMoTaChiTiet: '',
+        sGioiThieu: ""
     };
 
     const [formData, setFormData] = useState(initialState);
@@ -94,8 +95,8 @@ const ApplyJob = ({ route, navigation }:any) => {
                     .get();
 
                 if (!userQuerySnapshot.empty) {
-                    const userDoc:any = userQuerySnapshot.docs[0];
-                    setDocId(userDoc.id); 
+                    const userDoc: any = userQuerySnapshot.docs[0];
+                    setDocId(userDoc.id);
                     const userData = userDoc.data();
                     setFormData(prev => ({
                         ...prev,
@@ -123,14 +124,14 @@ const ApplyJob = ({ route, navigation }:any) => {
         fetchUserData();
     }, [sMaTinTuyenDung, userId]);
 
-    const handleChange = (key:any, value:any) => {
+    const handleChange = (key: any, value: any) => {
         setFormData(prev => ({ ...prev, [key]: value }));
     };
 
     const handleChooseFile = async () => {
         try {
             const result = await DocumentPicker.pick({
-                type: [DocumentPicker.types.pdf], 
+                type: [DocumentPicker.types.pdf],
             });
 
             if (result && result[0].uri) {
@@ -146,7 +147,7 @@ const ApplyJob = ({ route, navigation }:any) => {
         }
     };
 
-    const uploadFile = async (uri:any) => {
+    const uploadFile = async (uri: any) => {
         if (!uri || !sMaDoanhNghiep || !sMaTinTuyenDung || !userId) {
             Alert.alert('Lỗi', 'Thiếu thông tin để upload file. Vui lòng kiểm tra lại.');
             return;
@@ -168,7 +169,7 @@ const ApplyJob = ({ route, navigation }:any) => {
             setFormData(prev => ({ ...prev, fFileCV: downloadURL }));
 
             await RNFS.unlink(tempPath);
-        } catch (error:any) {
+        } catch (error: any) {
             console.error('Lỗi khi tải file lên:', error);
             if (error.code === 'storage/unauthorized') {
                 Alert.alert('Lỗi', 'Không có quyền upload file. Vui lòng kiểm tra quyền Firebase Storage.');
@@ -190,7 +191,7 @@ const ApplyJob = ({ route, navigation }:any) => {
                 sMaDonUngTuyen: formData.sMaDonUngTuyen,
                 sMaTinTuyenDung: formData.sMaTinTuyenDung,
                 sMaUngVien: formData.sMaUngVien,
-                 sNgayTao: formData.sNgayTao,
+                sNgayTao: formData.sNgayTao,
                 sTrangThai: formData.sTrangThai,
                 fFileCV: formData.fFileCV || '',
             });
@@ -205,6 +206,7 @@ const ApplyJob = ({ route, navigation }:any) => {
                     sKinhNghiem: formData.sKinhNghiem,
                     sSoThich: formData.sSoThich,
                     sMoTaChiTiet: formData.sMoTaChiTiet,
+                    sGioiThieu: formData.sGioiThieu,
                 });
             }
             setShowSuccessDialog(true);
@@ -265,9 +267,9 @@ const ApplyJob = ({ route, navigation }:any) => {
                     onChangeText={text => handleChange('sKiNang', text)}
                 />
 
-                <CustomText style={styles.label}>Kinh nghiệm</CustomText>
+                <CustomText style={styles.label}>Kinh nghiệm (Số năm)</CustomText>
                 <Input
-                    placeholder="Kinh nghiệm"
+                    placeholder="Kinh nghiệm (Số năm)"
                     style={styles.input}
                     value={formData.sKinhNghiem}
                     onChangeText={text => handleChange('sKinhNghiem', text)}
@@ -290,6 +292,15 @@ const ApplyJob = ({ route, navigation }:any) => {
                     onChangeText={text => handleChange('sMoTaChiTiet', text)}
                 />
 
+                <CustomText style={styles.label}>Giới thiệu bản thân</CustomText>
+                <Input
+                    placeholder="Giới thiệu bản thân"
+                    multiline
+                    style={styles.largeInput}
+                    value={formData.sGioiThieu}
+                    onChangeText={text => handleChange('sGioiThieu', text)}
+                />
+
                 <CustomText style={styles.sectionTitle}>File CV</CustomText>
 
                 <CustomText style={styles.label}>File CV (PDF)</CustomText>
@@ -306,7 +317,7 @@ const ApplyJob = ({ route, navigation }:any) => {
                 <Button
                     title="Gửi đơn ứng tuyển"
                     onPress={handleSubmit}
-                    disabled={loading || !formData.fFileCV} 
+                    disabled={loading || !formData.fFileCV}
                 />
             </View>
             {loading && <Loading />}
@@ -318,7 +329,7 @@ const ApplyJob = ({ route, navigation }:any) => {
                     text: "Close",
                     onPress: () => {
                         setShowSuccessDialog(false);
-                        navigation.goBack(); 
+                        navigation.goBack();
                     },
                 }}
             />
@@ -380,10 +391,6 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     buttonContainer: {
-        position: 'absolute',
-        bottom: 40,
-        left: 0,
-        right: 0,
         padding: 20,
         backgroundColor: '#fff',
         borderTopWidth: 1,

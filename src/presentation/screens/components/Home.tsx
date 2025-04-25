@@ -184,6 +184,7 @@ const styles = StyleSheet.create({
   },
   verticalList: {
     paddingHorizontal: 10,
+    paddingBottom: 80
   },
   verticalJobCard: {
     marginVertical: 10,

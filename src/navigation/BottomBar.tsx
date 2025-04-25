@@ -16,6 +16,7 @@ import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import { useNavigation } from '@react-navigation/native';
 import PostedJobs from '../presentation/screens/Company/PostedJobs';
+import JobSaved from '../presentation/screens/User/JobSaved';
 
 const homeIconActive = require('../../asset/images/img_home_active.png');
 const homeIcon = require('../../asset/images/img_home.png');
@@ -268,12 +269,12 @@ const BottomBar = () => {
 
   const tabs = [
     { name: "Trang chủ", component: <Home fetchJobData={fetchJobData} bestJobs={bestJobs} recommendedJobs={recommendedJobs} navigation={navigation} /> },
-    userType === 1 && { name: "Tìm kiếm", component: <View></View> },
-    userType === 1 && { name: "Lưu công việc", component: <View></View> },
+    userType === 1 && { name: "Tìm kiếm", component: <AppliedJobs navigation={navigation} /> },
+    userType === 1 && { name: "Lưu công việc", component: <JobSaved  navigation={navigation}/> },
     userType === 2 && { name: "Đã đăng tải", component: <PostedJobs navigation={navigation} /> },
     userType === 2 ? { name: "Tài khoản công ty", component: <SettingScreen navigation={navigation} /> } : { name: "Tài khoản", component: <SettingScreen navigation={navigation} /> },
     userType === 0 && { name: "Tìm kiếm", component: <View></View> },
-    userType === 0 && { name: "Tìm kiếm", component: <View></View> },
+    // userType === 2 && { name: "Tìm kiếm", component: <View></View> },
   ].filter(Boolean);
 
   return (

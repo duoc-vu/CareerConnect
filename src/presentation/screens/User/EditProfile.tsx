@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, ScrollView, Alert, TouchableOpacity } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
-import Toast from 'react-native-toast-message';
 import { launchImageLibrary } from 'react-native-image-picker';
 import Button from '../../components/Button';
 import Input from '../../components/Input';
@@ -13,6 +12,8 @@ import { Image } from 'react-native';
 import HeaderWithIcons from '../../components/Header';
 import { useLoading } from '../../../context/themeContext';
 import Loading from '../../components/Loading';
+import { Fonts } from '../../../theme/font';
+import Dialog from '../../components/Dialog';
 
 const fbUV = firestore().collection('tblUngVien');
 
@@ -23,17 +24,24 @@ const EditProfile = ({ navigation }: any) => {
     const initialState = {
         sAnhDaiDien: '',
         sChuyenNganh: '',
+        sLinhVuc: '',
         sDiaChi: '',
         sHoVaTen: '',
         sKiNang: '',
         sKinhNghiem: '',
         sMoTaChiTiet: '',
         sSoDienThoai: '',
-        sSoThich: ''
+        sSoThich: '',
     };
 
     const [formData, setFormData] = useState(initialState);
     const [docId, setDocId] = useState<string | null>(null);
+    const [dialogVisible, setDialogVisible] = useState(false);
+    const [dialogContent, setDialogContent] = useState({
+        title: "",
+        message: "",
+        isSuccess: false,
+    });
 
     useEffect(() => {
         if (userId) {
@@ -61,6 +69,7 @@ const EditProfile = ({ navigation }: any) => {
                 }
             } else {
                 console.warn('❌ Không tìm thấy ứng viên với mã:', userId);
+                setDocId(null);
             }
         } catch (error) {
             console.error('Lỗi khi lấy dữ liệu ứng viên:', error);
@@ -108,26 +117,59 @@ const EditProfile = ({ navigation }: any) => {
         }
     }
 
-    const handleSave = async () => {
-        if (!docId) {
-            Alert.alert("Lỗi", "Không tìm thấy tài liệu ứng viên để cập nhật!");
-            return;
-        }
+    const isFormValid = () => {
+        return (
+            (formData.sHoVaTen || '').trim() !== '' &&
+            (formData.sChuyenNganh || '').trim() !== '' &&
+            (formData.sLinhVuc || '').trim() !== '' &&
+            (formData.sDiaChi || '').trim() !== '' &&
+            (formData.sSoDienThoai || '').trim() !== '' &&
+            (formData.sKiNang || '').trim() !== '' &&
+            (formData.sKinhNghiem || '').trim() !== '' &&
+            (formData.sSoThich || '').trim() !== '' &&
+            (formData.sMoTaChiTiet || '').trim() !== ''
+        );
+    };
 
+    const handleSave = async () => {
         try {
             setLoading(true);
-            await fbUV.doc(docId).update(formData);
-            navigation.navigate('user-profile')
+
+            if (!docId) {
+                await fbUV.add({
+                    ...formData,
+                    sMaUngVien: userId,
+                });
+                setDialogContent({
+                    title: "Thành công",
+                    message: "Thông tin của bạn đã được lưu thành công!",
+                    isSuccess: true,
+                });
+                setDialogVisible(true);
+            } else {
+                await fbUV.doc(docId).update(formData);
+                setDialogContent({
+                    title: "Thành công",
+                    message: "Thông tin của bạn đã được cập nhật thành công!",
+                    isSuccess: true,
+                });
+                setDialogVisible(true);
+            }
         } catch (error) {
-            console.error('❌ Lỗi khi cập nhật:', error);
-            Alert.alert("Lỗi", "Không thể cập nhật thông tin, vui lòng thử lại.");
+            console.error('❌ Lỗi khi lưu thông tin:', error);
+            setDialogContent({
+                title: "Lỗi",
+                message: "Không thể lưu thông tin, vui lòng thử lại.",
+                isSuccess: false,
+            });
+            setDialogVisible(true);
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <View>
+        <View style={styles.wrapper}>
             <HeaderWithIcons
                 title='Chỉnh sửa hồ sơ'
                 onBackPress={() => { navigation.goBack() }}
@@ -149,7 +191,10 @@ const EditProfile = ({ navigation }: any) => {
                 <CustomText style={styles.label}>Họ và tên</CustomText>
                 <Input placeholder="Nhập họ tên" style={styles.input} value={formData.sHoVaTen} onChangeText={text => handleChange('sHoVaTen', text)} />
 
-                <CustomText style={styles.label}>Chuyên ngành</CustomText>
+                <CustomText style={styles.label}>Lĩnh Vực</CustomText>
+                <Input placeholder="Nhập chuyên ngành" style={styles.input} value={formData.sLinhVuc} onChangeText={text => handleChange('sLinhVuc', text)} />
+
+                <CustomText style={styles.label}>Vị trí</CustomText>
                 <Input placeholder="Nhập chuyên ngành" style={styles.input} value={formData.sChuyenNganh} onChangeText={text => handleChange('sChuyenNganh', text)} />
 
                 <CustomText style={styles.label}>Địa chỉ</CustomText>
@@ -176,9 +221,23 @@ const EditProfile = ({ navigation }: any) => {
                 <Button
                     title="Lưu thông tin"
                     onPress={handleSave}
-                    disabled={loading}
+                    disabled={loading || !isFormValid()}
                 />
             </View>
+            <Dialog
+                visible={dialogVisible}
+                title={dialogContent.title}
+                content={dialogContent.message}
+                confirm={{
+                    text: "Đóng",
+                    onPress: () => {
+                        setDialogVisible(false);
+                        if (dialogContent.isSuccess) {
+                            navigation.goBack();
+                        }
+                    },
+                }}
+            />
             {loading && <Loading />}
         </View>
 
@@ -186,6 +245,10 @@ const EditProfile = ({ navigation }: any) => {
 };
 
 const styles = StyleSheet.create({
+    wrapper: {
+        fontFamily: Fonts.medium.fontFamily,
+        flex: 1,
+    },
     container: { padding: 20, backgroundColor: '#fff', flexGrow: 1, paddingBottom: 130 },
     avatarContainer: {
         alignItems: 'center',
@@ -217,10 +280,6 @@ const styles = StyleSheet.create({
     label: { fontSize: 14, fontWeight: '600', color: '#333', marginTop: 10, marginBottom: 10 },
     largeInput: { height: 100, textAlignVertical: 'top', marginBottom: 10, borderColor: "#BEBEBE", backgroundColor: "#EDEDED" },
     buttonContainer: {
-        position: 'absolute',
-        bottom: 40,
-        left: 0,
-        right: 0,
         padding: 20,
         backgroundColor: '#fff',
         borderTopWidth: 1,

@@ -4,16 +4,13 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Home from './src/presentation/screens/components/Home'
 import Login from './src/presentation/screens/Login';
 import Register from './src/presentation/screens/Register';
-import Info from './src/presentation/screens/User/Info';
 import BottomBar from './src/navigation/BottomBar';
 import CV_Profile from './src/presentation/screens/User/CV_Profile';
 import JobDetail from './src/presentation/screens/components/JobDetail';
 import EditEmployerProfile from './src/presentation/screens/Company/EditEmployerProfile';
-import CompanyInfoScreen from './src/presentation/screens/Company/CompanyInfoScreen';
 import ApplyJob from './src/presentation/screens/User/ApplyJob';
 import JobApplyCompany from './src/presentation/screens/Company/ApplicantsScreen';
 import ApplicationDetail from './src/presentation/screens/Company/ApplicationDetails';
-import AppliedJobs from './src/presentation/screens/User/AppliedJobs';
 import AppDetails from './src/presentation/screens/User/AppDetails';
 import EditJob from './src/presentation/screens/Company/EditJob';
 import PostJob from './src/presentation/screens/Company/PostJob';
@@ -31,12 +28,13 @@ import ProfileCandidate from './src/presentation/screens/User/ProfileCandidate';
 import ProfileEmployer from './src/presentation/screens/Company/ProfileEmployer';
 import FeedbackScreen from './src/presentation/screens/components/FeedbackScreen';
 import ApplicantsScreen from './src/presentation/screens/Company/ApplicantsScreen';
-import { KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import CVPreview from './src/presentation/screens/components/CVPreview';
 import JobDetailEmployerScreen from './src/presentation/screens/Company/JobDetailEmployer';
 import AppointmentsScreen from './src/presentation/screens/Company/AppointmentsScreen';
 import AppointmentsCandidateScreen from './src/presentation/screens/User/AppointmentsCandidateScreen';
 import CompanyDetail from './src/presentation/screens/User/CompanyDetail';
+import AppliedJobsScreen from './src/presentation/screens/User/AppliedJobs';
+import JobSaved from './src/presentation/screens/User/JobSaved';
 
 const Stack = createNativeStackNavigator();
 
@@ -69,6 +67,7 @@ const App = () => {
 
     return unsubscribe;
   }, []);
+  
 
   return (
     <UserProvider>
@@ -77,8 +76,8 @@ const App = () => {
           <NavigationContainer >
             <Stack.Navigator >
               < Stack.Screen name="splash" component={SplashScreen} options={{ headerShown: false }} />
-              <Stack.Screen name='login' component={Login} options={{ headerShown: false }} />
               <Stack.Screen name="bottom" component={BottomBar} options={{ headerShown: false }} />
+              <Stack.Screen name='login' component={Login} options={{ headerShown: false }} />
               <Stack.Screen name='home' component={Home} options={{ headerShown: false }} />
               <Stack.Screen name='register' component={Register} options={{ headerShown: false }} />
               {/* <Stack.Screen name='Info' component={Info}  options={{ headerShown: false}}/> */}
@@ -103,8 +102,9 @@ const App = () => {
               <Stack.Screen name='appointments' component={AppointmentsScreen} options={{ headerShown: false }} />
               <Stack.Screen name='appointments-candidate' component={AppointmentsCandidateScreen} options={{ headerShown: false }} />
               <Stack.Screen name='company-detail-candidate' component={CompanyDetail} options={{ headerShown: false }} />
+              <Stack.Screen name='applied-jobs' component={AppliedJobsScreen} options={{ headerShown: false }} />
+              <Stack.Screen name='job-saved' component={JobSaved} options={{ headerShown: false }} />
               </Stack.Navigator>
-              
           </NavigationContainer>
         </LoadingProvider>
       </ThemeProvider>

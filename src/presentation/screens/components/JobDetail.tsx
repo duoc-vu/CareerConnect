@@ -20,7 +20,38 @@ const JobDetail = ({ route, navigation }: any) => {
   const [companyDetail, setCompanyDetail] = useState<any>(null);
   const { loading, setLoading } = useLoading();
   const { userId, userType } = useUser();
-  const [dialogVisible, setDialogVisible] = useState(false); 
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+
+  useEffect(() => {
+    const checkIfJobIsSaved = async () => {
+      if (userType !== 1) return;
+      try {
+        setLoading(true);
+
+        const candidateSnapshot = await firestore()
+          .collection("tblUngVien")
+          .where("sMaUngVien", "==", userId)
+          .get();
+
+        if (!candidateSnapshot.empty) {
+          const candidateDoc = candidateSnapshot.docs[0];
+          const candidateData = candidateDoc.data();
+
+          const savedJobs = candidateData.sCongViecDaLuu || [];
+          if (savedJobs.includes(sMaTinTuyenDung)) {
+            setIsSaved(true);
+          }
+        }
+      } catch (error) {
+        console.error("Lỗi khi kiểm tra trạng thái lưu công việc:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkIfJobIsSaved();
+  }, [sMaTinTuyenDung, userId, userType]);
 
   useEffect(() => {
     const getJobDetail = async () => {
@@ -62,6 +93,48 @@ const JobDetail = ({ route, navigation }: any) => {
     getJobDetail();
   }, [sMaTinTuyenDung]);
 
+  const handleSaveJob = async () => {
+    try {
+      setLoading(true);
+
+      const candidateSnapshot = await firestore()
+        .collection("tblUngVien")
+        .where("sMaUngVien", "==", userId)
+        .get();
+
+      if (!candidateSnapshot.empty) {
+        const candidateDoc = candidateSnapshot.docs[0];
+        const candidateData = candidateDoc.data();
+
+        const savedJobs = candidateData.sCongViecDaLuu || [];
+
+        if (isSaved) {
+          const updatedJobs = savedJobs.filter((jobId: string) => jobId !== sMaTinTuyenDung);
+
+          await firestore()
+            .collection("tblUngVien")
+            .doc(candidateDoc.id)
+            .update({ sCongViecDaLuu: updatedJobs });
+          setIsSaved(false);
+        } else {
+          savedJobs.push(sMaTinTuyenDung);
+
+          await firestore()
+            .collection("tblUngVien")
+            .doc(candidateDoc.id)
+            .update({ sCongViecDaLuu: savedJobs });
+          setIsSaved(true);
+        }
+      } else {
+        console.warn("Không tìm thấy thông tin ứng viên.");
+      }
+    } catch (error) {
+      console.error("Lỗi khi lưu hoặc xóa công việc:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const isApplyButtonEnabled = userType === 1;
   const jobDescriptions = job?.sMoTaCongViec?.split("/n") || [];
   const handleApply = async () => {
@@ -101,7 +174,7 @@ const JobDetail = ({ route, navigation }: any) => {
                 jobTitle={job.sViTriTuyenDung}
                 jobType="On-site"
                 location={job.sDiaChiLamViec}
-                onPress={() => navigation.navigate("company-detail-candidate", { sMaDoanhNghiep : job.sMaDoanhNghiep})}
+                onPress={() => navigation.navigate("company-detail-candidate", { sMaDoanhNghiep: job.sMaDoanhNghiep })}
                 salaryMax={job.sMucLuongToiThieu}
               />
             </View>
@@ -137,15 +210,20 @@ const JobDetail = ({ route, navigation }: any) => {
           </ScrollView>
 
           <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={styles.saveButton}
-              onPress={() => console.log("Lưu công việc")}
-            >
-              <Image
-                source={require("../../../../asset/images/img_save_bottom.png")}
-                style={styles.saveIcon}
-              />
-            </TouchableOpacity>
+            {userType == 1 &&
+              <TouchableOpacity
+                style={styles.saveButton}
+                onPress={handleSaveJob}
+              >
+                <Image
+                  source={
+                    isSaved
+                      ? require("../../../../asset/images/img_save_bottom_active.png")
+                      : require("../../../../asset/images/img_save_bottom.png")
+                  }
+                  style={styles.saveIcon}
+                />
+              </TouchableOpacity>}
             <TouchableOpacity
               style={[styles.applyButton, !isApplyButtonEnabled && styles.applyButtonDisabled]}
               disabled={!isApplyButtonEnabled}
@@ -164,7 +242,7 @@ const JobDetail = ({ route, navigation }: any) => {
           text: "Đăng ký thông tin",
           onPress: () => {
             setDialogVisible(false);
-            navigation.navigate("edit-candidate-profile"); 
+            navigation.navigate("edit-candidate-profile");
           },
         }}
         dismiss={{

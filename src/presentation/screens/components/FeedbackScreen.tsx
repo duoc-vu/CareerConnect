@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, ScrollView, Alert, View } from 'react-native';
+import { StyleSheet, ScrollView, View } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import Button from '../../components/Button';
 import Input from '../../components/Input';
@@ -9,15 +9,22 @@ import { useUser } from '../../../context/UserContext';
 import { useLoading } from '../../../context/themeContext';
 import Loading from '../../components/Loading';
 import Dialog from '../../components/Dialog';
+import axios from 'axios';
 
 const fbFeedback = firestore().collection('tblPhanHoi');
+const API_URL = 'http://192.168.102.24:3000/api/send-simple-email';
 
-const FeedbackScreen = ({ navigation }:any) => {
-    const { userInfo, userType } = useUser();
+const FeedbackScreen = ({ navigation }: any) => {
+    const { userInfo, userEmail} = useUser();
     const { loading, setLoading } = useLoading();
-    
+    const [dialogContent, setDialogContent] = useState({
+        title: '',
+        content: '',
+        visible: false,
+    });
+
     const initialState = {
-        sEmail: userInfo?.sEmailLienHe || '',
+        sEmailLienHe: userEmail || '',
         sHoVaTen: userInfo?.sHoVaTen || '',
         sMaPhanHoi: '',
         sNoiDung: '',
@@ -25,8 +32,6 @@ const FeedbackScreen = ({ navigation }:any) => {
     };
 
     const [formData, setFormData] = useState(initialState);
-    const [showSuccessDialog, setShowSuccessDialog] = useState(false);
-
     useEffect(() => {
         const generateFeedbackId = async () => {
             try {
@@ -37,7 +42,6 @@ const FeedbackScreen = ({ navigation }:any) => {
                 setFormData(prev => ({ ...prev, sMaPhanHoi: newId }));
             } catch (error) {
                 console.error('Lỗi khi tạo mã phản hồi:', error);
-                Alert.alert('Lỗi', 'Không thể tạo mã phản hồi, vui lòng thử lại.');
             } finally {
                 setLoading(false);
             }
@@ -46,62 +50,71 @@ const FeedbackScreen = ({ navigation }:any) => {
         generateFeedbackId();
     }, []);
 
-    const handleChange = (key:any, value:any) => {
+    const handleChange = (key: any, value: any) => {
         setFormData(prev => ({ ...prev, [key]: value }));
     };
 
     const handleSubmit = async () => {
         if (!formData.sTieuDe || !formData.sNoiDung) {
-            Alert.alert('Lỗi', 'Vui lòng điền đầy đủ thông tin.');
+            setDialogContent({
+                title: 'Lỗi',
+                content: 'Vui lòng điền đầy đủ thông tin trước khi gửi phản hồi.',
+                visible: true,
+            });
             return;
         }
 
         try {
             setLoading(true);
             await fbFeedback.add(formData);
-            setShowSuccessDialog(true);
-            sendFeedback(formData.sEmail);
+            sendFeedback(formData.sEmailLienHe, formData.sTieuDe);
+            setDialogContent({
+                title: 'Thành công',
+                content: 'Phản hồi của bạn đã được gửi thành công. Chúng tôi sẽ xem xét và phản hồi sớm nhất.',
+                visible: true,
+            });
         } catch (error) {
             console.error('Lỗi khi gửi phản hồi:', error);
-            Alert.alert('Lỗi', 'Không thể gửi phản hồi, vui lòng thử lại.');
+            setDialogContent({
+                title: 'Lỗi',
+                content: 'Đã xảy ra lỗi khi gửi phản hồi. Vui lòng thử lại sau.',
+                visible: true,
+            });
         } finally {
             setLoading(false);
         }
     };
 
-    const sendFeedback = async (email:any) => {
+    const sendFeedback = async (email: string, feedbackContent: string) => {
         if (!email) {
-          Alert.alert("Lỗi", "Vui lòng nhập email và nội dung phản hồi.");
-          return;
+            return;
         }
-    
+
         try {
-          const templateParams = {
-            to_email: email,
-            message: `Cảm ơn bạn đã gửi phản hồi! Chúng tôi đã nhận được phản hồi của bạn. Chúng tôi sẽ xem xét xử lý và phản hồi lại bạn trong thời gian ngắn nhất.`,
-          };
-    
-        //   await emailjs.send("service_5hx0gfs", "template_ua45s7t", templateParams, "rA95CaZxb-7tBUNex");
-          
-          Alert.alert("Thành công", "Phản hồi đã được gửi và email cảm ơn đã được gửi!");
+            const templateParams = {
+                to: email,
+                subject: "Cảm ơn bạn đã phản hồi, góp ý ý kiến",
+                message: feedbackContent,
+            };
+            await axios.post(API_URL, templateParams);
+
         } catch (error) {
-          console.error("Lỗi khi gửi phản hồi:", error);
-          Alert.alert("Lỗi", "Không thể gửi phản hồi.");
+            console.error("Lỗi khi gửi phản hồi:", error);
         }
-      };
+    };
 
     return (
         <View style={styles.mainContainer}>
             <HeaderWithIcons title="Gửi phản hồi" onBackPress={() => navigation.goBack()} />
             <ScrollView contentContainerStyle={styles.container}>
                 <CustomText style={styles.label}>Họ về tên</CustomText>
-                <Input placeholder="Nhập tên" value={formData.sHoVaTen} onChangeText={text => handleChange('sHoVaTen', text)} />
+                <Input placeholder="Nhập tên" style={styles.input} value={formData.sHoVaTen} onChangeText={text => handleChange('sHoVaTen', text)} editable={true}/>
 
                 <CustomText style={styles.label}>Email liên hệ</CustomText>
-                <Input placeholder="Nhập email liên hệ" value={formData.sEmail} onChangeText={text => handleChange('sEmailLienHe', text)} />
+                <Input placeholder="Nhập email liên hệ" style={styles.input} value={formData.sEmailLienHe} onChangeText={text => handleChange('sEmailLienHe', text)} editable={true}              />
 
                 <CustomText style={styles.label}>Tiêu đề</CustomText>
-                <Input placeholder="Nhập tiêu đề" value={formData.sTieuDe} onChangeText={text => handleChange('sTieuDe', text)} />
+                <Input placeholder="Nhập tiêu đề" value={formData.sTieuDe} style={styles.input} onChangeText={text => handleChange('sTieuDe', text)} />
 
                 <CustomText style={styles.label}>Nội dung</CustomText>
                 <Input placeholder="Nhập nội dung phản hồi" multiline style={styles.largeInput} value={formData.sNoiDung} onChangeText={text => handleChange('sNoiDung', text)} />
@@ -111,14 +124,16 @@ const FeedbackScreen = ({ navigation }:any) => {
             </View>
             {loading && <Loading />}
             <Dialog
-                visible={showSuccessDialog}
-                title="Thành công"
-                content="Phản hồi của bạn đã được gửi thành công. Chúng tôi sẽ xem xét và phản hồi sớm nhất."
+                visible={dialogContent.visible}
+                title={dialogContent.title}
+                content={dialogContent.content}
                 confirm={{
                     text: "Đóng",
                     onPress: () => {
-                        setShowSuccessDialog(false);
-                        navigation.goBack();
+                        setDialogContent(prev => ({ ...prev, visible: false }));
+                        if (dialogContent.title === 'Thành công') {
+                            navigation.goBack(); 
+                        }
                     },
                 }}
             />
@@ -143,6 +158,10 @@ const styles = StyleSheet.create({
         color: '#333',
         marginTop: 10,
         marginBottom: 10,
+    },
+    input:{
+        borderColor: '#BEBEBE',
+        backgroundColor: '#EDEDED',
     },
     largeInput: {
         height: 100,

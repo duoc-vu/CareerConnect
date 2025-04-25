@@ -8,8 +8,9 @@ interface JobCardProps {
   companyName: string;
   jobTitle: string;
   location: string;
-  jobType: string;
+  jobType?: string;
   salaryMax: number;
+  jobAppliTime?: string;
   onPress: () => void;
   style?: any;
   sCoKhoa?: number;
@@ -22,6 +23,7 @@ const JobCard: React.FC<JobCardProps> = ({
   location,
   salaryMax,
   jobType,
+  jobAppliTime,
   onPress,
   style,
   sCoKhoa,
@@ -81,7 +83,7 @@ const JobCard: React.FC<JobCardProps> = ({
       </View>
       <View style={styles.footer}>
         <View style={styles.tag}>
-          <Text style={styles.tagText}>{jobType}</Text>
+          <Text style={styles.tagText}>{jobAppliTime ? jobAppliTime : jobType}</Text>
         </View>
         <View style={styles.tag}>
           <Text style={styles.tagText}>{location}</Text>

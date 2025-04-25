@@ -15,7 +15,7 @@ import DialogInterview from '../../components/DialogInterview';
 import axios from 'axios';
 import Dialog from '../../components/Dialog';
 
-const API_URL = 'http://192.168.31.242:3000/api/send-email';
+const API_URL = 'http://192.168.102.24:3000/api/send-email';
 const fbLichHenPhongVan = firestore().collection('tblLichHenPhongVan');
 const fbUngVien = firestore().collection('tblUngVien');
 const fbTaiKhoan = firestore().collection('tblTaiKhoan');

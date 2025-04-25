@@ -21,14 +21,14 @@ const SplashScreen = () => {
             navigation.replace('bottom'); 
           } else {
             await AsyncStorage.removeItem('session');
-            navigation.replace('login');
+            navigation.replace('bottom');
           }
         } else {
-          navigation.replace('login'); 
+          navigation.replace('bottom'); 
         }
       } catch (error) {
         console.log(" Error checking session:", error);
-        navigation.replace('login');
+        navigation.replace('bottom');
       }
     };
   

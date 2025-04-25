@@ -19,7 +19,9 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ avatar, name, email, location
     avatar && avatar.startsWith("http")
       ? { uri: avatar }
       : require("../../../asset/images/default_avt.png");
-
+      const truncateText = (text: string, maxLength: number) => {
+        return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
+      };
   return isGuest ? (
     <View>
       <View style={[{
@@ -46,7 +48,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ avatar, name, email, location
             paddingHorizontal: 16,
             paddingVertical: 8,
             borderRadius: 8,
-          }} onPress={() => { navigation.navigate('login') }}>
+          }} onPress={() => { navigation.replace('login') }}>
             <Text style={styles.editButtonText}>{"Đăng nhập"}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={{
@@ -55,7 +57,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ avatar, name, email, location
             borderRadius: 8,
             borderWidth: 1,
             borderColor: "#FFF"
-          }} onPress={() => { navigation.navigate('login') }}>
+          }} onPress={() => { navigation.replace('register') }}>
             <Text style={{ color: "#FFF" }}>{"Đăng ký"}</Text>
           </TouchableOpacity>
         </View>
@@ -77,13 +79,13 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ avatar, name, email, location
           {email && (
             <View style={styles.detailItem}>
               <Image source={require("../../../asset/images/img_email.png")} />
-              <Text style={styles.detailText}>{email}</Text>
+              <Text style={styles.detailText}>{truncateText(email, 8)}</Text>
             </View>
           )}
           {location && (
             <View style={[styles.detailItem, { marginLeft: 12 }]}>
               <Image source={require("../../../asset/images/img_location.png")} />
-              <Text style={styles.detailText}>{location}</Text>
+              <Text style={styles.detailText}>{truncateText(location, 5)}</Text>
             </View>
           )}
         </View>

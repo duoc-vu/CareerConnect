@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, ScrollView } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
-import Toast from 'react-native-toast-message';
 import Button from '../../components/Button';
 import Input from '../../components/Input';
 import CustomText from '../../components/CustomText';
 import DatePicker from '../../components/DatePicker';
+import { useUser } from '../../../context/UserContext';
+import Dialog from '../../components/Dialog';
 
 const fbJob = firestore().collection('tblTinTuyenDung');
 
-const PostJob = ({ navigation, route }: any) => {
-    const { userId = null } = route?.params ?? {};
+const PostJob = ({ navigation }: any) => {
+    const { userId, userInfo } = useUser()
 
     const initialState = {
         sMaTinTuyenDung: '',
@@ -29,6 +30,45 @@ const PostJob = ({ navigation, route }: any) => {
 
     const [formData, setFormData] = useState(initialState);
     const [error, setError] = useState('');
+    const [dialogVisible, setDialogVisible] = useState(false);
+    const [dialogContent, setDialogContent] = useState({
+        title: '',
+        content: '',
+        confirm: null as null | { text: string; onPress: () => void },
+        dismiss: null as null | { text: string; onPress: () => void },
+        failure: false,
+    });
+
+    useEffect(() => {
+        if (userInfo?.sTrangThai === false) {
+            setDialogVisible(true);
+        }
+    }, [userInfo]);
+
+    useEffect(() => {
+        if (userInfo?.sTrangThai === false) {
+            setDialogContent({
+                title: 'Tài khoản bị khóa',
+                content: 'Tài khoản của bạn đang bị khóa. Bạn có muốn cập nhật lại thông tin không?',
+                confirm: {
+                    text: 'Cập nhật',
+                    onPress: () => {
+                        setDialogVisible(false);
+                        navigation.replace('edit-employer-profile');
+                    },
+                },
+                dismiss: {
+                    text: 'Đóng',
+                    onPress: () => {
+                        setDialogVisible(false);
+                        navigation.goBack();
+                    },
+                },
+                failure: true,
+            });
+            setDialogVisible(true);
+        }
+    }, [userInfo]);
 
     useEffect(() => {
         const generateJobCode = async () => {
@@ -52,13 +92,6 @@ const PostJob = ({ navigation, route }: any) => {
 
             const ngayDang = new Date(formData.sThoiGianDangBai);
             const hanTuyen = new Date(formData.sThoiHanTuyenDung);
-
-            let trangThai = "Chờ đăng";
-            if (currentDate.getTime() === ngayDang.getTime()) {
-                trangThai = "Đang tuyển";
-            } else if (currentDate.getTime() > hanTuyen.getTime()) {
-                trangThai = "Hết hạn";
-            }
 
 
             if (isNaN(ngayDang.getTime()) || isNaN(hanTuyen.getTime())) {
@@ -94,33 +127,38 @@ const PostJob = ({ navigation, route }: any) => {
                 sMaDoanhNghiep: userId,
                 sThoiGianDangBai: formData.sThoiGianDangBai.toISOString().split("T")[0],
                 sThoiHanTuyenDung: formData.sThoiHanTuyenDung.toISOString().split("T")[0],
-                sTrangThai: trangThai,
-                sCoKhoa: 2
+                sCoKhoa: 1
             });
-
-            // console.log({
-            //     sMaTinTuyenDung: formData.sMaTinTuyenDung,
-            //     sDiaChiLamViec: formData.sDiaChiLamViec,
-            //     sLinhVucTuyenDung: formData.sLinhVucTuyenDung,
-            //     sViTriTuyenDung: formData.sViTriTuyenDung,
-            //     sMoTaCongViec: formData.sMoTaCongViec,
-            //     sMucLuongToiThieu: formData.sMucLuongToiThieu, 
-            //     sMucLuongToiDa: formData.sMucLuongToiDa,
-            //     sMucLuongToiThieuRaw: minSalaryRaw,
-            //     sMucLuongToiDaRaw: maxSalaryRaw,
-            //     sSoLuongTuyenDung: formData.sSoLuongTuyenDung,
-            //     sSoNamKinhNghiem: formData.sSoNamKinhNghiem,
-            //     sThoiGianDangBai: formData.sThoiGianDangBai.toISOString().split("T")[0],
-            //     sThoiHanTuyenDung: formData.sThoiHanTuyenDung.toISOString().split("T")[0],
-            //     sTrangThai: trangThai
-            // });
 
             resetForm();
             navigation.goBack();
-
+            setDialogContent({
+                title: 'Thành công',
+                content: 'Tin tuyển dụng đã được đăng thành công!',
+                confirm: {
+                    text: 'Đóng',
+                    onPress: () => {
+                        setDialogVisible(false);
+                        navigation.goBack();
+                    },
+                },
+                dismiss: null,
+                failure: false,
+            });
+            setDialogVisible(true);
         } catch (error: any) {
             console.error('Lỗi khi đăng tin tuyển dụng:', error);
-            setError(error.message || "Lỗi không xác định khi đăng tin!");
+            setDialogContent({
+                title: 'Lỗi',
+                content: 'Đã xảy ra lỗi khi đăng tin tuyển dụng. Vui lòng thử lại.',
+                confirm: {
+                    text: 'Đóng',
+                    onPress: () => setDialogVisible(false),
+                },
+                dismiss: null,
+                failure: true,
+            });
+            setDialogVisible(true);
         }
     };
 
@@ -166,6 +204,14 @@ const PostJob = ({ navigation, route }: any) => {
             {error ? <CustomText style={styles.error}>{error}</CustomText> : null}
 
             <Button title="Post Job" onPress={handlePostJob} style={styles.button} />
+            <Dialog
+                visible={dialogVisible}
+                title={dialogContent.title}
+                content={dialogContent.content}
+                confirm={dialogContent.confirm}
+                dismiss={dialogContent.dismiss}
+                failure={dialogContent.failure}
+            />
         </ScrollView>
     );
 };
