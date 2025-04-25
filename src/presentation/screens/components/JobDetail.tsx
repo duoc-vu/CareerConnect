@@ -7,6 +7,7 @@ import JobCard from "../../components/JobCard";
 import Loading from "../../components/Loading";
 import HeaderWithIcons from "../../components/Header";
 import { useUser } from "../../../context/UserContext";
+import Dialog from "../../components/Dialog";
 
 const fbJobDetail = firestore().collection("tblTinTuyenDung");
 const fbCT = firestore().collection("tblDoanhNghiep");
@@ -19,6 +20,7 @@ const JobDetail = ({ route, navigation }: any) => {
   const [companyDetail, setCompanyDetail] = useState<any>(null);
   const { loading, setLoading } = useLoading();
   const { userId, userType } = useUser();
+  const [dialogVisible, setDialogVisible] = useState(false); 
 
   useEffect(() => {
     const getJobDetail = async () => {
@@ -60,8 +62,27 @@ const JobDetail = ({ route, navigation }: any) => {
     getJobDetail();
   }, [sMaTinTuyenDung]);
 
-  const isApplyButtonDisabled = userType === 2;
+  const isApplyButtonEnabled = userType === 1;
   const jobDescriptions = job?.sMoTaCongViec?.split("/n") || [];
+  const handleApply = async () => {
+    try {
+      setLoading(true);
+      const querySnapshot = await firestore()
+        .collection("tblUngVien")
+        .where("sMaUngVien", "==", userId)
+        .get();
+
+      if (!querySnapshot.empty) {
+        navigation.navigate("apply-job", { sMaTinTuyenDung });
+      } else {
+        setDialogVisible(true);
+      }
+    } catch (error) {
+      console.error("Lỗi khi kiểm tra thông tin ứng viên:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <View style={[styles.wrapper, { backgroundColor: theme.bG }]}>
       <HeaderWithIcons title="Tin tuyển dụng" onBackPress={() => navigation.goBack()} />
@@ -80,10 +101,8 @@ const JobDetail = ({ route, navigation }: any) => {
                 jobTitle={job.sViTriTuyenDung}
                 jobType="On-site"
                 location={job.sDiaChiLamViec}
-                onPress={() => { }}
+                onPress={() => navigation.navigate("company-detail-candidate", { sMaDoanhNghiep : job.sMaDoanhNghiep})}
                 salaryMax={job.sMucLuongToiThieu}
-                // salaryMin={job.sMucLuongToiDa}
-                // deadline={job.sThoiHanTuyenDung}
               />
             </View>
 
@@ -128,15 +147,31 @@ const JobDetail = ({ route, navigation }: any) => {
               />
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.applyButton, isApplyButtonDisabled && styles.applyButtonDisabled]}
-              disabled={isApplyButtonDisabled}
-              onPress={() => navigation.navigate("apply-job", { sMaTinTuyenDung })}
+              style={[styles.applyButton, !isApplyButtonEnabled && styles.applyButtonDisabled]}
+              disabled={!isApplyButtonEnabled}
+              onPress={handleApply}
             >
               <Text style={styles.applyText}>Ứng tuyển ngay</Text>
             </TouchableOpacity>
           </View>
         </>
       )}
+      <Dialog
+        visible={dialogVisible}
+        title="Thông báo"
+        content="Bạn chưa đăng ký thông tin ứng viên. Vui lòng đăng ký để tiếp tục ứng tuyển."
+        confirm={{
+          text: "Đăng ký thông tin",
+          onPress: () => {
+            setDialogVisible(false);
+            navigation.navigate("edit-candidate-profile"); 
+          },
+        }}
+        dismiss={{
+          text: "Hủy",
+          onPress: () => setDialogVisible(false),
+        }}
+      />
     </View>
   );
 };

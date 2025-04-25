@@ -14,6 +14,7 @@ import SearchBar from '../../components/SearchBar';
 import { useUser } from '../../../context/UserContext';
 import UploadButton from '../../components/UploadButton';
 import FilterDialog from '../../components/FilterDialog';
+import Dialog from '../../components/Dialog';
 
 const fbJob = firestore().collection('tblTinTuyenDung');
 
@@ -25,6 +26,16 @@ const PostedJobs = ({ navigation }:any) => {
   const [loading, setLoading] = useState(true);
   const [filterVisible, setFilterVisible] = useState(false); 
   const [isFilterActive, setIsFilterActive] = useState(false); 
+  const [companyDetail, setCompanyDetail] = useState<any>(null);
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [dialogContent, setDialogContent] = useState({
+    title: '',
+    content: '',
+    confirm: null as null | { text: string; onPress: () => void },
+    dismiss: null as null | { text: string; onPress: () => void },
+    failure: false, // Xác định trạng thái thành công hay thất bại
+  });
+
 
   useEffect(() => {
     const subscriber = fbJob
@@ -67,16 +78,77 @@ const PostedJobs = ({ navigation }:any) => {
     setFilteredJobs(filtered);
   };
 
-  const handleUploadPress = () => {
-    navigation.navigate("post-job", { userId });
-  };
+  useEffect(() => {
+    const fetchCompanyDetail = async () => {
+      try {
+        const companySnapshot = await firestore()
+          .collection('tblDoanhNghiep')
+          .where('sMaDoanhNghiep', '==', userId)
+          .get();
+  
+        if (!companySnapshot.empty) {
+          const companyData = companySnapshot.docs[0].data();
+          setCompanyDetail(companyData);
+        } else {
+          console.error('Không tìm thấy thông tin doanh nghiệp.');
+        }
+      } catch (error) {
+        console.error('Error fetching company details:', error);
+      }
+    };
+  
+    fetchCompanyDetail();
+  }, []);
+
+  const handleUploadPress = async () => {
+  try {
+    const companySnapshot = await firestore()
+      .collection('tblDoanhNghiep')
+      .where('sMaDoanhNghiep', '==', userId)
+      .get();
+
+    if (!companySnapshot.empty) {
+      navigation.navigate("post-job");
+    } else {
+      setDialogContent({
+        title: 'Thông báo',
+        content: 'Doanh nghiệp của bạn chưa đăng ký thông tin. Vui lòng đăng ký thông tin doanh nghiệp trước khi đăng tin tuyển dụng.',
+        confirm: {
+          text: 'Đăng ký ngay',
+          onPress: () => {
+            setDialogVisible(false);
+            navigation.navigate('edit-employer-profile'); 
+          },
+        },
+        dismiss: {
+          text: 'Hủy',
+          onPress: () => setDialogVisible(false),
+        },
+        failure: true,
+      });
+      setDialogVisible(true);
+    }
+  } catch (error) {
+    console.error('Error checking company details:', error);
+    setDialogContent({
+      title: 'Lỗi',
+      content: 'Không thể kiểm tra thông tin doanh nghiệp. Vui lòng thử lại.',
+      confirm: {
+        text: 'Đóng',
+        onPress: () => setDialogVisible(false),
+      },
+      dismiss: null,
+      failure: true,
+    });
+    setDialogVisible(true);
+  }
+};
 
   const handleApplyFilters = (filters: any) => {
     const { jobType } = filters; 
     const filtered = postedJobs.filter((job: any) => {
       const matchesStatus = jobType
         ? (job.sCoKhoa === 1 && jobType === 'Đã duyệt') ||
-          (job.sCoKhoa === 2 && jobType === 'Chờ duyệt') ||
           (job.sCoKhoa === 3 && jobType === 'Bị khóa') ||
           (job.sCoKhoa === 4 && jobType === 'Hết hạn')
         : true; 
@@ -91,7 +163,7 @@ const PostedJobs = ({ navigation }:any) => {
     <View style={{ overflow: 'hidden' }}>
       <View style={{ backgroundColor: 'transparent' }}>
         <JobCard
-          companyLogo={item.sAnhDaiDien}
+          companyLogo={companyDetail?.sAnhDaiDien}
           companyName={userInfo?.sTenDoanhNghiep}
           jobTitle={item.sViTriTuyenDung}
           salaryMax={item.sMucLuongToiDa || 0}
@@ -149,6 +221,14 @@ const PostedJobs = ({ navigation }:any) => {
         visible={filterVisible}
         onClose={() => setFilterVisible(false)} 
         onApply={handleApplyFilters} 
+      />
+      <Dialog
+        visible={dialogVisible}
+        title={dialogContent.title}
+        content={dialogContent.content}
+        confirm={dialogContent.confirm}
+        dismiss={dialogContent.dismiss}
+        failure={dialogContent.failure}
       />
     </View>
   );

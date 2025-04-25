@@ -81,14 +81,7 @@ const Home = ({ fetchJobData, bestJobs, recommendedJobs, navigation }: any) => {
   );
   const renderHeader = () => (
     <View>
-      <View style={styles.header}>
-        <SearchBar style={styles.searchBar} value={searchQuery} onChangeText={setSearchQuery} />
-        <Image
-          source={userInfo?.sAnhDaiDien ? { uri: userInfo?.sAnhDaiDien } : require('../../../../asset/images/img_ellipse_3.png')}
-          style={styles.avatar}
-        />
-      </View>
-      {userType === 1 && (
+      {userType === 1 && filteredRecommendedJobs && filteredRecommendedJobs.length > 0 && (
         <View style={styles.recommendedJobsContainer}>
           <Text style={styles.recommendedJobsTitle}>Việc làm dành cho bạn</Text>
           <FlatList
@@ -107,25 +100,34 @@ const Home = ({ fetchJobData, bestJobs, recommendedJobs, navigation }: any) => {
     </View>
   );
   return (
+    <>
+      <View style={styles.header}>
+        <SearchBar style={styles.searchBar} value={searchQuery} onChangeText={setSearchQuery} />
+        <Image
+          source={userInfo?.sAnhDaiDien ? { uri: userInfo?.sAnhDaiDien } : require('../../../../asset/images/img_ellipse_3.png')}
+          style={styles.avatar}
+        />
+      </View>
       <FlatList
-        data={filteredBestJobs} 
-        renderItem={renderVerticalItem} 
+        data={filteredBestJobs}
+        renderItem={renderVerticalItem}
         keyExtractor={(item: any) => item.sMaTinTuyenDung}
         showsVerticalScrollIndicator={false}
-        initialNumToRender={5} 
+        initialNumToRender={5}
         contentContainerStyle={styles.verticalList}
         onEndReached={() => fetchJobData(true)}
-        onEndReachedThreshold={0.9} 
+        onEndReachedThreshold={0.9}
         ListEmptyComponent={() => (
           <Text style={styles.noJobsText}>Không tìm thấy công việc nào.</Text>
-        )} 
-        ListHeaderComponent={renderHeader} 
+        )}
+        ListHeaderComponent={renderHeader}
       />
-    );
+    </>
+  );
 };
 
 const styles = StyleSheet.create({
-  scrollView:{
+  scrollView: {
     marginTop: 10,
   },
   container: {
@@ -139,7 +141,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    width: '100%',
+    width: '95%',
+    marginHorizontal: 20,
+    marginTop: 10
   },
   searchBar: {
     width: '80%',

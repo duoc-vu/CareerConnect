@@ -14,7 +14,7 @@ import HeaderWithIcons from '../../components/Header';
 const ProfileCandidate = ({ navigation }: any) => {
 
     const { userId, userType } = useUser();
-    // const { loading, setLoading } = useLoading();
+    const { loading, setLoading } = useLoading();
     const [user, setUser] = useState({
         sAnhDaiDien: '',
         sHoVaTen: '',
@@ -29,10 +29,7 @@ const ProfileCandidate = ({ navigation }: any) => {
     });
 
     const fetchUserData = async () => {
-        // setLoading(true);
-
-        console.log("User ID gửi sang", userId);
-
+        setLoading(true);
         try {
             const userQuery = await firestore()
                 .collection('tblUngVien')
@@ -70,7 +67,7 @@ const ProfileCandidate = ({ navigation }: any) => {
         } catch (error) {
             console.error('Lỗi khi lấy thông tin ứng viên:', error);
         } finally {
-            // setLoading(false);
+            setLoading(false);
         }
     };
 
@@ -97,7 +94,7 @@ const ProfileCandidate = ({ navigation }: any) => {
                     email={user.sEmailLienHe || 'No Email'}
                     location={user.sDiaChi || 'No Address'}
                     style={{ width: "100%" }}
-                    onPress={() => navigation.navigate('EditProfile', { userId })}
+                    onPress={() => navigation.navigate('edit-candidate-profile', { userId })}
                 />
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
@@ -163,7 +160,7 @@ const ProfileCandidate = ({ navigation }: any) => {
                     <CustomText style={styles.description}>{user.sChuyenNganh || 'Không có CV nào được đăng tải'}</CustomText>
                 </View>
             </ScrollView>
-            {/* {loading && <Loading />} */}
+            {loading && <Loading />}
         </View>
     );
 };

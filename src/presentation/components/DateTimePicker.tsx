@@ -110,6 +110,8 @@ export const firestoreTimestampToDate = (timestamp: any) => {
     return timestamp.toDate();
   } else if (timestamp && typeof timestamp === 'object' && 'seconds' in timestamp) {
     return new Date(timestamp.seconds * 1000 + (timestamp.nanoseconds || 0) / 1000000);
+  } else if (typeof timestamp === 'string' || typeof timestamp === 'number') {
+    return new Date(timestamp);
   }
-  return new Date(timestamp);
+  return new Date();
 };

@@ -12,6 +12,9 @@ import { Image } from 'react-native';
 import HeaderWithIcons from '../../components/Header';
 import { useLoading } from '../../../context/themeContext';
 import Loading from '../../components/Loading';
+import DocumentPicker from 'react-native-document-picker';
+import Dialog from '../../components/Dialog';
+import RNFS from 'react-native-fs';
 
 const fbDoanhNghiep = firestore().collection('tblDoanhNghiep');
 
@@ -26,10 +29,19 @@ const EditEmployerProfile = ({ navigation }: any) => {
         sLinhVuc: '',
         sSoLuongNhanVien: 0,
         sMoTaChiTiet: '',
+        sGiayPhepKinhDoanh: ''
     };
 
     const [formData, setFormData] = useState(initialState);
     const [docId, setDocId] = useState(null);
+    const [dialogVisible, setDialogVisible] = useState(false);
+    const [dialogContent, setDialogContent] = useState({
+        title: '',
+        content: '',
+        confirm: null as null | { text: string; onPress: () => void },
+        dismiss: null as null | { text: string; onPress: () => void },
+        failure: false, // Xác định trạng thái thành công hay thất bại
+    });
 
     useEffect(() => {
         if (userId) {
@@ -71,6 +83,104 @@ const EditEmployerProfile = ({ navigation }: any) => {
         setFormData(prev => ({ ...prev, [key]: value }));
     };
 
+    const handleChooseLicenseFile = async () => {
+        try {
+            const result = await DocumentPicker.pick({
+                type: [DocumentPicker.types.pdf], // Chỉ cho phép chọn file PDF
+            });
+
+            if (result && result[0].uri) {
+                const uri = result[0].uri;
+                await uploadLicenseFile(uri); // Gọi hàm tải file
+            }
+        } catch (error) {
+            if (DocumentPicker.isCancel(error)) {
+                // Hiển thị Dialog thông báo hủy
+                setDialogContent({
+                    title: 'Thông báo',
+                    content: 'Bạn đã hủy chọn file.',
+                    confirm: {
+                        text: 'Đóng',
+                        onPress: () => setDialogVisible(false),
+                    },
+                    dismiss: null,
+                    failure: false,
+                });
+                setDialogVisible(true);
+            } else {
+                console.error('Lỗi DocumentPicker:', error);
+
+                // Hiển thị Dialog lỗi
+                setDialogContent({
+                    title: 'Lỗi',
+                    content: 'Đã xảy ra lỗi khi chọn file. Vui lòng thử lại.',
+                    confirm: {
+                        text: 'Đóng',
+                        onPress: () => setDialogVisible(false),
+                    },
+                    dismiss: null,
+                    failure: true,
+                });
+                setDialogVisible(true);
+            }
+        }
+    };
+
+    const uploadLicenseFile = async (uri: string) => {
+        if (!uri) return;
+
+        setLoading(true);
+        try {
+            // Tạo đường dẫn tạm thời trong bộ nhớ thiết bị
+            const tempPath = `${RNFS.TemporaryDirectoryPath}/license_${Date.now()}.pdf`;
+
+            // Sao chép file từ URI `content://` vào đường dẫn tạm thời
+            await RNFS.copyFile(uri, tempPath);
+
+            const fileName = `tblDoanhNghiep/${userId}_license.pdf`;
+            const reference = storage().ref(fileName);
+
+            // Tải file từ đường dẫn tạm thời lên Firebase Storage
+            await reference.putFile(tempPath);
+
+            // Lấy URL tải xuống từ Firebase Storage
+            const downloadURL = await reference.getDownloadURL();
+
+            // Cập nhật URL vào formData
+            setFormData(prev => ({ ...prev, sGiayPhepKinhDoanh: downloadURL }));
+
+            // Hiển thị Dialog thành công
+            setDialogContent({
+                title: 'Thành công',
+                content: 'Giấy phép kinh doanh đã được tải lên thành công.',
+                confirm: {
+                    text: 'Đóng',
+                    onPress: () => setDialogVisible(false),
+                },
+                dismiss: null,
+                failure: false,
+            });
+            setDialogVisible(true);
+        } catch (error) {
+            console.error('Lỗi khi tải giấy phép kinh doanh lên:', error);
+
+            // Hiển thị Dialog lỗi
+            setDialogContent({
+                title: 'Lỗi',
+                content: 'Không thể tải giấy phép kinh doanh lên. Vui lòng thử lại.',
+                confirm: {
+                    text: 'Đóng',
+                    onPress: () => setDialogVisible(false),
+                },
+                dismiss: null,
+                failure: true,
+            });
+            setDialogVisible(true);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleChoosePhoto = () => {
         const options: any = {
             mediaType: 'photo',
@@ -109,17 +219,52 @@ const EditEmployerProfile = ({ navigation }: any) => {
 
     const handleSave = async () => {
         if (!docId) {
-            Alert.alert('Lỗi', 'Không tìm thấy tài liệu doanh nghiệp để cập nhật!');
+            setDialogContent({
+                title: 'Lỗi',
+                content: 'Không tìm thấy tài liệu doanh nghiệp để cập nhật!',
+                confirm: {
+                    text: 'Đóng',
+                    onPress: () => setDialogVisible(false),
+                },
+                dismiss: null,
+                failure: true,
+            });
+            setDialogVisible(true);
             return;
         }
 
         try {
             setLoading(true);
-            await fbDoanhNghiep.doc(docId).update(formData);
-            navigation.replace('employer-profile');
+            await fbDoanhNghiep.doc(docId).update({
+                ...formData,
+            });
+            setDialogContent({
+                title: 'Thành công',
+                content: 'Thông tin doanh nghiệp đã được cập nhật thành công.',
+                confirm: {
+                    text: 'Đóng',
+                    onPress: () => {
+                        setDialogVisible(false);
+                        navigation.replace('employer-profile');
+                    },
+                },
+                dismiss: null,
+                failure: false,
+            });
+            setDialogVisible(true);
         } catch (error) {
             console.error('❌ Lỗi khi cập nhật:', error);
-            Alert.alert('Lỗi', 'Không thể cập nhật thông tin, vui lòng thử lại.');
+            setDialogContent({
+                title: 'Lỗi',
+                content: 'Không thể cập nhật thông tin, vui lòng thử lại.',
+                confirm: {
+                    text: 'Đóng',
+                    onPress: () => setDialogVisible(false),
+                },
+                dismiss: null,
+                failure: true,
+            });
+            setDialogVisible(true);
         } finally {
             setLoading(false);
         }
@@ -181,6 +326,13 @@ const EditEmployerProfile = ({ navigation }: any) => {
                     onChangeText={text => handleChange('sSoLuongNhanVien', Number(text))}
                 />
 
+                <CustomText style={styles.label}>Giấy phép kinh doanh (PDF)</CustomText>
+                <TouchableOpacity style={styles.filePicker} onPress={handleChooseLicenseFile}>
+                    <CustomText style={styles.filePickerText}>
+                        {formData.sGiayPhepKinhDoanh ? 'Đã chọn file' : 'Chọn file PDF'}
+                    </CustomText>
+                </TouchableOpacity>
+
                 <CustomText style={styles.label}>Mô tả chi tiết</CustomText>
                 <Input
                     placeholder="Nhập mô tả chi tiết"
@@ -197,6 +349,14 @@ const EditEmployerProfile = ({ navigation }: any) => {
                     disabled={loading}
                 />
             </View>
+            <Dialog
+                visible={dialogVisible}
+                title={dialogContent.title}
+                content={dialogContent.content}
+                confirm={dialogContent.confirm}
+                dismiss={dialogContent.dismiss}
+                failure={dialogContent.failure}
+            />
             {loading && <Loading />}
         </View>
     );
@@ -265,6 +425,24 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         borderTopWidth: 1,
         borderColor: '#fff',
+    },
+    filePicker: {
+        padding: 10,
+        borderWidth: 1,
+        borderRadius: 5,
+        borderColor: '#BEBEBE',
+        backgroundColor: '#EDEDED',
+        marginBottom: 10,
+    },
+    filePickerText: {
+        color: '#333',
+        fontSize: 14,
+    },
+    fileLink: {
+        color: '#007AFF',
+        fontSize: 14,
+        textDecorationLine: 'underline',
+        marginBottom: 10,
     },
 });
 
