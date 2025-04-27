@@ -94,7 +94,7 @@ const AppointmentsScreen = ({ navigation }: any) => {
   }, [userId]);
 
   const handleGoDetailJob = (sMaTinTuyenDung: any) => {
-    navigation.navigate('job-detail-employer', { sMaTinTuyenDung });
+    navigation.navigate('job-detail', { sMaTinTuyenDung });
 
   };
 

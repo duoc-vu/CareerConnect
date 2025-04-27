@@ -208,8 +208,6 @@ const CompanyDetail = ({ navigation, route }: any) => {
                             data={groupedRecommendedJobs}
                             renderItem={renderHorizontalItem}
                             keyExtractor={(item, index) => `group-${index}`}
-                            horizontal
-                            showsHorizontalScrollIndicator={false}
                             contentContainerStyle={styles.horizontalList}
                             decelerationRate={'normal'}
                         />
@@ -255,12 +253,11 @@ const styles = StyleSheet.create({
         height: 14,
     },
     jobList: {
-        paddingVertical: 8,
+        paddingVertical: 1,
     },
     jobRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginBottom: 16,
     },
     horizontalList: {
     },
@@ -269,8 +266,6 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
     },
     jobCard: {
-        marginHorizontal: 5,
-        width: 390,
     },
     noJobsText: {
         textAlign: 'center',

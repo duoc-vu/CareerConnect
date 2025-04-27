@@ -15,17 +15,19 @@ import { useUser } from '../../../context/UserContext';
 import UploadButton from '../../components/UploadButton';
 import FilterDialog from '../../components/FilterDialog';
 import Dialog from '../../components/Dialog';
+import { Fonts } from '../../../theme/font';
+import { theme } from '../../../theme/theme';
 
 const fbJob = firestore().collection('tblTinTuyenDung');
 
-const PostedJobs = ({ navigation }:any) => {
+const PostedJobs = ({ navigation }: any) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [postedJobs, setPostedJobs] = useState([]);
   const [filteredJobs, setFilteredJobs] = useState([]);
   const { userId, userInfo } = useUser();
   const [loading, setLoading] = useState(true);
-  const [filterVisible, setFilterVisible] = useState(false); 
-  const [isFilterActive, setIsFilterActive] = useState(false); 
+  const [filterVisible, setFilterVisible] = useState(false);
+  const [isFilterActive, setIsFilterActive] = useState(false);
   const [companyDetail, setCompanyDetail] = useState<any>(null);
   const [dialogVisible, setDialogVisible] = useState(false);
   const [dialogContent, setDialogContent] = useState({
@@ -42,7 +44,7 @@ const PostedJobs = ({ navigation }:any) => {
       .where('sMaDoanhNghiep', '==', userId)
       .onSnapshot(
         (querySnapshot) => {
-          const jobs:any = [];
+          const jobs: any = [];
           querySnapshot.forEach((documentSnapshot) => {
             jobs.push({
               ...documentSnapshot.data(),
@@ -65,13 +67,13 @@ const PostedJobs = ({ navigation }:any) => {
     filterJobs(searchQuery);
   }, [searchQuery, postedJobs]);
 
-  const filterJobs = (query:any) => {
+  const filterJobs = (query: any) => {
     if (!query.trim()) {
       setFilteredJobs(postedJobs);
       return;
     }
 
-    const filtered = postedJobs.filter((job:any) =>
+    const filtered = postedJobs.filter((job: any) =>
       job.sViTriTuyenDung?.toLowerCase().includes(query.toLowerCase()) ||
       job.sTenDoanhNghiep?.toLowerCase().includes(query.toLowerCase())
     );
@@ -85,7 +87,7 @@ const PostedJobs = ({ navigation }:any) => {
           .collection('tblDoanhNghiep')
           .where('sMaDoanhNghiep', '==', userId)
           .get();
-  
+
         if (!companySnapshot.empty) {
           const companyData = companySnapshot.docs[0].data();
           setCompanyDetail(companyData);
@@ -96,70 +98,87 @@ const PostedJobs = ({ navigation }:any) => {
         console.error('Error fetching company details:', error);
       }
     };
-  
+
     fetchCompanyDetail();
   }, []);
 
   const handleUploadPress = async () => {
-  try {
-    const companySnapshot = await firestore()
-      .collection('tblDoanhNghiep')
-      .where('sMaDoanhNghiep', '==', userId)
-      .get();
+    try {
+      const companySnapshot = await firestore()
+        .collection('tblDoanhNghiep')
+        .where('sMaDoanhNghiep', '==', userId)
+        .get();
 
-    if (!companySnapshot.empty) {
-      navigation.navigate("post-job");
-    } else {
-      setDialogContent({
-        title: 'Thông báo',
-        content: 'Doanh nghiệp của bạn chưa đăng ký thông tin. Vui lòng đăng ký thông tin doanh nghiệp trước khi đăng tin tuyển dụng.',
-        confirm: {
-          text: 'Đăng ký ngay',
-          onPress: () => {
-            setDialogVisible(false);
-            navigation.navigate('edit-employer-profile'); 
+      if (!companySnapshot.empty) {
+        const companyData = companySnapshot.docs[0].data();
+
+        if (companyData.bTrangThai === false) {
+            setDialogContent({
+                title: 'Thông báo',
+                content: 'Tài khoản của bạn đang trong thời gian chờ duyệt nên chưa thể đăng tải.',
+                confirm: {
+                    text: 'Đóng',
+                    onPress: () => setDialogVisible(false),
+                },
+                dismiss: null,
+                failure: true,
+            });
+            setDialogVisible(true);
+            return;
+        }
+
+        navigation.navigate("post-job");
+      } else {
+        setDialogContent({
+          title: 'Thông báo',
+          content: 'Doanh nghiệp của bạn chưa đăng ký thông tin. Vui lòng đăng ký thông tin doanh nghiệp trước khi đăng tin tuyển dụng.',
+          confirm: {
+            text: 'Đăng ký ngay',
+            onPress: () => {
+              setDialogVisible(false);
+              navigation.navigate('edit-employer-profile');
+            },
           },
-        },
-        dismiss: {
-          text: 'Hủy',
+          dismiss: {
+            text: 'Hủy',
+            onPress: () => setDialogVisible(false),
+          },
+          failure: true,
+        });
+        setDialogVisible(true);
+      }
+    } catch (error) {
+      console.error('Error checking company details:', error);
+      setDialogContent({
+        title: 'Lỗi',
+        content: 'Không thể kiểm tra thông tin doanh nghiệp. Vui lòng thử lại.',
+        confirm: {
+          text: 'Đóng',
           onPress: () => setDialogVisible(false),
         },
+        dismiss: null,
         failure: true,
       });
       setDialogVisible(true);
     }
-  } catch (error) {
-    console.error('Error checking company details:', error);
-    setDialogContent({
-      title: 'Lỗi',
-      content: 'Không thể kiểm tra thông tin doanh nghiệp. Vui lòng thử lại.',
-      confirm: {
-        text: 'Đóng',
-        onPress: () => setDialogVisible(false),
-      },
-      dismiss: null,
-      failure: true,
-    });
-    setDialogVisible(true);
-  }
-};
+  };
 
   const handleApplyFilters = (filters: any) => {
-    const { jobType } = filters; 
+    const { jobType } = filters;
     const filtered = postedJobs.filter((job: any) => {
       const matchesStatus = jobType
         ? (job.sCoKhoa === 1 && jobType === 'Đã duyệt') ||
-          (job.sCoKhoa === 3 && jobType === 'Bị khóa') ||
-          (job.sCoKhoa === 4 && jobType === 'Hết hạn')
-        : true; 
+        (job.sCoKhoa === 3 && jobType === 'Bị khóa') ||
+        (job.sCoKhoa === 4 && jobType === 'Hết hạn')
+        : true;
       return matchesStatus;
     });
-  
+
     setFilteredJobs(filtered);
-    setIsFilterActive(true); 
+    setIsFilterActive(true);
   };
 
-  const renderItem = ({ item }:any) => (
+  const renderItem = ({ item }: any) => (
     <View style={{ overflow: 'hidden' }}>
       <View style={{ backgroundColor: 'transparent' }}>
         <JobCard
@@ -171,7 +190,7 @@ const PostedJobs = ({ navigation }:any) => {
           location={item.sDiaChiLamViec}
           sCoKhoa={item.sCoKhoa}
           onPress={() =>
-            navigation.navigate('job-detail-employer', { sMaTinTuyenDung: item.sMaTinTuyenDung })
+            navigation.navigate('job-detail', { sMaTinTuyenDung: item.sMaTinTuyenDung })
           }
         />
       </View>
@@ -183,31 +202,31 @@ const PostedJobs = ({ navigation }:any) => {
       <StatusBar backgroundColor={'#F0F4F7'} />
       <View style={styles.header}>
         <View style={{ width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-evenly' }}>
-          <SearchBar 
-            style={{ width: '85%' }} 
-            value={searchQuery} 
-            onChangeText={setSearchQuery} 
+          <SearchBar
+            style={{ width: '85%' }}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
             placeholder="Tìm kiếm công việc đã đăng..."
           />
           <TouchableOpacity
-            onPress={() => setFilterVisible(true)} 
+            onPress={() => setFilterVisible(true)}
           >
             <Image
               source={
                 isFilterActive
-                  ? require('../../../../asset/images/img_filter_active.png') 
-                  : require('../../../../asset/images/img_filter.png') 
+                  ? require('../../../../asset/images/img_filter_active.png')
+                  : require('../../../../asset/images/img_filter.png')
               }
               style={styles.filter}
             />
           </TouchableOpacity>
         </View>
       </View>
-
+      <Text style={styles.sectionTitle}>Việc làm đã đăng tải</Text>
       <FlatList
         data={filteredJobs}
         renderItem={renderItem}
-        keyExtractor={(item:any) => item.sMaTinTuyenDung || Math.random().toString()}
+        keyExtractor={(item: any) => item.sMaTinTuyenDung || Math.random().toString()}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={() => (
@@ -219,8 +238,8 @@ const PostedJobs = ({ navigation }:any) => {
       <UploadButton onPress={handleUploadPress} />
       <FilterDialog
         visible={filterVisible}
-        onClose={() => setFilterVisible(false)} 
-        onApply={handleApplyFilters} 
+        onClose={() => setFilterVisible(false)}
+        onApply={handleApplyFilters}
       />
       <Dialog
         visible={dialogVisible}
@@ -250,7 +269,7 @@ const styles = StyleSheet.create({
     width: 45,
     height: 45,
     marginLeft: 10,
-    resizeMode: 'contain', 
+    resizeMode: 'contain',
   },
   list: {
     paddingBottom: 50,
@@ -260,6 +279,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#6B7280',
     marginTop: 20,
+  },
+  sectionTitle: {
+    fontFamily: Fonts.medium.fontFamily,
+    fontSize: 18,
+    color: theme.colors.titleJob.third,
+    marginVertical: 10,
+    marginLeft: 10,
   },
 });
 

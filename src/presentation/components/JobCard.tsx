@@ -37,7 +37,7 @@ const JobCard: React.FC<JobCardProps> = ({
       case 1:
         return "Đã duyệt"; 
       case 2:
-        return "Chờ duyệt"; 
+        return "Bạn đã khóa"; 
       case 3:
         return "Từ chối"; 
       case 4:

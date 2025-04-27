@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, ScrollView, Alert, TouchableOpacity } from 'react-native';
+import { StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import { launchImageLibrary } from 'react-native-image-picker';
@@ -31,7 +31,7 @@ const EditEmployerProfile = ({ navigation }: any) => {
         sMoTaChiTiet: '',
         sGiayPhepKinhDoanh: ''
     };
-
+    const [initialFormData, setInitialFormData] = useState(initialState);
     const [formData, setFormData] = useState(initialState);
     const [docId, setDocId] = useState(null);
     const [dialogVisible, setDialogVisible] = useState(false);
@@ -40,7 +40,7 @@ const EditEmployerProfile = ({ navigation }: any) => {
         content: '',
         confirm: null as null | { text: string; onPress: () => void },
         dismiss: null as null | { text: string; onPress: () => void },
-        failure: false, // Xác định trạng thái thành công hay thất bại
+        failure: false, 
     });
 
     useEffect(() => {
@@ -59,7 +59,9 @@ const EditEmployerProfile = ({ navigation }: any) => {
             if (!querySnapshot.empty) {
                 const doc: any = querySnapshot.docs[0];
                 setDocId(doc.id);
-                setFormData(doc.data());
+                const data = doc.data();
+                setFormData(data);
+                setInitialFormData(data); 
 
                 const avatarPath = `tblDoanhNghiep/${userId}.png`;
                 const avatarRef = storage().ref(avatarPath);
@@ -86,16 +88,15 @@ const EditEmployerProfile = ({ navigation }: any) => {
     const handleChooseLicenseFile = async () => {
         try {
             const result = await DocumentPicker.pick({
-                type: [DocumentPicker.types.pdf], // Chỉ cho phép chọn file PDF
+                type: [DocumentPicker.types.images], 
             });
 
             if (result && result[0].uri) {
                 const uri = result[0].uri;
-                await uploadLicenseFile(uri); // Gọi hàm tải file
+                await uploadLicenseFile(uri);
             }
         } catch (error) {
             if (DocumentPicker.isCancel(error)) {
-                // Hiển thị Dialog thông báo hủy
                 setDialogContent({
                     title: 'Thông báo',
                     content: 'Bạn đã hủy chọn file.',
@@ -110,7 +111,6 @@ const EditEmployerProfile = ({ navigation }: any) => {
             } else {
                 console.error('Lỗi DocumentPicker:', error);
 
-                // Hiển thị Dialog lỗi
                 setDialogContent({
                     title: 'Lỗi',
                     content: 'Đã xảy ra lỗi khi chọn file. Vui lòng thử lại.',
@@ -131,25 +131,19 @@ const EditEmployerProfile = ({ navigation }: any) => {
 
         setLoading(true);
         try {
-            // Tạo đường dẫn tạm thời trong bộ nhớ thiết bị
-            const tempPath = `${RNFS.TemporaryDirectoryPath}/license_${Date.now()}.pdf`;
+            const tempPath = `${RNFS.TemporaryDirectoryPath}/license_${Date.now()}.png`;
 
-            // Sao chép file từ URI `content://` vào đường dẫn tạm thời
             await RNFS.copyFile(uri, tempPath);
 
-            const fileName = `tblDoanhNghiep/${userId}_license.pdf`;
+            const fileName = `tblDoanhNghiep/${userId}/${userId}_gpkd.png`;
             const reference = storage().ref(fileName);
 
-            // Tải file từ đường dẫn tạm thời lên Firebase Storage
             await reference.putFile(tempPath);
 
-            // Lấy URL tải xuống từ Firebase Storage
             const downloadURL = await reference.getDownloadURL();
 
-            // Cập nhật URL vào formData
             setFormData(prev => ({ ...prev, sGiayPhepKinhDoanh: downloadURL }));
 
-            // Hiển thị Dialog thành công
             setDialogContent({
                 title: 'Thành công',
                 content: 'Giấy phép kinh doanh đã được tải lên thành công.',
@@ -164,7 +158,6 @@ const EditEmployerProfile = ({ navigation }: any) => {
         } catch (error) {
             console.error('Lỗi khi tải giấy phép kinh doanh lên:', error);
 
-            // Hiển thị Dialog lỗi
             setDialogContent({
                 title: 'Lỗi',
                 content: 'Không thể tải giấy phép kinh doanh lên. Vui lòng thử lại.',
@@ -235,12 +228,16 @@ const EditEmployerProfile = ({ navigation }: any) => {
 
         try {
             setLoading(true);
+
+            const shouldSetInactive = formData.sGiayPhepKinhDoanh !== initialFormData.sGiayPhepKinhDoanh;
+
             await fbDoanhNghiep.doc(docId).update({
                 ...formData,
+                ...(shouldSetInactive && { bTrangThai: false }),
             });
             setDialogContent({
                 title: 'Thành công',
-                content: 'Thông tin doanh nghiệp đã được cập nhật thành công.',
+                content: 'Thông tin doanh nghiệp đã được cập nhật thành công',
                 confirm: {
                     text: 'Đóng',
                     onPress: () => {
@@ -326,10 +323,10 @@ const EditEmployerProfile = ({ navigation }: any) => {
                     onChangeText={text => handleChange('sSoLuongNhanVien', Number(text))}
                 />
 
-                <CustomText style={styles.label}>Giấy phép kinh doanh (PDF)</CustomText>
+                <CustomText style={styles.label}>Giấy phép kinh doanh (PNG)</CustomText>
                 <TouchableOpacity style={styles.filePicker} onPress={handleChooseLicenseFile}>
                     <CustomText style={styles.filePickerText}>
-                        {formData.sGiayPhepKinhDoanh ? 'Đã chọn file' : 'Chọn file PDF'}
+                        {formData.sGiayPhepKinhDoanh ? 'Đã chọn file' : 'Chọn file PNG'}
                     </CustomText>
                 </TouchableOpacity>
 

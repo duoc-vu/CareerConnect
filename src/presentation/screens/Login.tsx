@@ -11,6 +11,7 @@ import { useLoading } from '../../context/themeContext';
 import messaging from '@react-native-firebase/messaging';
 import { useUser } from "../../context/UserContext";
 import axios from 'axios';
+import Loading from '../components/Loading';
 
 const API_URL = 'http://192.168.102.24:3000/api/notify';
 const { width } = Dimensions.get('window');
@@ -52,7 +53,8 @@ const Login = ({ navigation }: any) => {
     };
     
     const handleLogin = async () => {
-        if (!loading) setLoading(true);
+        if (loading) return; 
+        setLoading(true);
         try {
             const normalizedEmail = email.toLowerCase();
             const userDoc = await fb.where('sEmailLienHe', '==', normalizedEmail).limit(1).get();
@@ -95,7 +97,7 @@ const Login = ({ navigation }: any) => {
                     };
                     await AsyncStorage.setItem('session', JSON.stringify(sessionData));
     
-                    navigation.navigate("bottom");
+                    navigation.replace("bottom");
                 } else {
                     setError("Sai tài khoản hoặc mật khẩu.");
                 }
@@ -105,7 +107,7 @@ const Login = ({ navigation }: any) => {
         } catch (error) {
             console.error('Lỗi khi kiểm tra User:', error);
         } finally {
-            if (loading) setLoading(false);
+            setLoading(false);
         }
     };
 
@@ -119,6 +121,7 @@ const Login = ({ navigation }: any) => {
     }, [navigation]);
 
     return (
+        <>
         <ScrollView contentContainerStyle={styles.container}>
             <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
             <CustomText style={styles.title}>Welcome Back To</CustomText>
@@ -127,14 +130,14 @@ const Login = ({ navigation }: any) => {
             <Input
                 placeholder="Email Or Phone Number"
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={(text) => setEmail(text.trim())}
                 style={styles.input}
             />
 
             <Input
                 placeholder="Password"
                 value={password}
-                onChangeText={setPassword}
+                onChangeText={(text) => setPassword(text.trim())}
                 secureTextEntry
                 style={styles.input}
             />
@@ -167,7 +170,8 @@ const Login = ({ navigation }: any) => {
                 </TouchableOpacity>
             </View>
         </ScrollView>
-        
+        {loading && <Loading />}
+        </>
     );
 };
 

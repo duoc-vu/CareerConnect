@@ -14,13 +14,15 @@ import { useLoading } from '../../../context/themeContext';
 import Loading from '../../components/Loading';
 import { Fonts } from '../../../theme/font';
 import Dialog from '../../components/Dialog';
+import DocumentPicker from 'react-native-document-picker';
+import RNFS from 'react-native-fs';
 
 const fbUV = firestore().collection('tblUngVien');
 
 const EditProfile = ({ navigation }: any) => {
     const { userId } = useUser();
     const { loading, setLoading } = useLoading();
-
+    const [cvFile, setCvFile] = useState<string | null>(null);
     const initialState = {
         sAnhDaiDien: '',
         sChuyenNganh: '',
@@ -32,7 +34,9 @@ const EditProfile = ({ navigation }: any) => {
         sMoTaChiTiet: '',
         sSoDienThoai: '',
         sSoThich: '',
+        fFileCV: ''
     };
+
 
     const [formData, setFormData] = useState(initialState);
     const [docId, setDocId] = useState<string | null>(null);
@@ -139,6 +143,7 @@ const EditProfile = ({ navigation }: any) => {
                 await fbUV.add({
                     ...formData,
                     sMaUngVien: userId,
+                    fFileCV: cvFile || "",
                 });
                 setDialogContent({
                     title: "Thành công",
@@ -147,7 +152,10 @@ const EditProfile = ({ navigation }: any) => {
                 });
                 setDialogVisible(true);
             } else {
-                await fbUV.doc(docId).update(formData);
+                await fbUV.doc(docId).update({
+                    ...formData,
+                    fFileCV: cvFile || "",
+                });
                 setDialogContent({
                     title: "Thành công",
                     message: "Thông tin của bạn đã được cập nhật thành công!",
@@ -160,6 +168,68 @@ const EditProfile = ({ navigation }: any) => {
             setDialogContent({
                 title: "Lỗi",
                 message: "Không thể lưu thông tin, vui lòng thử lại.",
+                isSuccess: false,
+            });
+            setDialogVisible(true);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleChooseCV = async () => {
+        try {
+            const result = await DocumentPicker.pick({
+                type: [DocumentPicker.types.pdf],
+            });
+
+            if (result && result[0].uri) {
+                const uri = result[0].uri;
+                await uploadCV(uri);
+            }
+        } catch (error) {
+            if (DocumentPicker.isCancel(error)) {
+                console.log('Người dùng hủy chọn file');
+            } else {
+                console.error('Lỗi DocumentPicker:', error);
+            }
+        }
+    };
+
+    const uploadCV = async (uri: string) => {
+        if (!uri || !userId) {
+            Alert.alert('Lỗi', 'Thiếu thông tin để upload file. Vui lòng kiểm tra lại.');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const fileName = `tblUngVien/${userId}/${userId}.pdf`; // Đường dẫn lưu file trong Firebase Storage
+            const reference = storage().ref(fileName);
+
+            // Sao chép file vào bộ nhớ tạm
+            const tempPath = `${RNFS.TemporaryDirectoryPath}/${userId}_cv.pdf`;
+            await RNFS.copyFile(uri, tempPath);
+
+            // Upload file từ bộ nhớ tạm
+            await reference.putFile(tempPath);
+            const downloadURL = await reference.getDownloadURL();
+
+            setCvFile(downloadURL);
+            setFormData((prev) => ({ ...prev, fFileCV: downloadURL }));
+
+            setDialogContent({
+                title: "Thành công",
+                message: "File CV đã được tải lên thành công!",
+                isSuccess: true,
+            });
+            setDialogVisible(true);
+
+            await RNFS.unlink(tempPath);
+        } catch (error: any) {
+            console.error('Lỗi khi tải file lên:', error);
+            setDialogContent({
+                title: "Lỗi",
+                message: "Không thể tải file lên, vui lòng thử lại.",
                 isSuccess: false,
             });
             setDialogVisible(true);
@@ -215,7 +285,15 @@ const EditProfile = ({ navigation }: any) => {
                 <CustomText style={styles.label}>Mô tả chi tiết</CustomText>
                 <Input placeholder="Nhập mô tả" multiline value={formData.sMoTaChiTiet} onChangeText={text => handleChange('sMoTaChiTiet', text)} style={styles.largeInput} />
 
-
+                <CustomText style={styles.label}>File CV cá nhân (PDF)</CustomText>
+                <TouchableOpacity style={styles.filePicker} onPress={handleChooseCV}>
+                    <CustomText style={styles.filePickerText}>
+                        {cvFile ? "File đã chọn" : "Chọn file PDF"}
+                    </CustomText>
+                </TouchableOpacity>
+                {cvFile ? (
+                    <CustomText style={styles.fileLink}>{cvFile}</CustomText>
+                ) : null}
             </ScrollView>
             <View style={styles.buttonContainer}>
                 <Button
@@ -230,13 +308,9 @@ const EditProfile = ({ navigation }: any) => {
                 content={dialogContent.message}
                 confirm={{
                     text: "Đóng",
-                    onPress: () => {
-                        setDialogVisible(false);
-                        if (dialogContent.isSuccess) {
-                            navigation.goBack();
-                        }
-                    },
+                    onPress: () => setDialogVisible(false), 
                 }}
+                failure={!dialogContent.isSuccess} 
             />
             {loading && <Loading />}
         </View>
@@ -246,8 +320,8 @@ const EditProfile = ({ navigation }: any) => {
 
 const styles = StyleSheet.create({
     wrapper: {
-        fontFamily: Fonts.medium.fontFamily,
         flex: 1,
+        fontFamily: Fonts.medium.fontFamily,
     },
     container: { padding: 20, backgroundColor: '#fff', flexGrow: 1, paddingBottom: 130 },
     avatarContainer: {
@@ -284,6 +358,23 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         borderTopWidth: 1,
         borderColor: "#fff"
+    },
+    filePicker: {
+        borderWidth: 1,
+        borderColor: "#BEBEBE",
+        backgroundColor: "#EDEDED",
+        padding: 10,
+        borderRadius: 5,
+        marginBottom: 10,
+    },
+    filePickerText: {
+        fontSize: 14,
+        color: "#333",
+    },
+    fileLink: {
+        fontSize: 12,
+        color: "#007AFF",
+        marginBottom: 10,
     },
 });
 

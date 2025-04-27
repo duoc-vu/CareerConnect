@@ -21,6 +21,7 @@ const ProfileEmployer = ({ navigation }: any) => {
         sLinhVuc: '',
         sSoLuongNhanVien: 0,
         sMoTaChiTiet: '',
+        sGiayPhepKinhDoanh: ""
     });
     const [jobList, setJobList] = useState<any[]>([]);
 
@@ -55,6 +56,7 @@ const ProfileEmployer = ({ navigation }: any) => {
                     sLinhVuc: employerData.sLinhVuc || '',
                     sSoLuongNhanVien: employerData.sSoLuongNhanVien || 0,
                     sMoTaChiTiet: employerData.sMoTaChiTiet || '',
+                    sGiayPhepKinhDoanh: employerData.sGiayPhepKinhDoanh || '', 
                 });
             } else {
                 console.log('Không có doanh nghiệp với ID:', userId);
@@ -195,6 +197,25 @@ const ProfileEmployer = ({ navigation }: any) => {
                     </View>
                     {renderDescriptionWithLineBreaks(employer.sMoTaChiTiet)}
                 </View>
+                {employer.sGiayPhepKinhDoanh.startsWith('http') ? (
+        <TouchableOpacity
+            onPress={() =>
+                navigation.navigate('license-preview', { licenseUrl: employer.sGiayPhepKinhDoanh }) 
+            }
+            style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10 }}
+        >
+            <Image
+                source={require('../../../../asset/images/img_CV.png')} 
+                style={{ width: 24, height: 24, marginRight: 10 }}
+            />
+            <View>
+                <CustomText style={styles.licenseName}>Giấy phép doanh nghiệp</CustomText>
+                <CustomText style={styles.licenseDate}>Đã tải lên</CustomText>
+            </View>
+        </TouchableOpacity>
+    ) : (
+        <CustomText style={styles.description}>Không có giấy phép doanh nghiệp</CustomText>
+    )}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <CustomText style={styles.sectionTitle}>Tin tuyển dụng</CustomText>
@@ -280,6 +301,15 @@ const styles = StyleSheet.create({
     columnWrapper: {
         justifyContent: 'space-between',
         marginBottom: 16,
+    },
+    licenseName: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: '#012A74',
+    },
+    licenseDate: {
+        fontSize: 12,
+        color: '#6B7280',
     },
 });
 

@@ -5,7 +5,6 @@ import Home from './src/presentation/screens/components/Home'
 import Login from './src/presentation/screens/Login';
 import Register from './src/presentation/screens/Register';
 import BottomBar from './src/navigation/BottomBar';
-import CV_Profile from './src/presentation/screens/User/CV_Profile';
 import JobDetail from './src/presentation/screens/components/JobDetail';
 import EditEmployerProfile from './src/presentation/screens/Company/EditEmployerProfile';
 import ApplyJob from './src/presentation/screens/User/ApplyJob';
@@ -29,12 +28,12 @@ import ProfileEmployer from './src/presentation/screens/Company/ProfileEmployer'
 import FeedbackScreen from './src/presentation/screens/components/FeedbackScreen';
 import ApplicantsScreen from './src/presentation/screens/Company/ApplicantsScreen';
 import CVPreview from './src/presentation/screens/components/CVPreview';
-import JobDetailEmployerScreen from './src/presentation/screens/Company/JobDetailEmployer';
 import AppointmentsScreen from './src/presentation/screens/Company/AppointmentsScreen';
 import AppointmentsCandidateScreen from './src/presentation/screens/User/AppointmentsCandidateScreen';
 import CompanyDetail from './src/presentation/screens/User/CompanyDetail';
 import AppliedJobsScreen from './src/presentation/screens/User/AppliedJobs';
 import JobSaved from './src/presentation/screens/User/JobSaved';
+import LicensePreview from './src/presentation/screens/Company/LicensePreview';
 
 const Stack = createNativeStackNavigator();
 
@@ -88,7 +87,6 @@ const App = () => {
               {/* <Stack.Screen name='CompanyIf' component={CompanyInfoScreen}  options={{ headerShown: false}}/> */}
               <Stack.Screen name='apply-job' component={ApplyJob} options={{ headerShown: false }} />
               <Stack.Screen name='list-apply-job' component={JobApplyCompany} options={{ headerShown: false }} />
-              <Stack.Screen name='cv-detail' component={CV_Profile} options={{ headerShown: false }} />
               <Stack.Screen name='application-detail' component={ApplicationDetail} options={{ headerShown: false }} />
               <Stack.Screen name='app-detail' component={AppDetails} options={{ headerShown: false }} />
               <Stack.Screen name='edit-job' component={EditJob} options={{ headerShown: false }} />
@@ -98,12 +96,12 @@ const App = () => {
               <Stack.Screen name="applicant-list" component={ApplicantsScreen} options={{ headerShown: false }} />
               <Stack.Screen name='feedback' component={FeedbackScreen} options={{ headerShown: false }} />
               <Stack.Screen name='cv-preview' component={CVPreview} options={{ headerShown: false }} />
-              <Stack.Screen name='job-detail-employer' component={JobDetailEmployerScreen} options={{ headerShown: false }} />
               <Stack.Screen name='appointments' component={AppointmentsScreen} options={{ headerShown: false }} />
               <Stack.Screen name='appointments-candidate' component={AppointmentsCandidateScreen} options={{ headerShown: false }} />
               <Stack.Screen name='company-detail-candidate' component={CompanyDetail} options={{ headerShown: false }} />
               <Stack.Screen name='applied-jobs' component={AppliedJobsScreen} options={{ headerShown: false }} />
               <Stack.Screen name='job-saved' component={JobSaved} options={{ headerShown: false }} />
+              <Stack.Screen name='license-preview' component={LicensePreview} options={{ headerShown: false }} />
               </Stack.Navigator>
           </NavigationContainer>
         </LoadingProvider>

@@ -44,7 +44,12 @@ const ApplyJob = ({ route, navigation }: any) => {
     const [formData, setFormData] = useState(initialState);
     const [sMaDoanhNghiep, setSMaDoanhNghiep] = useState('');
     const [docId, setDocId] = useState(null);
-    const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+    const [dialogVisible, setDialogVisible] = useState(false);
+    const [dialogContent, setDialogContent] = useState({
+        title: "",
+        message: "",
+        isSuccess: false,
+    });
 
     useEffect(() => {
         const currentDate = new Date();
@@ -60,7 +65,12 @@ const ApplyJob = ({ route, navigation }: any) => {
                 setFormData(prev => ({ ...prev, sMaDonUngTuyen: newId }));
             } catch (error) {
                 console.error('Lỗi khi tạo mã đơn ứng tuyển:', error);
-                Alert.alert('Lỗi', 'Không thể tạo mã đơn ứng tuyển, vui lòng thử lại.');
+                setDialogContent({
+                    title: "Lỗi",
+                    message: "Không thể tạo mã đơn ứng tuyển, vui lòng thử lại.",
+                    isSuccess: false,
+                });
+                setDialogVisible(true);
             } finally {
                 setLoading(false);
             }
@@ -108,6 +118,7 @@ const ApplyJob = ({ route, navigation }: any) => {
                         sKinhNghiem: userData.sKinhNghiem || '',
                         sSoThich: userData.sSoThich || '',
                         sMoTaChiTiet: userData.sMoTaChiTiet || '',
+                        fFileCV: userData.fFileCV || '',
                     }));
                 } else {
                     console.warn('❌ Không tìm thấy ứng viên với mã:', userId);
@@ -149,7 +160,12 @@ const ApplyJob = ({ route, navigation }: any) => {
 
     const uploadFile = async (uri: any) => {
         if (!uri || !sMaDoanhNghiep || !sMaTinTuyenDung || !userId) {
-            Alert.alert('Lỗi', 'Thiếu thông tin để upload file. Vui lòng kiểm tra lại.');
+            setDialogContent({
+                title: "Lỗi",
+                message: "Thiếu thông tin để upload file. Vui lòng kiểm tra lại.",
+                isSuccess: false,
+            });
+            setDialogVisible(true);
             return;
         }
 
@@ -171,13 +187,12 @@ const ApplyJob = ({ route, navigation }: any) => {
             await RNFS.unlink(tempPath);
         } catch (error: any) {
             console.error('Lỗi khi tải file lên:', error);
-            if (error.code === 'storage/unauthorized') {
-                Alert.alert('Lỗi', 'Không có quyền upload file. Vui lòng kiểm tra quyền Firebase Storage.');
-            } else if (error.code === 'storage/unknown') {
-                Alert.alert('Lỗi', 'Lỗi không xác định khi upload file. Vui lòng thử lại.');
-            } else {
-                Alert.alert('Lỗi', 'Không thể tải file lên, vui lòng thử lại.');
-            }
+            setDialogContent({
+                title: "Lỗi",
+                message: "Không thể tải file lên, vui lòng thử lại.",
+                isSuccess: false,
+            });
+            setDialogVisible(true);
         } finally {
             setLoading(false);
         }
@@ -209,10 +224,20 @@ const ApplyJob = ({ route, navigation }: any) => {
                     sGioiThieu: formData.sGioiThieu,
                 });
             }
-            setShowSuccessDialog(true);
+            setDialogContent({
+                title: "Thành công!",
+                message: "Đơn ứng tuyển của bạn đã được gửi đến cho nhà tuyển dụng.",
+                isSuccess: true,
+            });
+            setDialogVisible(true);
         } catch (error) {
             console.error('❌ Lỗi khi gửi đơn ứng tuyển:', error);
-            Alert.alert('Lỗi', 'Không thể gửi đơn ứng tuyển, vui lòng thử lại.');
+            setDialogContent({
+                title: "Lỗi",
+                message: "Không thể gửi đơn ứng tuyển, vui lòng thử lại.",
+                isSuccess: false,
+            });
+            setDialogVisible(true);
         } finally {
             setLoading(false);
         }
@@ -301,12 +326,11 @@ const ApplyJob = ({ route, navigation }: any) => {
                     onChangeText={text => handleChange('sGioiThieu', text)}
                 />
 
-                <CustomText style={styles.sectionTitle}>File CV</CustomText>
 
                 <CustomText style={styles.label}>File CV (PDF)</CustomText>
                 <TouchableOpacity style={styles.filePicker} onPress={handleChooseFile}>
                     <CustomText style={styles.filePickerText}>
-                        {formData.fFileCV ? 'File đã chọn' : 'Chọn file PDF'}
+                        {formData.fFileCV ? 'File đã chọn: ' + formData.fFileCV.split('/').pop() : 'Chọn file PDF'}
                     </CustomText>
                 </TouchableOpacity>
                 {formData.fFileCV ? (
@@ -322,16 +346,19 @@ const ApplyJob = ({ route, navigation }: any) => {
             </View>
             {loading && <Loading />}
             <Dialog
-                visible={showSuccessDialog}
-                title="Thành công!"
-                content="Đơn ứng tuyển của bạn đã được gửi đến cho nhà tuyển dụng. Kết quả sẽ được trả lại qua email hoặc số điện thoại mà bạn đã cung cấp."
+                visible={dialogVisible}
+                title={dialogContent.title}
+                content={dialogContent.message}
                 confirm={{
-                    text: "Close",
+                    text: "Đóng",
                     onPress: () => {
-                        setShowSuccessDialog(false);
-                        navigation.goBack();
+                        setDialogVisible(false);
+                        if (dialogContent.isSuccess) {
+                            navigation.goBack();
+                        }
                     },
                 }}
+                failure={!dialogContent.isSuccess}
             />
         </View>
     );

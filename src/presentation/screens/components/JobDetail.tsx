@@ -8,6 +8,7 @@ import Loading from "../../components/Loading";
 import HeaderWithIcons from "../../components/Header";
 import { useUser } from "../../../context/UserContext";
 import Dialog from "../../components/Dialog";
+import { theme } from "../../../theme/theme";
 
 const fbJobDetail = firestore().collection("tblTinTuyenDung");
 const fbCT = firestore().collection("tblDoanhNghiep");
@@ -22,9 +23,30 @@ const JobDetail = ({ route, navigation }: any) => {
   const { userId, userType } = useUser();
   const [dialogVisible, setDialogVisible] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [lockDialogVisible, setLockDialogVisible] = useState(false);
+  const [isLocked, setIsLocked] = useState(false);
+  const [recommendedCandidates, setRecommendedCandidates] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (userType === 2 && job) {
+      setIsOwner(job.sMaDoanhNghiep === userId);
+    }
+  }, [userType, job, userId]);
+
+  useEffect(() => {
+    if (job) {
+      setIsLocked(job.sCoKhoa === 2);
+    }
+  }, [job]);
 
   useEffect(() => {
     const checkIfJobIsSaved = async () => {
+      if (userType === 2) {
+        if (job?.sMaDoanhNghiep === userId) {
+          setIsOwner(true);
+        }
+        return;
+      }
       if (userType !== 1) return;
       try {
         setLoading(true);
@@ -53,9 +75,11 @@ const JobDetail = ({ route, navigation }: any) => {
     checkIfJobIsSaved();
   }, [sMaTinTuyenDung, userId, userType]);
 
+  const [isOwner, setIsOwner] = useState(false);
   useEffect(() => {
     const getJobDetail = async () => {
       setLoading(true);
+
       try {
         const jobQuerySnapshot = await fbJobDetail
           .where("sMaTinTuyenDung", "==", sMaTinTuyenDung)
@@ -135,7 +159,46 @@ const JobDetail = ({ route, navigation }: any) => {
     }
   };
 
-  const isApplyButtonEnabled = userType === 1;
+  const handleToggleLock = async () => {
+    try {
+      setLoading(true);
+
+      if (job) {
+        const newStatus = isLocked ? 1 : 2;
+        await firestore()
+          .collection("tblTinTuyenDung")
+          .doc(job.id)
+          .update({ sCoKhoa: newStatus });
+
+        setIsLocked(!isLocked);
+      }
+    } catch (error) {
+      console.error("Lỗi khi cập nhật trạng thái khóa/mở:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLockJob = async () => {
+    try {
+      setLoading(true);
+
+      if (job) {
+        await firestore()
+          .collection("tblTinTuyenDung")
+          .doc(job.id)
+          .update({ sCoKhoa: 2 });
+
+        console.log("Bài đăng đã được khóa.");
+      }
+    } catch (error) {
+      console.error("Lỗi khi khóa bài đăng:", error);
+    } finally {
+      setLoading(false);
+      setLockDialogVisible(false);
+    }
+  };
+
   const jobDescriptions = job?.sMoTaCongViec?.split("/n") || [];
   const handleApply = async () => {
     try {
@@ -156,6 +219,38 @@ const JobDetail = ({ route, navigation }: any) => {
       setLoading(false);
     }
   };
+
+  const fetchRecommendedCandidates = async () => {
+    try {
+        if (!job?.sLinhVucTuyenDung) return;
+
+        const candidatesSnapshot = await firestore()
+            .collection("tblUngVien")
+            .where("sChuyenNganh", "==", job.sLinhVucTuyenDung)
+            .get();
+
+        if (!candidatesSnapshot.empty) {
+            const candidates = candidatesSnapshot.docs.map((doc) => ({
+                id: doc.id,
+                ...doc.data(),
+            }));
+
+            const shuffled = candidates.sort(() => 0.5 - Math.random());
+            const selectedCandidates = shuffled.slice(0, 3);
+
+            setRecommendedCandidates(selectedCandidates);
+        } else {
+            console.log("Không tìm thấy ứng viên phù hợp.");
+        }
+    } catch (error) {
+        console.error("Lỗi khi lấy danh sách ứng viên phù hợp:", error);
+    }
+};
+useEffect(() => {
+  if (job) {
+      fetchRecommendedCandidates();
+  }
+}, [job]);
   return (
     <View style={[styles.wrapper, { backgroundColor: theme.bG }]}>
       <HeaderWithIcons title="Tin tuyển dụng" onBackPress={() => navigation.goBack()} />
@@ -206,11 +301,36 @@ const JobDetail = ({ route, navigation }: any) => {
                   {jobDescriptions[2] || "Không có thông tin"}
                 </Text>
               </View>
+              <View style={styles.section}>
+                <Text style={[styles.recommendedJobsTitle, Fonts.semiBold]}>
+                  Ứng viên phù hợp
+                </Text>
+                {recommendedCandidates.length > 0 ? (
+        recommendedCandidates.map((candidate, index) => (
+            <JobCard
+                key={index}
+                companyLogo={candidate.sAnhDaiDien || ""}
+                companyName={candidate.sHoVaTen || "Ứng viên ẩn danh"}
+                jobTitle={candidate.sChuyenNganh || "Chưa cập nhật"}
+                location={candidate.sDiaChi || "Không rõ địa chỉ"}
+                salaryMax={candidate.sMucLuongMongMuon || 0}
+                jobType="Ứng viên"
+                onPress={() =>
+                    navigation.navigate("application-detail", { sMaUngVien: candidate.sMaUngVien, sMaTinTuyenDung: sMaTinTuyenDung })
+                }
+                style={styles.jobCard}
+            />
+        ))
+    ) : (
+        <Text style={styles.noJobsText}>Không có ứng viên phù hợp.</Text>
+    )}
+              </View>
             </View>
           </ScrollView>
 
           <View style={styles.buttonContainer}>
-            {userType == 1 &&
+            {/* Nút Save hoặc Lock */}
+            {userType === 1 && (
               <TouchableOpacity
                 style={styles.saveButton}
                 onPress={handleSaveJob}
@@ -223,17 +343,59 @@ const JobDetail = ({ route, navigation }: any) => {
                   }
                   style={styles.saveIcon}
                 />
-              </TouchableOpacity>}
-            <TouchableOpacity
-              style={[styles.applyButton, !isApplyButtonEnabled && styles.applyButtonDisabled]}
-              disabled={!isApplyButtonEnabled}
-              onPress={handleApply}
-            >
-              <Text style={styles.applyText}>Ứng tuyển ngay</Text>
-            </TouchableOpacity>
+              </TouchableOpacity>
+            )}
+
+            {userType === 2 && isOwner && (
+              <TouchableOpacity
+                style={styles.saveButton}
+                onPress={handleToggleLock} // Gọi hàm xử lý khi bấm nút
+              >
+                <Image
+                  source={
+                    isLocked
+                      ? require("../../../../asset/images/img_unlock1.png")
+                      : require("../../../../asset/images/img_lock.png")
+                  }
+                  style={styles.saveIcon}
+                />
+              </TouchableOpacity>
+            )}
+
+            {(userType === 1 || (userType === 2 && isOwner)) && (
+              <TouchableOpacity
+                style={styles.applyButton}
+                onPress={() => {
+                  if (isOwner) {
+                    navigation.navigate("edit-job", { sMaTinTuyenDung });
+                  } else {
+                    handleApply();
+                  }
+                }}
+              >
+                <Text style={styles.applyText}>
+                  {isOwner ? "Chỉnh sửa bài đăng" : "Ứng tuyển ngay"}
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
         </>
       )}
+      <Dialog
+        visible={lockDialogVisible}
+        title="Xác nhận khóa bài đăng"
+        content="Bạn có chắc chắn muốn khóa bài đăng không? Các ứng viên sẽ không thể thấy được bài đăng của bạn."
+        confirm={{
+          text: "Xác nhận",
+          onPress: handleLockJob,
+        }}
+        dismiss={{
+          text: "Không",
+          onPress: () => setLockDialogVisible(false),
+        }}
+        request={true}
+      />
+
       <Dialog
         visible={dialogVisible}
         title="Thông báo"
@@ -249,6 +411,7 @@ const JobDetail = ({ route, navigation }: any) => {
           text: "Hủy",
           onPress: () => setDialogVisible(false),
         }}
+        request={true}
       />
     </View>
   );
@@ -330,6 +493,21 @@ const styles = StyleSheet.create({
     backgroundColor: "#A9A9A9",
     opacity: 0.8,
   },
+  recommendedJobsTitle: {
+    fontFamily: Fonts.medium.fontFamily,
+    fontSize: 18,
+    color: theme.colors.titleJob.third,
+    marginVertical: 10,
+  },
+  jobCard: {
+    marginBottom: 16,
+},
+noJobsText: {
+    textAlign: "center",
+    fontSize: 14,
+    color: "#333",
+    marginTop: 10,
+},
 });
 
 export default JobDetail;

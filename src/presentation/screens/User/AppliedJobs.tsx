@@ -6,7 +6,6 @@ import {
   FlatList,
 } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
-import ApplicantCard from '../../components/ApplicantCard';
 import HeaderWithIcons from '../../components/Header';
 import { useUser } from '../../../context/UserContext';
 import JobCard from '../../components/JobCard';
