@@ -26,6 +26,7 @@ const ProfileCandidate = ({ navigation }: any) => {
         sKiNang: '',
         sSoThich: '',
         sMoTaChiTiet: '',
+        fFileCV: '',
     });
 
     const fetchUserData = async () => {
@@ -59,7 +60,8 @@ const ProfileCandidate = ({ navigation }: any) => {
                     sDiaChi: userData.sDiaChi || '',
                     sMoTaChiTiet: userData.sMoTaChiTiet || '',
                     sKiNang: userData.sKiNang,
-                    sSoThich: userData.sSoThich
+                    sSoThich: userData.sSoThich,
+                    fFileCV: userData.fFileCV || '',
                 });
             } else {
                 console.log('Không có ứng viên với ID:', userId);
@@ -157,7 +159,25 @@ const ProfileCandidate = ({ navigation }: any) => {
                             <Image source={require('../../../../asset/images/img_edit.png')} />
                         </TouchableOpacity>
                     </View>
-                    <CustomText style={styles.description}>{user.sChuyenNganh || 'Không có CV nào được đăng tải'}</CustomText>
+                    {user.fFileCV.startsWith('http') ? (
+                        <TouchableOpacity
+                            onPress={() =>
+                                navigation.navigate('cv-preview', { cvUrl: user.fFileCV }) // Điều hướng đến màn hình xem CV
+                            }
+                            style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10 }}
+                        >
+                            <Image
+                                source={require('../../../../asset/images/img_CV.png')}
+                                style={{ width: 24, height: 24, marginRight: 10 }}
+                            />
+                            <View>
+                                <CustomText style={styles.cvName}>CV</CustomText>
+                                <CustomText style={styles.cvDate}>Đã tải lên</CustomText>
+                            </View>
+                        </TouchableOpacity>
+                    ) : (
+                        <CustomText style={styles.description}>Không có CV nào được đăng tải</CustomText>
+                    )}
                 </View>
             </ScrollView>
             {loading && <Loading />}
@@ -231,6 +251,15 @@ const styles = StyleSheet.create({
     description: {
         fontSize: 14,
         color: '#333',
+    },
+    cvName: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: '#012A74',
+    },
+    cvDate: {
+        fontSize: 12,
+        color: '#6B7280',
     },
 });
 
