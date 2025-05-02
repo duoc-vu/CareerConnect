@@ -13,8 +13,9 @@ import DialogInterview from '../../components/DialogInterview';
 import Dialog from '../../components/Dialog';
 import { useUser } from '../../../context/UserContext';
 import axios from 'axios';
+import API_URL from '../../../config/apiConfig';
 
-const API_URL = 'http://192.168.102.24:3000/api/send-email';
+// const API_URL = 'http://192.168.102.24:3000/api/send-email';
 
 const ApplicantionDetail = ({ route, navigation }: any) => {
     const { sMaUngVien, sMaTinTuyenDung } = route.params;
@@ -110,7 +111,19 @@ const ApplicantionDetail = ({ route, navigation }: any) => {
     const handleConfirmInterview = async (data: { date: Date; message: string }) => {
         setLoading(true);
         var sTieuDe = '';
+        var sTenDoanhNghiep = '';
         try {
+            const companyQuery = await firestore()
+                .collection('tblDoanhNghiep')
+                .where('sMaDoanhNghiep', '==', userInfo?.userId)
+                .get();
+
+            if (!companyQuery.empty) {
+                sTenDoanhNghiep = companyQuery.docs[0].data().sTenDoanhNghiep || 'Không có tên công ty';
+            } else {
+                sTenDoanhNghiep = 'Không tìm thấy công ty';
+            }
+
             const existingScheduleQuery = await firestore()
                 .collection('tblLichHenPhongVan')
                 .where('sMaDoanhNghiep', '==', userInfo?.userId)
@@ -188,10 +201,11 @@ const ApplicantionDetail = ({ route, navigation }: any) => {
                 message: data.message,
                 candidateName: user.sHoVaTen || "Ứng viên",
                 scheduleTime: data.date.toISOString(),
-                location: user.sDiaChi || "TP.HCM",
+                location: user.sDiaChi || "",
+                companyName: sTenDoanhNghiep,
             };
 
-            await axios.post(API_URL, emailPayload);
+            await axios.post(`${API_URL}/send-email`, emailPayload);
 
             setDialogContent({
                 title: "Thành công",

@@ -3,15 +3,30 @@ import { ScrollView, StyleSheet } from 'react-native';
 import SettingsList from '../../components/SettingsList';
 import firestore from '@react-native-firebase/firestore';
 import { useUser } from '../../../context/UserContext';
-import HeaderWithIcons from '../../components/Header';
 import { View } from 'react-native-animatable';
 import ProfileCard from '../../components/ProfileCard';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Dialog from '../../components/Dialog';
+import CustomText from '../../components/CustomText';
+import { theme } from '../../../theme/theme';
 
 const SettingScreen = ({ navigation }: any) => {
   const { userId, userType, userInfo, userEmail } = useUser();
   const isGuest = userType === 2 || userType === 1;
-
+  const [dialogContent, setDialogContent] = React.useState({
+    title: '',
+    content: '',
+    visible: false,
+    confirm: {
+      text: '',
+      onPress: () => { },
+    },
+    dismiss: {
+      text: '',
+      onPress: () => { },
+    },
+    request: false
+  });
   const removeFCMToken = async (userId: any) => {
     try {
       if (!userId) {
@@ -62,14 +77,30 @@ const SettingScreen = ({ navigation }: any) => {
           : 'Hồ sơ cá nhân',
       onPress: () => {
         if (userType === 1) {
-          navigation.navigate("candidate-profile", navigation);
+          navigation.navigate("candidate-profile");
         } else if (userType === 2) {
-          navigation.navigate("employer-profile", navigation);
+          navigation.navigate("employer-profile");
         } else {
-          navigation.replace("login");
+          setDialogContent({
+            title: 'Thông báo',
+            content: 'Bạn cần đăng nhập để thực hiện hành động này.',
+            visible: true,
+            confirm: {
+              text: 'Đăng nhập',
+              onPress: () => {
+                setDialogContent(prev => ({ ...prev, visible: false }));
+                navigation.navigate('login');
+              },
+            },
+            dismiss: {
+              text: 'Hủy',
+              onPress: () => setDialogContent(prev => ({ ...prev, visible: false })),
+            },
+            request: true
+          });
         }
       },
-      icon: require('../../../../asset/images/right-arrow.png')
+      icon: require('../../../../asset/images/right-arrow.png'),
     },
     {
       id: '2',
@@ -80,14 +111,30 @@ const SettingScreen = ({ navigation }: any) => {
           : 'Đăng ký thông tin',
       onPress: () => {
         if (userType === 1) {
-          navigation.navigate("edit-candidate-profile", navigation);
+          navigation.navigate("edit-candidate-profile");
         } else if (userType === 2) {
-          navigation.navigate("edit-employer-profile", navigation);
+          navigation.navigate("edit-employer-profile");
         } else {
-          navigation.replace("login");
+          setDialogContent({
+            title: 'Thông báo',
+            content: 'Bạn cần đăng nhập để thực hiện hành động này.',
+            visible: true,
+            confirm: {
+              text: 'Đăng nhập',
+              onPress: () => {
+                setDialogContent(prev => ({ ...prev, visible: false }));
+                navigation.navigate('login');
+              },
+            },
+            dismiss: {
+              text: 'Hủy',
+              onPress: () => setDialogContent(prev => ({ ...prev, visible: false })),
+            },
+            request: true
+          });
         }
       },
-      icon: require('../../../../asset/images/right-arrow.png')
+      icon: require('../../../../asset/images/right-arrow.png'),
     },
     {
       id: '3',
@@ -98,56 +145,153 @@ const SettingScreen = ({ navigation }: any) => {
           : 'Công việc đã lưu',
       onPress: () => {
         if (userType === 1) {
-          navigation.navigate("");
+          navigation.navigate("saved-jobs");
         } else if (userType === 2) {
           navigation.navigate("applicant-list");
         } else {
-          navigation.navigate("login");
+          setDialogContent({
+            title: 'Thông báo',
+            content: 'Bạn cần đăng nhập để thực hiện hành động này.',
+            visible: true,
+            confirm: {
+              text: 'Đăng nhập',
+              onPress: () => {
+                setDialogContent(prev => ({ ...prev, visible: false }));
+                navigation.navigate('login');
+              },
+            },
+            dismiss: {
+              text: 'Hủy',
+              onPress: () => setDialogContent(prev => ({ ...prev, visible: false })),
+            },
+            request: true
+          });
         }
       },
-      icon: require('../../../../asset/images/right-arrow.png')
+      icon: require('../../../../asset/images/right-arrow.png'),
     },
     {
       id: '4',
       title: 'Quản lý lịch hẹn phỏng vấn',
-      onPress: () => userType === 1 ? navigation.navigate("appointments-candidate") : navigation.navigate("appointments"),
-      icon: require('../../../../asset/images/right-arrow.png')
+      onPress: () => {
+        if (userType === 1 || userType === 2) {
+          navigation.navigate(userType === 1 ? "appointments-candidate" : "appointments");
+        } else {
+          setDialogContent({
+            title: 'Thông báo',
+            content: 'Bạn cần đăng nhập để thực hiện hành động này.',
+            visible: true,
+            confirm: {
+              text: 'Đăng nhập',
+              onPress: () => {
+                setDialogContent(prev => ({ ...prev, visible: false }));
+                navigation.navigate('login');
+              },
+            },
+            dismiss: {
+              text: 'Hủy',
+              onPress: () => setDialogContent(prev => ({ ...prev, visible: false })),
+            },
+            request: true
+          });
+        }
+      },
+      icon: require('../../../../asset/images/right-arrow.png'),
     },
     {
       id: '5',
       title: 'Chính sách',
-      onPress: () => console.log("Go to Chính sách"),
-      icon: require('../../../../asset/images/right-arrow.png')
+      onPress: () => handlePolicy(),
+      icon: require('../../../../asset/images/right-arrow.png'),
     },
     {
       id: '6',
       title: 'Phản hồi và góp ý',
       onPress: () => navigation.navigate("feedback"),
-      icon: require('../../../../asset/images/right-arrow.png')
-    },
-    {
-      id: '7',
-      title: 'Đổi mật khẩu',
-      onPress: () => console.log('Go to Đổi mật khẩu'),
-      icon: require('../../../../asset/images/right-arrow.png')
+      icon: require('../../../../asset/images/right-arrow.png'),
     },
   ];
   if (userType === 1 || userType === 2) {
-    data.push({
-      id: '8',
-      title: 'Đăng xuất',
-      onPress: () => handleLogout(),
-      icon: require('../../../../asset/images/logout.png')
-    });
+    data.push(
+      {
+        id: '7',
+        title: 'Đổi mật khẩu',
+        onPress: () => console.log('Go to Đổi mật khẩu'),
+        icon: require('../../../../asset/images/right-arrow.png')
+      },
+      {
+        id: '8',
+        title: 'Đăng xuất',
+        onPress: () => handleLogout(),
+        icon: require('../../../../asset/images/logout.png')
+      });
   }
+
+  const handlePolicy = async () => {
+    try {
+      const querySnapshot = await firestore()
+        .collection('tblChinhSach')
+        .where('bTrangThai', '==', true)
+        .get();
+
+      if (!querySnapshot.empty) {
+        const policy = querySnapshot.docs[0].data();
+        if (policy.sNoiDung) {
+          navigation.navigate('policy-preview', { url: policy.sNoiDung }); // Điều hướng đến PolicyPreview
+        } else {
+          setDialogContent({
+            title: 'Thông báo',
+            content: 'Không tìm thấy nội dung chính sách.',
+            visible: true,
+            confirm: {
+              text: 'Đóng',
+              onPress: () => setDialogContent(prev => ({ ...prev, visible: false })),
+            },
+            dismiss: {
+              text: 'Đóng',
+              onPress: () => setDialogContent(prev => ({ ...prev, visible: false })),
+            },
+            request: false
+          });
+        }
+      } else {
+        setDialogContent({
+          title: 'Thông báo',
+          content: 'Không có chính sách nào đang hoạt động.',
+          visible: true,
+          confirm: {
+            text: 'Đóng',
+            onPress: () => setDialogContent(prev => ({ ...prev, visible: false })),
+          },
+          dismiss: {
+            text: 'Đóng',
+            onPress: () => setDialogContent(prev => ({ ...prev, visible: false })),
+          },
+          request: false
+        });
+      }
+    } catch (error) {
+      console.error('Lỗi khi kiểm tra chính sách:', error);
+      setDialogContent({
+        title: 'Lỗi',
+        content: 'Đã xảy ra lỗi khi kiểm tra chính sách. Vui lòng thử lại.',
+        visible: true,
+        confirm: {
+          text: 'Đóng',
+          onPress: () => setDialogContent(prev => ({ ...prev, visible: false })),
+        },
+        dismiss: {
+          text: 'Đóng',
+          onPress: () => setDialogContent(prev => ({ ...prev, visible: false })),
+        },
+        request: false
+      });
+    }
+  };
 
   return (
     <View style={styles.container}>
-      <HeaderWithIcons
-        title='Cài đặt'
-        onBackPress={() => { navigation.goBack() }}
-        backgroundColor="#F0F4F7"
-      />
+      <CustomText style={styles.title}>Cài đặt</CustomText>
       <ScrollView style={styles.containerScroll}>
         <ProfileCard
           avatar={logo}
@@ -166,6 +310,14 @@ const SettingScreen = ({ navigation }: any) => {
         />
         <SettingsList style={{ width: "100%", paddingHorizontal: 5, marginTop: 10 }} data={data} />
       </ScrollView>
+      <Dialog
+        visible={dialogContent.visible}
+        title={dialogContent.title}
+        content={dialogContent.content}
+        confirm={dialogContent.confirm}
+        dismiss={dialogContent.dismiss}
+        request={true}
+      />
     </View>
   );
 };
@@ -175,6 +327,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F0F4F7',
     paddingHorizontal: 20,
+  },
+  title: {
+    fontSize: 17,
+    fontWeight: 'bold', 
+    textAlign: 'center', 
+    marginVertical: 15, 
+    color: theme.template.biru
   },
   profileCard: {
     marginTop: 20,

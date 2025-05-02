@@ -113,18 +113,18 @@ const PostedJobs = ({ navigation }: any) => {
         const companyData = companySnapshot.docs[0].data();
 
         if (companyData.bTrangThai === false) {
-            setDialogContent({
-                title: 'Thông báo',
-                content: 'Tài khoản của bạn đang trong thời gian chờ duyệt nên chưa thể đăng tải.',
-                confirm: {
-                    text: 'Đóng',
-                    onPress: () => setDialogVisible(false),
-                },
-                dismiss: null,
-                failure: true,
-            });
-            setDialogVisible(true);
-            return;
+          setDialogContent({
+            title: 'Thông báo',
+            content: 'Tài khoản của bạn đang trong thời gian chờ duyệt nên chưa thể đăng tải.',
+            confirm: {
+              text: 'Đóng',
+              onPress: () => setDialogVisible(false),
+            },
+            dismiss: null,
+            failure: true,
+          });
+          setDialogVisible(true);
+          return;
         }
 
         navigation.navigate("post-job");
@@ -165,17 +165,19 @@ const PostedJobs = ({ navigation }: any) => {
 
   const handleApplyFilters = (filters: any) => {
     const { jobType } = filters;
+
     const filtered = postedJobs.filter((job: any) => {
       const matchesStatus = jobType
-        ? (job.sCoKhoa === 1 && jobType === 'Đã duyệt') ||
-        (job.sCoKhoa === 3 && jobType === 'Bị khóa') ||
-        (job.sCoKhoa === 4 && jobType === 'Hết hạn')
+        ? (jobType === 'Đã duyệt' && job.sCoKhoa === 1) ||
+        (jobType === 'Bị khóa' && job.sCoKhoa === 3) ||
+        (jobType === 'Hết hạn' && job.sCoKhoa === 4)
         : true;
+
       return matchesStatus;
     });
 
     setFilteredJobs(filtered);
-    setIsFilterActive(true);
+    setIsFilterActive(!!jobType);
   };
 
   const renderItem = ({ item }: any) => (
@@ -238,8 +240,13 @@ const PostedJobs = ({ navigation }: any) => {
       <UploadButton onPress={handleUploadPress} />
       <FilterDialog
         visible={filterVisible}
-        onClose={() => setFilterVisible(false)}
+        onClose={() => {
+          setFilterVisible(false);
+          setFilteredJobs(postedJobs);
+          setIsFilterActive(false);
+        }}
         onApply={handleApplyFilters}
+        fields={['jobType']}
       />
       <Dialog
         visible={dialogVisible}

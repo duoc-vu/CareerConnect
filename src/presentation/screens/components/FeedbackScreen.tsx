@@ -10,9 +10,10 @@ import { useLoading } from '../../../context/themeContext';
 import Loading from '../../components/Loading';
 import Dialog from '../../components/Dialog';
 import axios from 'axios';
+import API_URL from '../../../config/apiConfig';
 
 const fbFeedback = firestore().collection('tblPhanHoi');
-const API_URL = 'http://192.168.102.24:3000/api/send-simple-email';
+// const API_URL = 'http://192.168.102.24:3000/api/send-simple-email';
 
 const FeedbackScreen = ({ navigation }: any) => {
     const { userInfo, userEmail} = useUser();
@@ -93,10 +94,10 @@ const FeedbackScreen = ({ navigation }: any) => {
         try {
             const templateParams = {
                 to: email,
-                subject: "Cảm ơn bạn đã phản hồi, góp ý ý kiến",
+                subject: "[CAREER CONNECT] Cảm ơn bạn đã góp ý để phát triển hệ thống",
                 message: feedbackContent,
             };
-            await axios.post(API_URL, templateParams);
+            await axios.post(`${API_URL}/send-simple-email`, templateParams);
 
         } catch (error) {
             console.error("Lỗi khi gửi phản hồi:", error);

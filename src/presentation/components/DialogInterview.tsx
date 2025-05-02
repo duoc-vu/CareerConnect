@@ -10,6 +10,7 @@ import Input from "./Input";
 import DateTimePicker, { firestoreTimestampToDate } from "./DateTimePicker";
 
 interface DialogInterviewProps {
+  title?: string,
   visible: boolean;
   sThoiGianPhongVan?: Date,
   sDiaDiem?: string,
@@ -20,6 +21,7 @@ interface DialogInterviewProps {
 }
 
 const DialogInterview: React.FC<DialogInterviewProps> = ({
+  title,
   visible,
   sThoiGianPhongVan,
   sDiaDiem,
@@ -59,7 +61,7 @@ const DialogInterview: React.FC<DialogInterviewProps> = ({
     >
       <View style={styles.overlay}>
         <View style={styles.dialogContainer}>
-          <Text style={styles.title}>Tạo lịch hẹn phỏng vấn</Text>
+          <Text style={styles.title}>{title ? title : "Tạo lịch hẹn phỏng vấn"}</Text>
 
           <Text style={styles.label}>Chọn ngày và giờ</Text>
           <DateTimePicker date={date} setDate={setDate} style={styles.datePicker} showSeconds={false} />

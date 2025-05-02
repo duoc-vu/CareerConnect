@@ -77,14 +77,14 @@ const AppointmentCard = ({
 
           <View style={styles.detailRow}>
             <Text style={styles.label}>Chi tiết:</Text>
-            <TouchableOpacity onPress={() => onPressJobDetail} style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <TouchableOpacity onPress={onPressJobDetail} style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Text style={styles.linkText}>Tin tuyển dụng</Text>
             </TouchableOpacity>
           </View>
 
           <View style={styles.detailRow}>
             <Text style={styles.label}></Text>
-            <TouchableOpacity onPress={() => onPressApplicantDetail}>
+            <TouchableOpacity onPress={onPressApplicantDetail}>
               <Text style={styles.linkText}>{sSDT ? "Hồ sơ ứng viên" : "Hồ sơ doanh nghiêp"}</Text>
             </TouchableOpacity>
           </View>

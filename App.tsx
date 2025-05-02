@@ -34,6 +34,7 @@ import CompanyDetail from './src/presentation/screens/User/CompanyDetail';
 import AppliedJobsScreen from './src/presentation/screens/User/AppliedJobs';
 import JobSaved from './src/presentation/screens/User/JobSaved';
 import LicensePreview from './src/presentation/screens/Company/LicensePreview';
+import PolicyPreview from './src/presentation/screens/components/PolicyPreview';
 
 const Stack = createNativeStackNavigator();
 
@@ -102,6 +103,7 @@ const App = () => {
               <Stack.Screen name='applied-jobs' component={AppliedJobsScreen} options={{ headerShown: false }} />
               <Stack.Screen name='job-saved' component={JobSaved} options={{ headerShown: false }} />
               <Stack.Screen name='license-preview' component={LicensePreview} options={{ headerShown: false }} />
+              <Stack.Screen name="policy-preview" component={PolicyPreview} options={{ headerShown: false }} />
               </Stack.Navigator>
           </NavigationContainer>
         </LoadingProvider>

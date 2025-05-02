@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
 import { Fonts } from "../../theme/font";
 import { theme } from "../../theme/theme";
@@ -14,6 +14,7 @@ interface JobCardProps {
   onPress: () => void;
   style?: any;
   sCoKhoa?: number;
+  sTrangThai?: number;
 }
 
 const JobCard: React.FC<JobCardProps> = ({
@@ -27,6 +28,7 @@ const JobCard: React.FC<JobCardProps> = ({
   onPress,
   style,
   sCoKhoa,
+  sTrangThai
 }) => {
   const formatSalary = (max: number) => {
     return `Up to ${max.toLocaleString()} VND`;
@@ -35,18 +37,37 @@ const JobCard: React.FC<JobCardProps> = ({
   const getStatusText = (sCoKhoa: number | undefined) => {
     switch (sCoKhoa) {
       case 1:
-        return "Đã duyệt"; 
+        return "Đã duyệt";
       case 2:
-        return "Bạn đã khóa"; 
+        return "Bạn đã khóa";
       case 3:
-        return "Từ chối"; 
+        return "Từ chối";
       case 4:
-        return "Hết hạn"; 
+        return "Hết hạn";
       default:
-        return ""; 
+        return "";
     }
+
   };
 
+  const getStatusUVText = (status: number | undefined) => {
+    switch (status) {
+      case 1:
+        return "Đã duyệt";
+      case 2:
+        return "Chờ duyệt";
+      case 3:
+        return "Từ chối";
+      default:
+        return "";
+    }
+  };
+  const limitWords = (text: string, wordLimit: number) => {
+    const words = text.split(" ");
+    return words.length > wordLimit
+      ? words.slice(0, wordLimit).join(" ") + "..."
+      : text;
+  };
 
   return (
     <TouchableOpacity
@@ -54,7 +75,9 @@ const JobCard: React.FC<JobCardProps> = ({
       onPress={onPress}
       activeOpacity={0.8}
     >
-      {sCoKhoa ? (
+      {typeof sTrangThai === "number" ? (
+        <Text style={styles.statusText}>{getStatusUVText(sTrangThai)}</Text>
+      ) : sCoKhoa ? (
         <Text style={styles.statusText}>{getStatusText(sCoKhoa)}</Text>
       ) : (
         <TouchableOpacity>
@@ -79,17 +102,25 @@ const JobCard: React.FC<JobCardProps> = ({
             <Text style={styles.companyName} numberOfLines={1} ellipsizeMode="tail">{companyName}</Text>
           </View>
         </View>
-        
+
       </View>
       <View style={styles.footer}>
         <View style={styles.tag}>
           <Text style={styles.tagText}>{jobAppliTime ? jobAppliTime : jobType}</Text>
         </View>
         <View style={styles.tag}>
-          <Text style={styles.tagText}>{location}</Text>
+          <Text style={styles.tagText}>{limitWords(location, 2)}</Text>
         </View>
-        <View style={styles.tag}>
-          <Text style={styles.tagText}>{formatSalary(salaryMax)}</Text>
+        <View style={styles.footer}>
+          <View style={styles.tag}>
+            {typeof salaryMax === "number" ? (
+              <Text style={styles.tagText}>{formatSalary(salaryMax)}</Text>
+            ) : (
+              <Text style={styles.tagText}>{salaryMax === "0"
+                ? "Chưa có thông tin"
+                : limitWords(salaryMax, 5)} năm kinh nghiệm</Text>
+            )}
+          </View>
         </View>
       </View>
     </TouchableOpacity>
@@ -115,7 +146,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 8, 
+    marginBottom: 8,
   },
   headerLeft: {
     flexDirection: "row",
@@ -125,20 +156,20 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 20,
-    marginHorizontal: 8, 
-    marginTop:-10
+    marginHorizontal: 8,
+    marginTop: -10
   },
   companyName: {
     fontSize: 12,
-    ...Fonts.regular, 
-    color: "#000000", 
-    marginBottom: 12, 
+    ...Fonts.regular,
+    color: "#000000",
+    marginBottom: 12,
   },
   jobTitle: {
     fontSize: 14,
-    ...Fonts.semiBold, 
+    ...Fonts.semiBold,
     color: "#000000",
-    marginTop:8,
+    marginTop: 8,
     width: 220,
   },
   footer: {
@@ -151,9 +182,9 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     paddingHorizontal: 10,
     borderWidth: 1,
-    borderColor: "#1F3C88", 
-    backgroundColor: "#FFFFFF", 
-    marginRight: 10, 
+    borderColor: "#1F3C88",
+    backgroundColor: "#FFFFFF",
+    marginRight: 10,
   },
   tagText: {
     fontSize: 12,
@@ -163,7 +194,7 @@ const styles = StyleSheet.create({
   saveIcon: {
     position: "absolute",
     resizeMode: "contain",
-    right:8,
+    right: 8,
     top: 1,
   },
   statusText: {

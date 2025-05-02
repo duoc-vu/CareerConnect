@@ -108,7 +108,7 @@ const JobSaved = ({ navigation }: any) => {
             salaryMax={item.sMucLuongToiDa || 0}
             jobType="On-site"
             location={item.sDiaChiLamViec}
-            onPress={() => navigation.navigate("job-detail", { sMaTinTuyenDung: item.sMaTinTuyenDung })}
+            onPress={() => navigation.push("job-detail", { sMaTinTuyenDung: item.sMaTinTuyenDung })}
             style={styles.verticalJobCard}
         />
     );
@@ -182,7 +182,8 @@ const styles = StyleSheet.create({
         fontSize: 18,
         color: theme.colors.titleJob.third,
         marginVertical: 10,
-        marginLeft: 10,
+        marginLeft: 20,
+        marginRight: 10,
     },
     verticalList: {
         paddingHorizontal: 10,

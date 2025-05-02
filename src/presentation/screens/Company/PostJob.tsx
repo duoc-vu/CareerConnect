@@ -7,6 +7,7 @@ import CustomText from '../../components/CustomText';
 import DatePicker from '../../components/DatePicker';
 import { useUser } from '../../../context/UserContext';
 import Dialog from '../../components/Dialog';
+import { View } from 'react-native-animatable';
 
 const fbJob = firestore().collection('tblTinTuyenDung');
 
@@ -109,11 +110,16 @@ const PostJob = ({ navigation }: any) => {
                 return;
             }
 
-            const minSalaryRaw = formData.sMucLuongToiThieu.replace(/\./g, "").trim();
-            const maxSalaryRaw = formData.sMucLuongToiDa.replace(/\./g, "").trim();
-
-            if (!isNumber(minSalaryRaw) || !isNumber(maxSalaryRaw)) {
+            const minSalary = parseInt(formData.sMucLuongToiThieu.replace(/\./g, "").trim(), 10);
+            const maxSalary = parseInt(formData.sMucLuongToiDa.replace(/\./g, "").trim(), 10);
+    
+            if (isNaN(minSalary) || isNaN(maxSalary)) {
                 setError("Mức lương phải là số hợp lệ!");
+                return;
+            }
+    
+            if (minSalary > maxSalary) {
+                setError("Mức lương tối thiểu không được lớn hơn mức lương tối đa!");
                 return;
             }
 
@@ -168,42 +174,48 @@ const PostJob = ({ navigation }: any) => {
     };
 
     return (
-        <ScrollView contentContainerStyle={styles.container}>
-            <CustomText style={styles.title}>Đăng tin tuyển dụng</CustomText>
+        <>
+            <ScrollView contentContainerStyle={styles.container}>
+                <CustomText style={styles.title}>Đăng tin tuyển dụng</CustomText>
 
-            <CustomText style={styles.label}>Vị trí tuyển dụng</CustomText>
-            <Input placeholder="" value={formData.sViTriTuyenDung} onChangeText={text => handleChange('sViTriTuyenDung', text)} style={styles.input} />
+                <CustomText style={styles.label}>Vị trí tuyển dụng</CustomText>
+                <Input placeholder="" value={formData.sViTriTuyenDung} onChangeText={text => handleChange('sViTriTuyenDung', text)} style={styles.input} />
 
-            <CustomText style={styles.label}>Lĩnh vực tuyển dụng</CustomText>
-            <Input placeholder="" value={formData.sLinhVucTuyenDung} onChangeText={text => handleChange('sLinhVucTuyenDung', text)} style={styles.input} />
+                <CustomText style={styles.label}>Lĩnh vực tuyển dụng</CustomText>
+                <Input placeholder="" value={formData.sLinhVucTuyenDung} onChangeText={text => handleChange('sLinhVucTuyenDung', text)} style={styles.input} />
 
-            <CustomText style={styles.label}>Địa điểm</CustomText>
-            <Input placeholder="" value={formData.sDiaChiLamViec} onChangeText={text => handleChange('sDiaChiLamViec', text)} style={styles.input} />
+                <CustomText style={styles.label}>Địa điểm</CustomText>
+                <Input placeholder="" value={formData.sDiaChiLamViec} onChangeText={text => handleChange('sDiaChiLamViec', text)} style={styles.input} />
 
-            <CustomText style={styles.label}>Mức lương tối thiểu</CustomText>
-            <Input placeholder="" value={formData.sMucLuongToiThieu} onChangeText={text => handleChange('sMucLuongToiThieu', text)} style={styles.input} />
+                <CustomText style={styles.label}>Mức lương tối thiểu</CustomText>
+                <Input placeholder="" value={formData.sMucLuongToiThieu} onChangeText={text => handleChange('sMucLuongToiThieu', text)} style={styles.input} />
 
-            <CustomText style={styles.label}>Mức lương tối đa</CustomText>
-            <Input placeholder="" value={formData.sMucLuongToiDa} onChangeText={text => handleChange('sMucLuongToiDa', text)} style={styles.input} />
+                <CustomText style={styles.label}>Mức lương tối đa</CustomText>
+                <Input placeholder="" value={formData.sMucLuongToiDa} onChangeText={text => handleChange('sMucLuongToiDa', text)} style={styles.input} />
 
-            <CustomText style={styles.label}>Số lượng tuyển</CustomText>
-            <Input placeholder="" value={formData.sSoLuongTuyenDung} onChangeText={text => handleChange('sSoLuongTuyenDung', text)} style={styles.input} />
+                <CustomText style={styles.label}>Số lượng tuyển</CustomText>
+                <Input placeholder="" value={formData.sSoLuongTuyenDung} onChangeText={text => handleChange('sSoLuongTuyenDung', text)} style={styles.input} />
 
-            <CustomText style={styles.label}>Kinh nghiệm (Số năm)</CustomText>
-            <Input placeholder="" value={formData.sSoNamKinhNghiem} onChangeText={text => handleChange('sSoNamKinhNghiem', text)} style={styles.input} />
+                <CustomText style={styles.label}>Kinh nghiệm (Số năm)</CustomText>
+                <Input placeholder="" value={formData.sSoNamKinhNghiem} onChangeText={text => handleChange('sSoNamKinhNghiem', text)} style={styles.input} />
 
-            <CustomText style={styles.label}>Ngày bắt đầu tuyển</CustomText>
-            <DatePicker label="" date={formData.sThoiGianDangBai} setDate={(date: any) => handleChange('sThoiGianDangBai', date)} />
+                <CustomText style={styles.label}>Ngày bắt đầu tuyển</CustomText>
+                <DatePicker label="" date={formData.sThoiGianDangBai} setDate={(date: any) => handleChange('sThoiGianDangBai', date)} />
 
-            <CustomText style={styles.label}>Hạn tuyển</CustomText>
-            <DatePicker label="" date={formData.sThoiHanTuyenDung} setDate={(date: any) => handleChange('sThoiHanTuyenDung', date)} />
+                <CustomText style={styles.label}>Hạn tuyển</CustomText>
+                <DatePicker label="" date={formData.sThoiHanTuyenDung} setDate={(date: any) => handleChange('sThoiHanTuyenDung', date)} />
 
-            <CustomText style={styles.label}>Mô tả công việc</CustomText>
-            <Input placeholder="" multiline value={formData.sMoTaCongViec} onChangeText={text => handleChange('sMoTaCongViec', text)} style={styles.largeInput} />
+                <CustomText style={styles.label}>Mô tả công việc</CustomText>
+                <Input placeholder="" multiline value={formData.sMoTaCongViec} onChangeText={text => handleChange('sMoTaCongViec', text)} style={styles.largeInput} />
 
-            {error ? <CustomText style={styles.error}>{error}</CustomText> : null}
+                {error ? <CustomText style={styles.error}>{error}</CustomText> : null}
 
-            <Button title="Post Job" onPress={handlePostJob} style={styles.button} />
+
+            </ScrollView>
+            <View style={styles.button}>
+            <Button title="Đăng tin tuyển dụng" onPress={handlePostJob}  />
+            </View>
+            
             <Dialog
                 visible={dialogVisible}
                 title={dialogContent.title}
@@ -212,7 +224,7 @@ const PostJob = ({ navigation }: any) => {
                 dismiss={dialogContent.dismiss}
                 failure={dialogContent.failure}
             />
-        </ScrollView>
+        </>
     );
 };
 
@@ -223,7 +235,16 @@ const styles = StyleSheet.create({
     largeInput: { height: 100, textAlignVertical: 'top', marginBottom: 10, borderColor: "#BEBEBE", backgroundColor: "#EDEDED" },
     label: { fontSize: 14, fontWeight: '600', color: '#333', marginBottom: 5 },
     error: { color: 'red', textAlign: 'center', marginVertical: 5 },
-    button: {}
+    button: {
+        position: 'absolute',
+        bottom: 0.5,
+        left: 0,
+        right: 0,
+        padding: 20,
+        backgroundColor: '#fff',
+        borderTopWidth: 1,
+        borderColor: '#fff',
+    }
 });
 
 export default PostJob;

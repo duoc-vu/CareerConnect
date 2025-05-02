@@ -12,8 +12,9 @@ import messaging from '@react-native-firebase/messaging';
 import { useUser } from "../../context/UserContext";
 import axios from 'axios';
 import Loading from '../components/Loading';
+import API_URL from "../../config/apiConfig";
 
-const API_URL = 'http://192.168.102.24:3000/api/notify';
+// const API_URL = 'http://192.168.102.24:3000/api/notify';
 const { width } = Dimensions.get('window');
 
 const fb = firestore().collection('tblTaiKhoan');
@@ -42,7 +43,7 @@ const Login = ({ navigation }: any) => {
                         }
                     });
             }
-            await axios.post(API_URL, {
+            await axios.post(`${API_URL}/notify`, {
                 fcmToken: token,
                 title: 'Đăng nhập thành công!',
                 body: `Chào mừng bạn quay lại Jobify 👋`,
@@ -124,18 +125,18 @@ const Login = ({ navigation }: any) => {
         <>
         <ScrollView contentContainerStyle={styles.container}>
             <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-            <CustomText style={styles.title}>Welcome Back To</CustomText>
+            <CustomText style={styles.title}>Chào mừng trở lại</CustomText>
             <CustomText style={styles.appName}>Career Connect</CustomText>
 
             <Input
-                placeholder="Email Or Phone Number"
+                placeholder="Email"
                 value={email}
                 onChangeText={(text) => setEmail(text.trim())}
                 style={styles.input}
             />
 
             <Input
-                placeholder="Password"
+                placeholder="Mật khẩu"
                 value={password}
                 onChangeText={(text) => setPassword(text.trim())}
                 secureTextEntry
@@ -143,16 +144,16 @@ const Login = ({ navigation }: any) => {
             />
             {error && <Text style={styles.error}>{error}</Text>}
             <CheckBox
-                label="Remember Me"
+                label="Nhớ mật khẩu"
                 checked={rememberMe}
                 onToggle={() => setRememberMe(!rememberMe)}
                 style={styles.rememberContainer}
             />
 
             <View style={styles.loginOptionsContainer}>
-                <Button title="Login" onPress={handleLogin} />
+                <Button title="Đăng nhập" onPress={handleLogin} />
 
-                <CustomText style={styles.orText}>Or</CustomText>
+                <CustomText style={styles.orText}>Hoặc</CustomText>
 
                 <TouchableOpacity style={styles.socialIconContainer}>
                     <Image source={require('../../../asset/images/img_google.png')} style={styles.socialIcon} />

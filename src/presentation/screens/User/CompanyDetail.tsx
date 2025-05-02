@@ -156,7 +156,7 @@ const CompanyDetail = ({ navigation, route }: any) => {
     return (
         <View style={styles.container}>
             <HeaderWithIcons
-                title='Hồ sơ tài khoản'
+                title='Chi tiết doanh nghiệp'
                 onBackPress={() => navigation.goBack()}
             />
             <ScrollView style={styles.scrollContainer}>
@@ -170,9 +170,8 @@ const CompanyDetail = ({ navigation, route }: any) => {
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <CustomText style={styles.sectionTitle}>Lĩnh Vực</CustomText>
-                        <TouchableOpacity onPress={() => navigation.navigate("edit-employer-profile")}>
+                         
                             <Image source={require('../../../../asset/images/img_edit.png')} />
-                        </TouchableOpacity>
                     </View>
                     <CustomText style={styles.description}>{employer.sLinhVuc || 'Chưa có thông tin'}</CustomText>
                 </View>
@@ -180,9 +179,8 @@ const CompanyDetail = ({ navigation, route }: any) => {
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <CustomText style={styles.sectionTitle}>Số lượng nhân viên</CustomText>
-                        <TouchableOpacity onPress={() => navigation.navigate("edit-employer-profile")}>
+                         
                             <Image source={require('../../../../asset/images/img_edit.png')} />
-                        </TouchableOpacity>
                     </View>
                     <CustomText style={styles.description}>{employer.sSoLuongNhanVien || 'Chưa có thông tin'}</CustomText>
                 </View>
@@ -190,18 +188,15 @@ const CompanyDetail = ({ navigation, route }: any) => {
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <CustomText style={styles.sectionTitle}>Giới thiệu doanh nghiệp</CustomText>
-                        <TouchableOpacity onPress={() => navigation.navigate("edit-employer-profile")}>
                             <Image source={require('../../../../asset/images/img_edit.png')} />
-                        </TouchableOpacity>
                     </View>
                     {renderDescriptionWithLineBreaks(employer.sMoTaChiTiet)}
                 </View>
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <CustomText style={styles.sectionTitle}>Tin tuyển dụng</CustomText>
-                        <TouchableOpacity onPress={() => navigation.navigate("edit-employer-profile")}>
+                         
                             <Image source={require('../../../../asset/images/img_edit.png')} />
-                        </TouchableOpacity>
                     </View>
                     {groupedRecommendedJobs.length > 0 ? (
                         <FlatList

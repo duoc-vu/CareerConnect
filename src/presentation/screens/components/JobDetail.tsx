@@ -16,17 +16,20 @@ const fbCT = firestore().collection("tblDoanhNghiep");
 const JobDetail = ({ route, navigation }: any) => {
   const { theme } = useTheme();
   const { sMaTinTuyenDung } = route.params;
-
   const [job, setJob] = useState<any>(null);
   const [companyDetail, setCompanyDetail] = useState<any>(null);
   const { loading, setLoading } = useLoading();
   const { userId, userType } = useUser();
-  const [dialogVisible, setDialogVisible] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
-  const [lockDialogVisible, setLockDialogVisible] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
   const [recommendedCandidates, setRecommendedCandidates] = useState<any[]>([]);
-
+  const [dialogContent, setDialogContent] = useState({
+    title: '',
+    content: '',
+    confirm: null as null | { text: string; onPress: () => void },
+    dismiss: null as null | { text: string; onPress: () => void },
+    visible: false,
+  });
   useEffect(() => {
     if (userType === 2 && job) {
       setIsOwner(job.sMaDoanhNghiep === userId);
@@ -118,6 +121,26 @@ const JobDetail = ({ route, navigation }: any) => {
   }, [sMaTinTuyenDung]);
 
   const handleSaveJob = async () => {
+    if (!userId || (userType !== 1 && userType !== 2)) {
+      setDialogContent({
+        title: 'Thông báo',
+        content: 'Bạn cần đăng nhập để lưu công việc này.',
+        confirm: {
+          text: 'Đăng nhập',
+          onPress: () => {
+            setDialogContent(prev => ({ ...prev, visible: false }));
+            navigation.navigate('login');
+          },
+        },
+        dismiss: {
+          text: 'Hủy',
+          onPress: () => setDialogContent(prev => ({ ...prev, visible: false })),
+        },
+        visible: true,
+      });
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -126,31 +149,66 @@ const JobDetail = ({ route, navigation }: any) => {
         .where("sMaUngVien", "==", userId)
         .get();
 
-      if (!candidateSnapshot.empty) {
-        const candidateDoc = candidateSnapshot.docs[0];
-        const candidateData = candidateDoc.data();
+      if (candidateSnapshot.empty) {
+        setDialogContent({
+          title: 'Thông báo',
+          content: 'Bạn cần đăng ký thông tin để lưu công việc này.',
+          confirm: {
+            text: 'Đăng ký thông tin',
+            onPress: () => {
+              setDialogContent(prev => ({ ...prev, visible: false }));
+              navigation.navigate('edit-candidate-profile');
+            },
+          },
+          dismiss: {
+            text: 'Hủy',
+            onPress: () => setDialogContent(prev => ({ ...prev, visible: false })),
+          },
+          visible: true,
+        });
+        return;
+      }
 
-        const savedJobs = candidateData.sCongViecDaLuu || [];
+      const candidateDoc = candidateSnapshot.docs[0];
+      const candidateData = candidateDoc.data();
 
-        if (isSaved) {
-          const updatedJobs = savedJobs.filter((jobId: string) => jobId !== sMaTinTuyenDung);
+      if (!candidateData) {
+        setDialogContent({
+          title: 'Thông báo',
+          content: 'Bạn cần đăng ký thông tin để lưu công việc này.',
+          confirm: {
+            text: 'Đăng ký thông tin',
+            onPress: () => {
+              setDialogContent(prev => ({ ...prev, visible: false }));
+              navigation.navigate('edit-candidate-profile');
+            },
+          },
+          dismiss: {
+            text: 'Hủy',
+            onPress: () => setDialogContent(prev => ({ ...prev, visible: false })),
+          },
+          visible: true,
+        });
+        return;
+      }
+      const savedJobs = candidateData.sCongViecDaLuu || [];
 
-          await firestore()
-            .collection("tblUngVien")
-            .doc(candidateDoc.id)
-            .update({ sCongViecDaLuu: updatedJobs });
-          setIsSaved(false);
-        } else {
-          savedJobs.push(sMaTinTuyenDung);
+      if (isSaved) {
+        const updatedJobs = savedJobs.filter((jobId: string) => jobId !== sMaTinTuyenDung);
 
-          await firestore()
-            .collection("tblUngVien")
-            .doc(candidateDoc.id)
-            .update({ sCongViecDaLuu: savedJobs });
-          setIsSaved(true);
-        }
+        await firestore()
+          .collection("tblUngVien")
+          .doc(candidateDoc.id)
+          .update({ sCongViecDaLuu: updatedJobs });
+        setIsSaved(false);
       } else {
-        console.warn("Không tìm thấy thông tin ứng viên.");
+        savedJobs.push(sMaTinTuyenDung);
+
+        await firestore()
+          .collection("tblUngVien")
+          .doc(candidateDoc.id)
+          .update({ sCongViecDaLuu: savedJobs });
+        setIsSaved(true);
       }
     } catch (error) {
       console.error("Lỗi khi lưu hoặc xóa công việc:", error);
@@ -160,47 +218,63 @@ const JobDetail = ({ route, navigation }: any) => {
   };
 
   const handleToggleLock = async () => {
-    try {
-      setLoading(true);
+    setDialogContent({
+      title: isLocked ? 'Xác nhận mở khóa bài đăng' : 'Xác nhận khóa bài đăng',
+      content: isLocked
+        ? 'Bạn có chắc chắn muốn mở khóa bài đăng không?'
+        : 'Bạn có chắc chắn muốn khóa bài đăng không? Các ứng viên sẽ không thể thấy được bài đăng của bạn.',
+      confirm: {
+        text: 'Xác nhận',
+        onPress: async () => {
+          try {
+            setLoading(true);
 
-      if (job) {
-        const newStatus = isLocked ? 1 : 2;
-        await firestore()
-          .collection("tblTinTuyenDung")
-          .doc(job.id)
-          .update({ sCoKhoa: newStatus });
+            if (job) {
+              const newStatus = isLocked ? 1 : 2;
+              await firestore()
+                .collection('tblTinTuyenDung')
+                .doc(job.id)
+                .update({ sCoKhoa: newStatus });
 
-        setIsLocked(!isLocked);
-      }
-    } catch (error) {
-      console.error("Lỗi khi cập nhật trạng thái khóa/mở:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleLockJob = async () => {
-    try {
-      setLoading(true);
-
-      if (job) {
-        await firestore()
-          .collection("tblTinTuyenDung")
-          .doc(job.id)
-          .update({ sCoKhoa: 2 });
-
-        console.log("Bài đăng đã được khóa.");
-      }
-    } catch (error) {
-      console.error("Lỗi khi khóa bài đăng:", error);
-    } finally {
-      setLoading(false);
-      setLockDialogVisible(false);
-    }
+              setIsLocked(!isLocked);
+            }
+          } catch (error) {
+            console.error('Lỗi khi cập nhật trạng thái khóa/mở:', error);
+          } finally {
+            setLoading(false);
+            setDialogContent(prev => ({ ...prev, visible: false }));
+          }
+        },
+      },
+      dismiss: {
+        text: 'Hủy',
+        onPress: () => setDialogContent(prev => ({ ...prev, visible: false })),
+      },
+      visible: true,
+    });
   };
 
   const jobDescriptions = job?.sMoTaCongViec?.split("/n") || [];
   const handleApply = async () => {
+    if (!userId || (userType !== 1 && userType !== 2)) {
+      setDialogContent({
+        title: 'Thông báo',
+        content: 'Bạn cần đăng nhập để ứng tuyển công việc này.',
+        confirm: {
+          text: 'Đăng nhập',
+          onPress: () => {
+            setDialogContent(prev => ({ ...prev, visible: false }));
+            navigation.navigate('login');
+          },
+        },
+        dismiss: {
+          text: 'Hủy',
+          onPress: () => setDialogContent(prev => ({ ...prev, visible: false })),
+        },
+        visible: true,
+      });
+      return;
+    }
     try {
       setLoading(true);
       const querySnapshot = await firestore()
@@ -211,7 +285,22 @@ const JobDetail = ({ route, navigation }: any) => {
       if (!querySnapshot.empty) {
         navigation.navigate("apply-job", { sMaTinTuyenDung });
       } else {
-        setDialogVisible(true);
+        setDialogContent({
+          title: 'Thông báo',
+          content: 'Bạn chưa đăng ký thông tin ứng viên. Vui lòng đăng ký để tiếp tục ứng tuyển.',
+          confirm: {
+            text: 'Đăng ký thông tin',
+            onPress: () => {
+              setDialogContent(prev => ({ ...prev, visible: false }));
+              navigation.navigate('edit-candidate-profile');
+            },
+          },
+          dismiss: {
+            text: 'Hủy',
+            onPress: () => setDialogContent(prev => ({ ...prev, visible: false })),
+          },
+          visible: true,
+        });
       }
     } catch (error) {
       console.error("Lỗi khi kiểm tra thông tin ứng viên:", error);
@@ -222,35 +311,35 @@ const JobDetail = ({ route, navigation }: any) => {
 
   const fetchRecommendedCandidates = async () => {
     try {
-        if (!job?.sLinhVucTuyenDung) return;
+      if (!job?.sLinhVucTuyenDung) return;
 
-        const candidatesSnapshot = await firestore()
-            .collection("tblUngVien")
-            .where("sChuyenNganh", "==", job.sLinhVucTuyenDung)
-            .get();
+      const candidatesSnapshot = await firestore()
+        .collection("tblUngVien")
+        .where("sLinhVuc", "==", job.sLinhVucTuyenDung)
+        .get();
 
-        if (!candidatesSnapshot.empty) {
-            const candidates = candidatesSnapshot.docs.map((doc) => ({
-                id: doc.id,
-                ...doc.data(),
-            }));
+      if (!candidatesSnapshot.empty) {
+        const candidates = candidatesSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
 
-            const shuffled = candidates.sort(() => 0.5 - Math.random());
-            const selectedCandidates = shuffled.slice(0, 3);
+        const shuffled = candidates.sort(() => 0.5 - Math.random());
+        const selectedCandidates = shuffled.slice(0, 3);
 
-            setRecommendedCandidates(selectedCandidates);
-        } else {
-            console.log("Không tìm thấy ứng viên phù hợp.");
-        }
+        setRecommendedCandidates(selectedCandidates);
+      } else {
+        console.log("Không tìm thấy ứng viên phù hợp.");
+      }
     } catch (error) {
-        console.error("Lỗi khi lấy danh sách ứng viên phù hợp:", error);
+      console.error("Lỗi khi lấy danh sách ứng viên phù hợp:", error);
     }
-};
-useEffect(() => {
-  if (job) {
+  };
+  useEffect(() => {
+    if (job) {
       fetchRecommendedCandidates();
-  }
-}, [job]);
+    }
+  }, [job]);
   return (
     <View style={[styles.wrapper, { backgroundColor: theme.bG }]}>
       <HeaderWithIcons title="Tin tuyển dụng" onBackPress={() => navigation.goBack()} />
@@ -306,30 +395,29 @@ useEffect(() => {
                   Ứng viên phù hợp
                 </Text>
                 {recommendedCandidates.length > 0 ? (
-        recommendedCandidates.map((candidate, index) => (
-            <JobCard
-                key={index}
-                companyLogo={candidate.sAnhDaiDien || ""}
-                companyName={candidate.sHoVaTen || "Ứng viên ẩn danh"}
-                jobTitle={candidate.sChuyenNganh || "Chưa cập nhật"}
-                location={candidate.sDiaChi || "Không rõ địa chỉ"}
-                salaryMax={candidate.sMucLuongMongMuon || 0}
-                jobType="Ứng viên"
-                onPress={() =>
-                    navigation.navigate("application-detail", { sMaUngVien: candidate.sMaUngVien, sMaTinTuyenDung: sMaTinTuyenDung })
-                }
-                style={styles.jobCard}
-            />
-        ))
-    ) : (
-        <Text style={styles.noJobsText}>Không có ứng viên phù hợp.</Text>
-    )}
+                  recommendedCandidates.map((candidate, index) => (
+                    <JobCard
+                      key={index}
+                      companyLogo={candidate.sAnhDaiDien || ""}
+                      companyName={candidate.sHoVaTen || "Ứng viên ẩn danh"}
+                      jobTitle={candidate.sChuyenNganh || "Chưa cập nhật"}
+                      location={candidate.sDiaChi || "Không rõ địa chỉ"}
+                      salaryMax={candidate.sKinhNghiem || "0"}
+                      jobType="Ứng viên"
+                      onPress={() =>
+                        navigation.navigate("application-detail", { sMaUngVien: candidate.sMaUngVien, sMaTinTuyenDung: sMaTinTuyenDung })
+                      }
+                      style={styles.jobCard}
+                    />
+                  ))
+                ) : (
+                  <Text style={styles.noJobsText}>Không có ứng viên phù hợp.</Text>
+                )}
               </View>
             </View>
           </ScrollView>
 
           <View style={styles.buttonContainer}>
-            {/* Nút Save hoặc Lock */}
             {userType === 1 && (
               <TouchableOpacity
                 style={styles.saveButton}
@@ -349,7 +437,7 @@ useEffect(() => {
             {userType === 2 && isOwner && (
               <TouchableOpacity
                 style={styles.saveButton}
-                onPress={handleToggleLock} // Gọi hàm xử lý khi bấm nút
+                onPress={handleToggleLock}
               >
                 <Image
                   source={
@@ -359,6 +447,32 @@ useEffect(() => {
                   }
                   style={styles.saveIcon}
                 />
+              </TouchableOpacity>
+            )}
+
+            {userType !== 1 && userType !== 2 && (
+              <TouchableOpacity
+                style={styles.applyButton}
+                onPress={() => {
+                  setDialogContent({
+                    title: 'Thông báo',
+                    content: 'Bạn cần đăng nhập để thực hiện hành động này.',
+                    confirm: {
+                      text: 'Đăng nhập',
+                      onPress: () => {
+                        setDialogContent(prev => ({ ...prev, visible: false }));
+                        navigation.navigate('login');
+                      },
+                    },
+                    dismiss: {
+                      text: 'Hủy',
+                      onPress: () => setDialogContent(prev => ({ ...prev, visible: false })),
+                    },
+                    visible: true,
+                  });
+                }}
+              >
+                <Text style={styles.applyText}>Đăng nhập để tiếp tục</Text>
               </TouchableOpacity>
             )}
 
@@ -382,35 +496,11 @@ useEffect(() => {
         </>
       )}
       <Dialog
-        visible={lockDialogVisible}
-        title="Xác nhận khóa bài đăng"
-        content="Bạn có chắc chắn muốn khóa bài đăng không? Các ứng viên sẽ không thể thấy được bài đăng của bạn."
-        confirm={{
-          text: "Xác nhận",
-          onPress: handleLockJob,
-        }}
-        dismiss={{
-          text: "Không",
-          onPress: () => setLockDialogVisible(false),
-        }}
-        request={true}
-      />
-
-      <Dialog
-        visible={dialogVisible}
-        title="Thông báo"
-        content="Bạn chưa đăng ký thông tin ứng viên. Vui lòng đăng ký để tiếp tục ứng tuyển."
-        confirm={{
-          text: "Đăng ký thông tin",
-          onPress: () => {
-            setDialogVisible(false);
-            navigation.navigate("edit-candidate-profile");
-          },
-        }}
-        dismiss={{
-          text: "Hủy",
-          onPress: () => setDialogVisible(false),
-        }}
+        visible={dialogContent.visible}
+        title={dialogContent.title}
+        content={dialogContent.content}
+        confirm={dialogContent.confirm}
+        dismiss={dialogContent.dismiss}
         request={true}
       />
     </View>
@@ -501,13 +591,13 @@ const styles = StyleSheet.create({
   },
   jobCard: {
     marginBottom: 16,
-},
-noJobsText: {
+  },
+  noJobsText: {
     textAlign: "center",
     fontSize: 14,
     color: "#333",
     marginTop: 10,
-},
+  },
 });
 
 export default JobDetail;

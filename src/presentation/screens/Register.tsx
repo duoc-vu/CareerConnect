@@ -103,7 +103,7 @@ const Register = ({ navigation }: any) => {
         <ScrollView contentContainerStyle={styles.container}>
             <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
             <CustomText style={styles.title}>Chào mừng trở lại</CustomText>
-            <CustomText style={styles.appName}>Jobify</CustomText>
+            <CustomText style={styles.appName}>Career Connect</CustomText>
 
             <Input
                 placeholder="Email"

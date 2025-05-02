@@ -6,6 +6,7 @@ import Input from '../../components/Input';
 import CustomText from '../../components/CustomText';
 import DatePicker from '../../components/DatePicker';
 import Dialog from '../../components/Dialog';
+import { View } from 'react-native-animatable';
 
 const fbJob = firestore().collection('tblTinTuyenDung');
 
@@ -190,8 +191,10 @@ const EditJob = ({ navigation, route }: any) => {
 
                 {error ? <CustomText style={styles.error}>{error}</CustomText> : null}
 
-                <Button title="Lưu" onPress={handleSaveConfirmation} style={styles.button} />
             </ScrollView>
+            <View style={styles.button}>
+                <Button title="Lưu" onPress={handleSaveConfirmation} />
+            </View>
             <Dialog
                 visible={confirmDialogVisible}
                 title="Xác nhận cập nhật"
@@ -228,7 +231,16 @@ const styles = StyleSheet.create({
     largeInput: { height: 100, textAlignVertical: 'top', marginBottom: 10, borderColor: '#BEBEBE', backgroundColor: '#EDEDED' },
     label: { fontSize: 14, fontWeight: '600', color: '#333', marginBottom: 5 },
     error: { color: 'red', textAlign: 'center', marginVertical: 5 },
-    button: {},
+    button: {
+        position: 'absolute',
+        bottom: 0.5,
+        left: 0,
+        right: 0,
+        padding: 20,
+        backgroundColor: '#fff',
+        borderTopWidth: 1,
+        borderColor: '#fff',
+    },
     loading: { textAlign: 'center', marginTop: 20, fontSize: 16 },
 });
 

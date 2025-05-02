@@ -14,8 +14,9 @@ import { useLoading } from '../../../context/themeContext';
 import DialogInterview from '../../components/DialogInterview';
 import axios from 'axios';
 import Dialog from '../../components/Dialog';
+import API_URL from '../../../config/apiConfig';
 
-const API_URL = 'http://192.168.102.24:3000/api/send-email';
+// const API_URL = 'http://192.168.102.24:3000/api/send-email';
 const fbLichHenPhongVan = firestore().collection('tblLichHenPhongVan');
 const fbUngVien = firestore().collection('tblUngVien');
 const fbTaiKhoan = firestore().collection('tblTaiKhoan');
@@ -95,7 +96,6 @@ const AppointmentsScreen = ({ navigation }: any) => {
 
   const handleGoDetailJob = (sMaTinTuyenDung: any) => {
     navigation.navigate('job-detail', { sMaTinTuyenDung });
-
   };
 
   const handleGoDetailApplicant = (sMaUngVien: any, sMaTinTuyenDung: any) => {
@@ -172,7 +172,7 @@ const AppointmentsScreen = ({ navigation }: any) => {
         location: appointment?.sDiaDiem || "",
       };
 
-      await axios.post(API_URL, emailPayload);
+      await axios.post(`${API_URL}/send-email`, emailPayload);
 
 
       setDialogContent({
@@ -246,6 +246,7 @@ const AppointmentsScreen = ({ navigation }: any) => {
         sLoiNhan={selectedAppointment?.sLoiNhan}
         onConfirm={handleConfirmInterview}
         appointment={selectedAppointment}
+        title="Chỉnh sửa lịch hẹn phỏng vấn"
       />
       <Dialog
         visible={dialogVisible}

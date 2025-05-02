@@ -415,7 +415,7 @@ const styles = StyleSheet.create({
     },
     buttonContainer: {
         position: 'absolute',
-        bottom: 40,
+        bottom: 5,
         left: 0,
         right: 0,
         padding: 20,

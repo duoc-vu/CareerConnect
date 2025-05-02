@@ -13,8 +13,9 @@ import { useLoading } from '../../../context/themeContext';
 import axios from 'axios';
 import Dialog from '../../components/Dialog';
 import AppointmentCardCandidate from '../../components/AppointmentsCandidateCard';
+import API_URL from '../../../config/apiConfig';
 
-const API_URL = 'http://192.168.102.24:3000/api/send-email';
+// const API_URL = 'http://192.168.102.24:3000/api/send-email';
 const fbLichHenPhongVan = firestore().collection('tblLichHenPhongVan');
 const fbDoanhNghiep = firestore().collection('tblDoanhNghiep');
 const fbTaiKhoan = firestore().collection('tblTaiKhoan');
@@ -136,7 +137,7 @@ const AppointmentsCandidateScreen = ({ navigation }: any) => {
         location: selectedAppointment.sDiaDiem,
         status: isAccept ? 'accepted' : 'declined'
       };
-      await axios.post(API_URL, emailPayload);
+      await axios.post(`${API_URL}/send-email`, emailPayload);
 
       setDialogContent({
         title: "Thành công",

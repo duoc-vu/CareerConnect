@@ -5,18 +5,23 @@ import {
   Image,
   Text,
   FlatList,
+  TouchableOpacity,
 } from 'react-native';
 import JobCard from '../../components/JobCard';
 import SearchBar from '../../components/SearchBar';
 import { theme } from '../../../theme/theme';
 import { Fonts } from '../../../theme/font';
 import { useUser } from '../../../context/UserContext';
+import FilterDialog from '../../components/FilterDialog';
 
 const Home = ({ fetchJobData, bestJobs, recommendedJobs, navigation }: any) => {
   const { userType, userInfo } = useUser();
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredBestJobs, setFilteredBestJobs] = useState(bestJobs || []);
   const [filteredRecommendedJobs, setFilteredRecommendedJobs] = useState(recommendedJobs || []);
+  const [filterVisible, setFilterVisible] = useState(false);
+  const [isFilterActive, setIsFilterActive] = useState(false);
+
 
   const groupedRecommendedJobs = useMemo(() => {
     const chunkArray = (array: any[], size: number) => {
@@ -50,6 +55,10 @@ const Home = ({ fetchJobData, bestJobs, recommendedJobs, navigation }: any) => {
     filterJobs(searchQuery);
   }, [searchQuery, bestJobs, recommendedJobs]);
 
+  useEffect(() => {
+    console.log('Best Jobs:', bestJobs);
+  }, [bestJobs]);
+
   const renderHorizontalItem = ({ item }: any) => (
     <View style={styles.horizontalGroup}>
       {item.map((job: any, index: number) => (
@@ -79,6 +88,29 @@ const Home = ({ fetchJobData, bestJobs, recommendedJobs, navigation }: any) => {
       style={styles.verticalJobCard}
     />
   );
+
+const handleApplyFilters = (filters: any) => {
+  const { salaryRange, location } = filters;
+
+  const filtered = bestJobs.filter((job: any) => {
+    // Kiểm tra địa điểm
+    const matchesLocation = location
+      ? job.sDiaChiLamViec?.toLowerCase().includes(location.toLowerCase())
+      : true;
+
+    // Kiểm tra mức lương
+    const matchesSalary =
+      (!salaryRange || (typeof job.sMucLuongToiDa === 'number' && job.sMucLuongToiDa >= salaryRange[0])) &&
+      (!salaryRange || (typeof job.sMucLuongToiDa === 'number' && job.sMucLuongToiDa <= salaryRange[1]));
+
+    return matchesLocation && matchesSalary;
+  });
+
+  setFilteredBestJobs(filtered);
+  setIsFilterActive(true); // Đánh dấu rằng bộ lọc đang hoạt động
+};
+
+  
   const renderHeader = () => (
     <View>
       {userType === 1 && filteredRecommendedJobs && filteredRecommendedJobs.length > 0 && (
@@ -103,10 +135,16 @@ const Home = ({ fetchJobData, bestJobs, recommendedJobs, navigation }: any) => {
     <>
       <View style={styles.header}>
         <SearchBar style={styles.searchBar} value={searchQuery} onChangeText={setSearchQuery} />
-        <Image
-          source={userInfo?.sAnhDaiDien ? { uri: userInfo?.sAnhDaiDien } : require('../../../../asset/images/img_ellipse_3.png')}
-          style={styles.avatar}
-        />
+        <TouchableOpacity onPress={() => setFilterVisible(true)}>
+  <Image
+    source={
+      isFilterActive
+        ? require('../../../../asset/images/img_filter_active.png') 
+        : require('../../../../asset/images/img_filter.png') 
+    }
+    style={styles.filterIcon}
+  />
+</TouchableOpacity>
       </View>
       <FlatList
         data={filteredBestJobs}
@@ -121,6 +159,16 @@ const Home = ({ fetchJobData, bestJobs, recommendedJobs, navigation }: any) => {
           <Text style={styles.noJobsText}>Không tìm thấy công việc nào.</Text>
         )}
         ListHeaderComponent={renderHeader}
+      />
+      <FilterDialog
+        visible={filterVisible}
+        onClose={() => {setFilterVisible(false)
+          if (filteredBestJobs.length === bestJobs.length) {
+            setIsFilterActive(false); 
+          }
+        }}
+        onApply={handleApplyFilters}
+        fields={['location', 'salaryRange']}
       />
     </>
   );
@@ -148,11 +196,11 @@ const styles = StyleSheet.create({
   searchBar: {
     width: '80%',
   },
-  avatar: {
+  filterIcon: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    marginHorizontal: 10,
+    marginRight: 15,
+    resizeMode: 'contain',
   },
   recommendedJobsContainer: {
     height: 370,
