@@ -79,14 +79,17 @@ const JobCard: React.FC<JobCardProps> = ({
         <Text style={styles.statusText}>{getStatusUVText(sTrangThai)}</Text>
       ) : sCoKhoa ? (
         <Text style={styles.statusText}>{getStatusText(sCoKhoa)}</Text>
-      ) : (
-        <TouchableOpacity>
-          <Image
-            source={require("../../../asset/images/save_job.png")}
-            style={styles.saveIcon}
-          />
-        </TouchableOpacity>
-      )}
+      ) : 
+      // (
+      //   <TouchableOpacity>
+      //     <Image
+      //       source={require("../../../asset/images/save_job.png")}
+      //       style={styles.saveIcon}
+      //     />
+      //   </TouchableOpacity>
+      // )
+      null
+      }
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Image
@@ -170,7 +173,7 @@ const styles = StyleSheet.create({
     ...Fonts.semiBold,
     color: "#000000",
     marginTop: 8,
-    width: 220,
+    width: 250,
   },
   footer: {
     flexDirection: "row",

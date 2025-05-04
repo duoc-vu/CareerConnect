@@ -10,6 +10,7 @@ interface UserContextType {
   userInfo: UserInfo | null;
   userEmail: string | null;
   setUser: (id: string, type: number, info: UserInfo | null ,userEmail: string | null) => void;
+  updateUserInfo: (info: UserInfo) => void; 
   logout: () => void;
 }
 
@@ -28,6 +29,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     setUserEmail(email);
   };
 
+  const updateUserInfo = (info: UserInfo) => {
+    setUserInfo(prev => ({ ...prev, ...info }));
+  };
+
   const logout = () => {
     setUserId(null);
     setUserType(null);
@@ -36,7 +41,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <UserContext.Provider value={{ userId, userType, userInfo, setUser, logout, userEmail }}>
+    <UserContext.Provider value={{ userId, userType, userInfo, setUser, updateUserInfo, logout, userEmail }}>
       {children}
     </UserContext.Provider>
   );

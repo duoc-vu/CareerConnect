@@ -8,11 +8,19 @@ import DatePicker from '../../components/DatePicker';
 import { useUser } from '../../../context/UserContext';
 import Dialog from '../../components/Dialog';
 import { View } from 'react-native-animatable';
+import HeaderWithIcons from '../../components/Header';
 
 const fbJob = firestore().collection('tblTinTuyenDung');
 
 const PostJob = ({ navigation }: any) => {
     const { userId, userInfo } = useUser()
+
+    const [errors, setErrors] = useState({
+        sMucLuongToiThieu: '',
+        sMucLuongToiDa: '',
+        sSoLuongTuyenDung: '',
+        sSoNamKinhNghiem: '',
+    });
 
     const initialState = {
         sMaTinTuyenDung: '',
@@ -80,6 +88,17 @@ const PostJob = ({ navigation }: any) => {
     }, [userId]);
 
     const handleChange = (key: string, value: string | Date) => {
+        if (['sMucLuongToiThieu', 'sMucLuongToiDa', 'sSoLuongTuyenDung', 'sSoNamKinhNghiem'].includes(key)) {
+            if (!/^\d*$/.test(String(value))) {
+                setErrors(prev => ({
+                    ...prev,
+                    [key]: 'Giá trị phải là số.',
+                }));
+            } else {
+                setErrors(prev => ({ ...prev, [key]: '' }));
+            }
+        }
+
         setFormData(prev => ({ ...prev, [key]: value }));
     };
 
@@ -112,12 +131,12 @@ const PostJob = ({ navigation }: any) => {
 
             const minSalary = parseInt(formData.sMucLuongToiThieu.replace(/\./g, "").trim(), 10);
             const maxSalary = parseInt(formData.sMucLuongToiDa.replace(/\./g, "").trim(), 10);
-    
+
             if (isNaN(minSalary) || isNaN(maxSalary)) {
                 setError("Mức lương phải là số hợp lệ!");
                 return;
             }
-    
+
             if (minSalary > maxSalary) {
                 setError("Mức lương tối thiểu không được lớn hơn mức lương tối đa!");
                 return;
@@ -174,9 +193,14 @@ const PostJob = ({ navigation }: any) => {
     };
 
     return (
-        <>
-            <ScrollView contentContainerStyle={styles.container}>
-                <CustomText style={styles.title}>Đăng tin tuyển dụng</CustomText>
+        <View style={styles.container}>
+                        <HeaderWithIcons
+                    title='Đăng tin tuyển dụng'
+                    onBackPress={navigation.goBack}
+                    style={styles.header}
+                />
+            <ScrollView contentContainerStyle={styles.containerChild}>
+
 
                 <CustomText style={styles.label}>Vị trí tuyển dụng</CustomText>
                 <Input placeholder="" value={formData.sViTriTuyenDung} onChangeText={text => handleChange('sViTriTuyenDung', text)} style={styles.input} />
@@ -189,16 +213,19 @@ const PostJob = ({ navigation }: any) => {
 
                 <CustomText style={styles.label}>Mức lương tối thiểu</CustomText>
                 <Input placeholder="" value={formData.sMucLuongToiThieu} onChangeText={text => handleChange('sMucLuongToiThieu', text)} style={styles.input} />
+                {errors.sMucLuongToiThieu ? <CustomText style={styles.error}>{errors.sMucLuongToiThieu}</CustomText> : null}
 
                 <CustomText style={styles.label}>Mức lương tối đa</CustomText>
                 <Input placeholder="" value={formData.sMucLuongToiDa} onChangeText={text => handleChange('sMucLuongToiDa', text)} style={styles.input} />
+                {errors.sMucLuongToiDa ? <CustomText style={styles.error}>{errors.sMucLuongToiDa}</CustomText> : null}
 
                 <CustomText style={styles.label}>Số lượng tuyển</CustomText>
                 <Input placeholder="" value={formData.sSoLuongTuyenDung} onChangeText={text => handleChange('sSoLuongTuyenDung', text)} style={styles.input} />
+                {errors.sSoLuongTuyenDung ? <CustomText style={styles.error}>{errors.sSoLuongTuyenDung}</CustomText> : null}
 
                 <CustomText style={styles.label}>Kinh nghiệm (Số năm)</CustomText>
                 <Input placeholder="" value={formData.sSoNamKinhNghiem} onChangeText={text => handleChange('sSoNamKinhNghiem', text)} style={styles.input} />
-
+                {errors.sSoNamKinhNghiem ? <CustomText style={styles.error}>{errors.sSoNamKinhNghiem}</CustomText> : null}
                 <CustomText style={styles.label}>Ngày bắt đầu tuyển</CustomText>
                 <DatePicker label="" date={formData.sThoiGianDangBai} setDate={(date: any) => handleChange('sThoiGianDangBai', date)} />
 
@@ -213,9 +240,9 @@ const PostJob = ({ navigation }: any) => {
 
             </ScrollView>
             <View style={styles.button}>
-            <Button title="Đăng tin tuyển dụng" onPress={handlePostJob}  />
+                <Button title="Đăng tin tuyển dụng" onPress={handlePostJob} />
             </View>
-            
+
             <Dialog
                 visible={dialogVisible}
                 title={dialogContent.title}
@@ -224,20 +251,24 @@ const PostJob = ({ navigation }: any) => {
                 dismiss={dialogContent.dismiss}
                 failure={dialogContent.failure}
             />
-        </>
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
-    container: { padding: 20, backgroundColor: '#fff', flexGrow: 1 },
+    container: {backgroundColor: '#fff', flexGrow: 1 },
+    containerChild: { padding: 20, paddingBottom:150},
     title: { fontSize: 22, fontWeight: 'bold', textAlign: 'center', marginVertical: 10 },
+    header:{
+        marginBottom:10
+    },
     input: { marginBottom: 10, borderColor: "#BEBEBE", backgroundColor: "#EDEDED" },
     largeInput: { height: 100, textAlignVertical: 'top', marginBottom: 10, borderColor: "#BEBEBE", backgroundColor: "#EDEDED" },
     label: { fontSize: 14, fontWeight: '600', color: '#333', marginBottom: 5 },
-    error: { color: 'red', textAlign: 'center', marginVertical: 5 },
+    error: { color: 'red', marginVertical: 5, fontSize: 13 },
     button: {
         position: 'absolute',
-        bottom: 0.5,
+        bottom: 50,
         left: 0,
         right: 0,
         padding: 20,

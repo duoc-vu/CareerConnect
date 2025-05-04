@@ -55,10 +55,6 @@ const Home = ({ fetchJobData, bestJobs, recommendedJobs, navigation }: any) => {
     filterJobs(searchQuery);
   }, [searchQuery, bestJobs, recommendedJobs]);
 
-  useEffect(() => {
-    console.log('Best Jobs:', bestJobs);
-  }, [bestJobs]);
-
   const renderHorizontalItem = ({ item }: any) => (
     <View style={styles.horizontalGroup}>
       {item.map((job: any, index: number) => (
@@ -93,12 +89,10 @@ const handleApplyFilters = (filters: any) => {
   const { salaryRange, location } = filters;
 
   const filtered = bestJobs.filter((job: any) => {
-    // Kiểm tra địa điểm
     const matchesLocation = location
       ? job.sDiaChiLamViec?.toLowerCase().includes(location.toLowerCase())
       : true;
 
-    // Kiểm tra mức lương
     const matchesSalary =
       (!salaryRange || (typeof job.sMucLuongToiDa === 'number' && job.sMucLuongToiDa >= salaryRange[0])) &&
       (!salaryRange || (typeof job.sMucLuongToiDa === 'number' && job.sMucLuongToiDa <= salaryRange[1]));
@@ -107,7 +101,7 @@ const handleApplyFilters = (filters: any) => {
   });
 
   setFilteredBestJobs(filtered);
-  setIsFilterActive(true); // Đánh dấu rằng bộ lọc đang hoạt động
+  setIsFilterActive(true); 
 };
 
   
@@ -119,7 +113,7 @@ const handleApplyFilters = (filters: any) => {
           <FlatList
             data={groupedRecommendedJobs}
             renderItem={renderHorizontalItem}
-            keyExtractor={(item, index) => `group-${index}`}
+            keyExtractor={(_, index) => `group-${index}`}
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.horizontalList}

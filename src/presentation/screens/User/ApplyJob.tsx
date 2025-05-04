@@ -22,6 +22,10 @@ const ApplyJob = ({ route, navigation }: any) => {
     const { userId } = useUser();
     const { loading, setLoading } = useLoading();
     const { sMaTinTuyenDung } = route.params;
+    const [errors, setErrors] = useState({
+        sSoDienThoai: '',
+        sKinhNghiem: '',
+    });
 
     const initialState = {
         sMaDonUngTuyen: '',
@@ -136,6 +140,16 @@ const ApplyJob = ({ route, navigation }: any) => {
     }, [sMaTinTuyenDung, userId]);
 
     const handleChange = (key: any, value: any) => {
+        if (key === 'sSoDienThoai' || key === 'sKinhNghiem') {
+            if (!/^\d*$/.test(value)) {
+                setErrors(prev => ({
+                    ...prev,
+                    [key]: `${key === 'sSoDienThoai' ? 'Số điện thoại' : 'Kinh nghiệm'} phải là số.`,
+                }));
+            } else {
+                setErrors(prev => ({ ...prev, [key]: '' }));
+            }
+        }
         setFormData(prev => ({ ...prev, [key]: value }));
     };
 
@@ -199,6 +213,22 @@ const ApplyJob = ({ route, navigation }: any) => {
     };
 
     const handleSubmit = async () => {
+        if (!/^\d+$/.test(formData.sSoDienThoai)) {
+            setErrors(prev => ({
+                ...prev,
+                sSoDienThoai: 'Số điện thoại phải là số.',
+            }));
+            return;
+        }
+    
+        if (!/^\d+$/.test(formData.sKinhNghiem)) {
+            setErrors(prev => ({
+                ...prev,
+                sKinhNghiem: 'Kinh nghiệm phải là số.',
+            }));
+            return;
+        }
+    
         try {
             setLoading(true);
 
@@ -283,6 +313,7 @@ const ApplyJob = ({ route, navigation }: any) => {
                     value={formData.sSoDienThoai}
                     onChangeText={text => handleChange('sSoDienThoai', text)}
                 />
+                {errors.sSoDienThoai ? <CustomText style={styles.error}>{errors.sSoDienThoai}</CustomText> : null}
 
                 <CustomText style={styles.label}>Kỹ năng</CustomText>
                 <Input
@@ -299,7 +330,7 @@ const ApplyJob = ({ route, navigation }: any) => {
                     value={formData.sKinhNghiem}
                     onChangeText={text => handleChange('sKinhNghiem', text)}
                 />
-
+                {errors.sKinhNghiem ? <CustomText style={styles.error}>{errors.sKinhNghiem}</CustomText> : null}
                 <CustomText style={styles.label}>Sở thích</CustomText>
                 <Input
                     placeholder="Sở thích"
@@ -317,9 +348,9 @@ const ApplyJob = ({ route, navigation }: any) => {
                     onChangeText={text => handleChange('sMoTaChiTiet', text)}
                 />
 
-                <CustomText style={styles.label}>Giới thiệu bản thân</CustomText>
+                <CustomText style={styles.label}>Lời giới thiệu</CustomText>
                 <Input
-                    placeholder="Giới thiệu bản thân"
+                    placeholder="Lời giới thiệu"
                     multiline
                     style={styles.largeInput}
                     value={formData.sGioiThieu}
@@ -422,6 +453,11 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         borderTopWidth: 1,
         borderColor: '#fff',
+    },
+    error: {
+        color: 'red',
+        fontSize: 12,
+        marginTop: 5,
     },
 });
 

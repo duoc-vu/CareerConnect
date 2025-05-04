@@ -102,42 +102,42 @@ const SettingScreen = ({ navigation }: any) => {
       },
       icon: require('../../../../asset/images/right-arrow.png'),
     },
+    // {
+    //   id: '2',
+    //   title: userType === 1
+    //     ? 'Đăng ký thông tin'
+    //     : userType === 2
+    //       ? 'Đăng ký thông tin doanh nghiệp'
+    //       : 'Đăng ký thông tin',
+    //   onPress: () => {
+    //     if (userType === 1) {
+    //       navigation.navigate("edit-candidate-profile");
+    //     } else if (userType === 2) {
+    //       navigation.navigate("edit-employer-profile");
+    //     } else {
+    //       setDialogContent({
+    //         title: 'Thông báo',
+    //         content: 'Bạn cần đăng nhập để thực hiện hành động này.',
+    //         visible: true,
+    //         confirm: {
+    //           text: 'Đăng nhập',
+    //           onPress: () => {
+    //             setDialogContent(prev => ({ ...prev, visible: false }));
+    //             navigation.navigate('login');
+    //           },
+    //         },
+    //         dismiss: {
+    //           text: 'Hủy',
+    //           onPress: () => setDialogContent(prev => ({ ...prev, visible: false })),
+    //         },
+    //         request: true
+    //       });
+    //     }
+    //   },
+    //   icon: require('../../../../asset/images/right-arrow.png'),
+    // },
     {
       id: '2',
-      title: userType === 1
-        ? 'Đăng ký thông tin'
-        : userType === 2
-          ? 'Đăng ký thông tin doanh nghiệp'
-          : 'Đăng ký thông tin',
-      onPress: () => {
-        if (userType === 1) {
-          navigation.navigate("edit-candidate-profile");
-        } else if (userType === 2) {
-          navigation.navigate("edit-employer-profile");
-        } else {
-          setDialogContent({
-            title: 'Thông báo',
-            content: 'Bạn cần đăng nhập để thực hiện hành động này.',
-            visible: true,
-            confirm: {
-              text: 'Đăng nhập',
-              onPress: () => {
-                setDialogContent(prev => ({ ...prev, visible: false }));
-                navigation.navigate('login');
-              },
-            },
-            dismiss: {
-              text: 'Hủy',
-              onPress: () => setDialogContent(prev => ({ ...prev, visible: false })),
-            },
-            request: true
-          });
-        }
-      },
-      icon: require('../../../../asset/images/right-arrow.png'),
-    },
-    {
-      id: '3',
       title: userType === 1
         ? 'Công việc đã lưu'
         : userType === 2
@@ -171,7 +171,7 @@ const SettingScreen = ({ navigation }: any) => {
       icon: require('../../../../asset/images/right-arrow.png'),
     },
     {
-      id: '4',
+      id: '3',
       title: 'Quản lý lịch hẹn phỏng vấn',
       onPress: () => {
         if (userType === 1 || userType === 2) {
@@ -199,13 +199,13 @@ const SettingScreen = ({ navigation }: any) => {
       icon: require('../../../../asset/images/right-arrow.png'),
     },
     {
-      id: '5',
+      id: '4',
       title: 'Chính sách',
       onPress: () => handlePolicy(),
       icon: require('../../../../asset/images/right-arrow.png'),
     },
     {
-      id: '6',
+      id: '5',
       title: 'Phản hồi và góp ý',
       onPress: () => navigation.navigate("feedback"),
       icon: require('../../../../asset/images/right-arrow.png'),
@@ -214,7 +214,7 @@ const SettingScreen = ({ navigation }: any) => {
   if (userType === 1 || userType === 2) {
     data.push(
       {
-        id: '7',
+        id: '6',
         title: 'Đổi mật khẩu',
         onPress: () => console.log('Go to Đổi mật khẩu'),
         icon: require('../../../../asset/images/right-arrow.png')

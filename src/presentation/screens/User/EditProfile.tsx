@@ -20,7 +20,7 @@ import RNFS from 'react-native-fs';
 const fbUV = firestore().collection('tblUngVien');
 
 const EditProfile = ({ navigation }: any) => {
-    const { userId } = useUser();
+    const { userId, updateUserInfo } = useUser();
     const { loading, setLoading } = useLoading();
     const [cvFile, setCvFile] = useState<string | null>(null);
     const initialState = {
@@ -36,6 +36,10 @@ const EditProfile = ({ navigation }: any) => {
         sSoThich: '',
         fFileCV: ''
     };
+    const [errors, setErrors] = useState({
+        sSoDienThoai: '',
+        sKinhNghiem: '',
+    });
 
 
     const [formData, setFormData] = useState(initialState);
@@ -83,6 +87,17 @@ const EditProfile = ({ navigation }: any) => {
     };
 
     const handleChange = (key: string, value: string) => {
+        if (key === 'sKinhNghiem' || key === 'sSoDienThoai') {
+            if (!/^\d*$/.test(value)) {
+                setErrors(prev => ({
+                    ...prev,
+                    [key]: `${key === 'sKinhNghiem' ? 'Kinh nghiệm' : 'Số điện thoại'} phải là số.`,
+                }));
+            } else {
+                setErrors(prev => ({ ...prev, [key]: '' }));
+            }
+        }
+
         setFormData(prev => ({ ...prev, [key]: value }));
     };
     const handleChoosePhoto = () => {
@@ -95,7 +110,12 @@ const EditProfile = ({ navigation }: any) => {
             if (response.didCancel) {
                 console.log('Người dùng hủy chọn ảnh');
             } else if (response.errorCode) {
-                console.error('Lỗi ImagePicker:', response.errorMessage);
+                setDialogContent({
+                    title: "Lỗi",
+                    message: `Lỗi khi chọn ảnh: ${response.errorMessage}`,
+                    isSuccess: false,
+                });
+                setDialogVisible(true);
             } else if (response.assets && response.assets.length > 0) {
                 const uri = response.assets[0].uri;
                 await uploadImage(uri);
@@ -114,8 +134,21 @@ const EditProfile = ({ navigation }: any) => {
             const downloadURL = await reference.getDownloadURL();
 
             setFormData(prev => ({ ...prev, sAnhDaiDien: downloadURL }));
+
+            setDialogContent({
+                title: "Thành công",
+                message: "Ảnh đại diện đã được tải lên thành công!",
+                isSuccess: true,
+            });
+            setDialogVisible(true);
         } catch (error) {
             console.error('Lỗi khi tải ảnh lên:', error);
+            setDialogContent({
+                title: "Lỗi",
+                message: "Không thể tải ảnh lên, vui lòng thử lại.",
+                isSuccess: false,
+            });
+            setDialogVisible(true);
         } finally {
             setLoading(false);
         }
@@ -127,15 +160,25 @@ const EditProfile = ({ navigation }: any) => {
             (formData.sChuyenNganh || '').trim() !== '' &&
             (formData.sLinhVuc || '').trim() !== '' &&
             (formData.sDiaChi || '').trim() !== '' &&
-            (formData.sSoDienThoai || '').trim() !== '' &&
+            /^\d+$/.test(formData.sSoDienThoai || '') &&
+            /^\d+$/.test(formData.sKinhNghiem || '') &&
             (formData.sKiNang || '').trim() !== '' &&
-            (formData.sKinhNghiem || '').trim() !== '' &&
             (formData.sSoThich || '').trim() !== '' &&
             (formData.sMoTaChiTiet || '').trim() !== ''
         );
     };
 
     const handleSave = async () => {
+        if (!userId) {
+            setDialogContent({
+                title: "Lỗi",
+                message: "Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.",
+                isSuccess: false,
+            });
+            setDialogVisible(true);
+            return;
+        }
+
         try {
             setLoading(true);
 
@@ -163,6 +206,7 @@ const EditProfile = ({ navigation }: any) => {
                 });
                 setDialogVisible(true);
             }
+            updateUserInfo({ ...formData, fFileCV: cvFile || "" });
         } catch (error) {
             console.error('❌ Lỗi khi lưu thông tin:', error);
             setDialogContent({
@@ -197,20 +241,23 @@ const EditProfile = ({ navigation }: any) => {
 
     const uploadCV = async (uri: string) => {
         if (!uri || !userId) {
-            Alert.alert('Lỗi', 'Thiếu thông tin để upload file. Vui lòng kiểm tra lại.');
+            setDialogContent({
+                title: "Lỗi",
+                message: "Thiếu thông tin để upload file. Vui lòng kiểm tra lại.",
+                isSuccess: false,
+            });
+            setDialogVisible(true);
             return;
         }
 
         setLoading(true);
         try {
-            const fileName = `tblUngVien/${userId}/${userId}.pdf`; // Đường dẫn lưu file trong Firebase Storage
+            const fileName = `tblUngVien/${userId}/${userId}.pdf`;
             const reference = storage().ref(fileName);
 
-            // Sao chép file vào bộ nhớ tạm
             const tempPath = `${RNFS.TemporaryDirectoryPath}/${userId}_cv.pdf`;
             await RNFS.copyFile(uri, tempPath);
 
-            // Upload file từ bộ nhớ tạm
             await reference.putFile(tempPath);
             const downloadURL = await reference.getDownloadURL();
 
@@ -272,12 +319,14 @@ const EditProfile = ({ navigation }: any) => {
 
                 <CustomText style={styles.label}>Số điện thoại</CustomText>
                 <Input placeholder="Nhập số điện thoại" style={styles.input} value={formData.sSoDienThoai} onChangeText={text => handleChange('sSoDienThoai', text)} />
+                {errors.sSoDienThoai ? <CustomText style={styles.error}>{errors.sSoDienThoai}</CustomText> : null}
 
                 <CustomText style={styles.label}>Kỹ năng</CustomText>
                 <Input placeholder="Nhập kỹ năng" style={styles.input} value={formData.sKiNang} onChangeText={text => handleChange('sKiNang', text)} />
 
                 <CustomText style={styles.label}>Kinh nghiệm</CustomText>
                 <Input placeholder="Nhập kinh nghiệm" style={styles.input} value={formData.sKinhNghiem} onChangeText={text => handleChange('sKinhNghiem', text)} />
+                {errors.sKinhNghiem ? <CustomText style={styles.error}>{errors.sKinhNghiem}</CustomText> : null}
 
                 <CustomText style={styles.label}>Sở thích</CustomText>
                 <Input placeholder="Nhập sở thích" style={styles.input} value={formData.sSoThich} onChangeText={text => handleChange('sSoThich', text)} />
@@ -308,9 +357,9 @@ const EditProfile = ({ navigation }: any) => {
                 content={dialogContent.message}
                 confirm={{
                     text: "Đóng",
-                    onPress: () => setDialogVisible(false), 
+                    onPress: () => setDialogVisible(false),
                 }}
-                failure={!dialogContent.isSuccess} 
+                failure={!dialogContent.isSuccess}
             />
             {loading && <Loading />}
         </View>
@@ -322,6 +371,7 @@ const styles = StyleSheet.create({
     wrapper: {
         flex: 1,
         fontFamily: Fonts.medium.fontFamily,
+        backgroundColor: '#fff',
     },
     container: { padding: 20, backgroundColor: '#fff', flexGrow: 1, paddingBottom: 130 },
     avatarContainer: {
@@ -375,6 +425,11 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: "#007AFF",
         marginBottom: 10,
+    },
+    error: {
+        color: 'red',
+        fontSize: 12,
+        marginTop: 5,
     },
 });
 

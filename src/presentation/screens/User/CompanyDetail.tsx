@@ -170,8 +170,6 @@ const CompanyDetail = ({ navigation, route }: any) => {
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <CustomText style={styles.sectionTitle}>Lĩnh Vực</CustomText>
-                         
-                            <Image source={require('../../../../asset/images/img_edit.png')} />
                     </View>
                     <CustomText style={styles.description}>{employer.sLinhVuc || 'Chưa có thông tin'}</CustomText>
                 </View>
@@ -179,8 +177,6 @@ const CompanyDetail = ({ navigation, route }: any) => {
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <CustomText style={styles.sectionTitle}>Số lượng nhân viên</CustomText>
-                         
-                            <Image source={require('../../../../asset/images/img_edit.png')} />
                     </View>
                     <CustomText style={styles.description}>{employer.sSoLuongNhanVien || 'Chưa có thông tin'}</CustomText>
                 </View>
@@ -188,15 +184,12 @@ const CompanyDetail = ({ navigation, route }: any) => {
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <CustomText style={styles.sectionTitle}>Giới thiệu doanh nghiệp</CustomText>
-                            <Image source={require('../../../../asset/images/img_edit.png')} />
                     </View>
                     {renderDescriptionWithLineBreaks(employer.sMoTaChiTiet)}
                 </View>
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <CustomText style={styles.sectionTitle}>Tin tuyển dụng</CustomText>
-                         
-                            <Image source={require('../../../../asset/images/img_edit.png')} />
                     </View>
                     {groupedRecommendedJobs.length > 0 ? (
                         <FlatList

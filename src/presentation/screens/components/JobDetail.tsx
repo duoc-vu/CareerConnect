@@ -390,6 +390,7 @@ const JobDetail = ({ route, navigation }: any) => {
                   {jobDescriptions[2] || "Không có thông tin"}
                 </Text>
               </View>
+              {isOwner && (
               <View style={styles.section}>
                 <Text style={[styles.recommendedJobsTitle, Fonts.semiBold]}>
                   Ứng viên phù hợp
@@ -414,6 +415,7 @@ const JobDetail = ({ route, navigation }: any) => {
                   <Text style={styles.noJobsText}>Không có ứng viên phù hợp.</Text>
                 )}
               </View>
+              )}
             </View>
           </ScrollView>
 

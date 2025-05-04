@@ -12,6 +12,7 @@ import { useUser } from '../../../context/UserContext';
 import Loading from '../../components/Loading';
 import { useLoading } from '../../../context/themeContext';
 import Dialog from '../../components/Dialog';
+import { theme } from '../../../theme/theme';
 
 const fbDonUngTuyen = firestore().collection('tblDonUngTuyen');
 
@@ -35,6 +36,96 @@ const ApplicantsScreen = ({ navigation }: any) => {
     dismiss: null as null | { text: string; onPress: () => void },
     failure: false,
   });
+
+  const [groupedApplicants, setGroupedApplicants] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchApplicants = async () => {
+      setLoading(true);
+      try {
+        const jobQuerySnapshot = await firestore()
+          .collection('tblTinTuyenDung')
+          .where('sMaDoanhNghiep', '==', userId)
+          .get();
+
+        const jobs = jobQuerySnapshot.docs.map(doc => ({
+          sMaTinTuyenDung: doc.data().sMaTinTuyenDung,
+          sViTriTuyenDung: doc.data().sViTriTuyenDung,
+        }));
+
+        if (jobs.length === 0) {
+          setGroupedApplicants([]);
+          return;
+        }
+
+        const applicantQuerySnapshot = await fbDonUngTuyen
+          .where('sMaTinTuyenDung', 'in', jobs.map(job => job.sMaTinTuyenDung))
+          .get();
+
+        const applicantsList = applicantQuerySnapshot.docs.map(doc => ({
+          ...doc.data(),
+          id: doc.id,
+          sMaTinTuyenDung: doc.data().sMaTinTuyenDung || ''
+        }));
+
+        const grouped = jobs.map(job => ({
+          sMaTinTuyenDung: job.sMaTinTuyenDung,
+          sViTriTuyenDung: job.sViTriTuyenDung,
+          applicants: applicantsList.filter(applicant => applicant.sMaTinTuyenDung === job.sMaTinTuyenDung),
+        }));
+
+        setGroupedApplicants(grouped);
+      } catch (error) {
+        console.error('Error fetching applicants:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchApplicants();
+  }, [userId]);
+
+  const renderGroup = ({ item }: any) => (
+    <View style={styles.groupContainer}>
+      <Text style={styles.groupTitle}>{item.sViTriTuyenDung} (#{item.sMaTinTuyenDung})</Text>
+      {item.applicants.length === 0 ? (
+        <Text style={styles.noApplicantsText}>Không có đơn ứng tuyển nào</Text>
+      ) : (
+        <>
+          {item.applicants.slice(0, 1).map((applicant: any) => (
+            <ApplicantCard
+              key={applicant.id}
+              applicantCode={applicant.sMaDonUngTuyen}
+              applicationDate={applicant.sNgayTao}
+              status={STATUS_TEXT_MAPPING[applicant.sTrangThai]}
+              cvUrl={applicant.fFileCV}
+              onViewCV={() =>
+                navigation.navigate('application-detail', {
+                  sMaUngVien: applicant.sMaUngVien,
+                  sMaTinTuyenDung: applicant.sMaTinTuyenDung,
+                })
+              }
+              onAccept={() => handleAccept(applicant.sMaDonUngTuyen)}
+              onReject={() => handleReject(applicant.sMaDonUngTuyen)}
+            />
+          ))}
+          {item.applicants.length > 1 && (
+            <Text
+              style={styles.viewMore}
+              onPress={() =>
+                navigation.navigate('job-applicants', {
+                  sMaTinTuyenDung: item.sMaTinTuyenDung,
+                  sViTriTuyenDung: item.sViTriTuyenDung,
+                })
+              }
+            >
+              Xem thêm
+            </Text>
+          )}
+        </>
+      )}
+    </View>
+  );
 
   useEffect(() => {
     const fetchApplicants = async () => {
@@ -215,14 +306,14 @@ const ApplicantsScreen = ({ navigation }: any) => {
   return (
     <View style={styles.container}>
       <HeaderWithIcons
-        title="Quản lý tin tuyển dụng"
+        title="Quản lý đơn ứng tuyển"
         backgroundColor="#f2f2f2"
         onBackPress={() => navigation.goBack()}
       />
       <FlatList
-        data={filteredApplicants}
-        renderItem={renderItem}
-        keyExtractor={(item: any) => item.id || Math.random().toString()}
+        data={groupedApplicants}
+        renderItem={renderGroup}
+        keyExtractor={(item: any) => item.sMaTinTuyenDung}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={() => (
@@ -231,6 +322,7 @@ const ApplicantsScreen = ({ navigation }: any) => {
           </Text>
         )}
       />
+
       <Dialog
         visible={dialogVisible}
         title={dialogContent.title}
@@ -254,10 +346,35 @@ const styles = StyleSheet.create({
     paddingBottom: 50,
   },
   noApplicantsText: {
-    textAlign: 'center',
     fontSize: 16,
     color: '#6B7280',
     marginTop: 20,
+  },
+  groupContainer: {
+    marginBottom: 20,
+    backgroundColor: theme.template.biru,
+    borderRadius: 8,
+    padding: 15,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  groupTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: 'white',
+    marginBottom: 10,
+  },
+  groupList: {
+    paddingBottom: 10,
+  },
+  viewMore: {
+    color: '#007BFF',
+    fontSize: 14,
+    fontWeight: 'bold',
+    textAlign: 'right',
+    marginTop: 10,
   },
 });
 

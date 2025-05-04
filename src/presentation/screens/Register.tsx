@@ -21,7 +21,7 @@ const Register = ({ navigation }: any) => {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState('');
     const { loading, setLoading } = useLoading();
-    const [rememberMe, setRememberMe] = useState(false);
+    // const [rememberMe, setRememberMe] = useState(false);
     const [selectedOption, setSelectedOption] = useState<string>('');
     const [dialogVisible, setDialogVisible] = useState(false);
     const [dialogContent, setDialogContent] = useState({
@@ -132,12 +132,12 @@ const Register = ({ navigation }: any) => {
             <UserOption selected={selectedOption} onSelect={handleSelectOption} />
 
 
-            <CheckBox
+            {/* <CheckBox
                 label="Nhớ mật khẩu"
                 checked={rememberMe}
                 onToggle={() => setRememberMe(!rememberMe)}
                 style={styles.rememberContainer}
-            />
+            /> */}
 
             <View style={styles.loginOptionsContainer}>
                 <Button title="Đăng ký" onPress={handleRegister} />
@@ -161,7 +161,7 @@ const Register = ({ navigation }: any) => {
                 title={dialogContent.title}
                 content={dialogContent.message}
                 confirm={{
-                    text: "Đóng",
+                    text: dialogContent.isAccept ? "Đăng nhập" : "Đóng",
                     onPress: () => {
                         setDialogVisible(false);
                         if (dialogContent.isAccept) {

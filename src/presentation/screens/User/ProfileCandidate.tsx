@@ -100,10 +100,7 @@ const ProfileCandidate = ({ navigation }: any) => {
                 />
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
-                        <CustomText style={styles.sectionTitle}>Lĩnh Vực</CustomText>
-                        <TouchableOpacity onPress={() => navigation.navigate("edit-candidate-profile")}>
-                            <Image source={require('../../../../asset/images/img_edit.png')} />
-                        </TouchableOpacity>
+                        <CustomText style={styles.sectionTitle}>Vị trí công việc</CustomText>
                     </View>
                     <CustomText style={styles.description}>{user.sChuyenNganh || 'Chưa có thông tin'}</CustomText>
                 </View>
@@ -111,20 +108,13 @@ const ProfileCandidate = ({ navigation }: any) => {
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <CustomText style={styles.sectionTitle}>Kinh Nghiệm Làm Việc</CustomText>
-                        <TouchableOpacity onPress={() => navigation.navigate("edit-candidate-profile")}>
-                            <Image source={require('../../../../asset/images/img_edit.png')} />
-                        </TouchableOpacity>
                     </View>
-                    <CustomText style={styles.description}>{user.sKinhNghiem || 'Chưa có kinh nghiệm'}</CustomText>
+                    <CustomText style={styles.description}>{user.sKinhNghiem ? `${user.sKinhNghiem} năm kinh nghiệm` : 'Chưa có kinh nghiệm'}</CustomText>
                 </View>
 
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <CustomText style={styles.sectionTitle}>Kĩ năng</CustomText>
-
-                        <TouchableOpacity onPress={() => navigation.navigate("edit-candidate-profile")}>
-                            <Image source={require('../../../../asset/images/img_edit.png')} />
-                        </TouchableOpacity>
                     </View>
                     <SkillTags
                         skills={user.sKiNang || 'Không có kĩ năng nào'}
@@ -135,9 +125,6 @@ const ProfileCandidate = ({ navigation }: any) => {
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <CustomText style={styles.sectionTitle}>Sở Thích</CustomText>
-                        <TouchableOpacity onPress={() => navigation.navigate("edit-candidate-profile")}>
-                            <Image source={require('../../../../asset/images/img_edit.png')} />
-                        </TouchableOpacity>
                     </View>
                     <CustomText style={styles.description}>{user.sSoThich || 'Không có sở thích.'}</CustomText>
                 </View>
@@ -145,9 +132,6 @@ const ProfileCandidate = ({ navigation }: any) => {
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <CustomText style={styles.sectionTitle}>Giới thiệu bản thân</CustomText>
-                        <TouchableOpacity onPress={() => navigation.navigate("edit-candidate-profile")}>
-                            <Image source={require('../../../../asset/images/img_edit.png')} />
-                        </TouchableOpacity>
                     </View>
                     <CustomText style={styles.description}>{user.sMoTaChiTiet || 'Không có mô tả chi tiết nào.'}</CustomText>
                 </View>
@@ -155,14 +139,11 @@ const ProfileCandidate = ({ navigation }: any) => {
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <CustomText style={styles.sectionTitle}>CV</CustomText>
-                        <TouchableOpacity onPress={() => navigation.navigate("edit-candidate-profile")}>
-                            <Image source={require('../../../../asset/images/img_edit.png')} />
-                        </TouchableOpacity>
                     </View>
                     {user.fFileCV.startsWith('http') ? (
                         <TouchableOpacity
                             onPress={() =>
-                                navigation.navigate('cv-preview', { cvUrl: user.fFileCV }) // Điều hướng đến màn hình xem CV
+                                navigation.navigate('cv-preview', { cvUrl: user.fFileCV })
                             }
                             style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10 }}
                         >
@@ -207,10 +188,10 @@ const styles = StyleSheet.create({
         height: 60,
         borderRadius: 30,
     },
-    infoContainer: {
-        flex: 1,
-        marginLeft: 12,
-    },
+    // infoContainer: {
+    //     flex: 1,
+    //     marginLeft: 12,
+    // },
     name: {
         fontSize: 18,
         fontWeight: 'bold',
@@ -224,19 +205,18 @@ const styles = StyleSheet.create({
         fontSize: 102,
         color: '#ddd',
     },
-    editButton: {
-        backgroundColor: '#fff',
-        paddingVertical: 6,
-        paddingHorizontal: 12,
-        borderRadius: 6,
-    },
+    // editButton: {
+    //     backgroundColor: '#fff',
+    //     paddingVertical: 6,
+    //     paddingHorizontal: 12,
+    //     borderRadius: 6,
+    // },
     editButtonText: {
         color: '#1E3A8A',
         fontWeight: 'bold',
     },
     section: {
-        padding: 16,
-        marginBottom: 16,
+        paddingVertical: 16,
     },
     sectionHeader: {
         flexDirection: "row",
