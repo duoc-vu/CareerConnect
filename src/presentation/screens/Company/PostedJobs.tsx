@@ -163,6 +163,68 @@ const PostedJobs = ({ navigation }: any) => {
     }
   };
 
+  const handleImportCSVPress = async () => {
+  try {
+    const companySnapshot = await firestore()
+      .collection('tblDoanhNghiep')
+      .where('sMaDoanhNghiep', '==', userId)
+      .get();
+
+    if (!companySnapshot.empty) {
+      const companyData = companySnapshot.docs[0].data();
+
+      if (companyData.bTrangThai === false) {
+        setDialogContent({
+          title: 'Thông báo',
+          content: 'Tài khoản của bạn đang trong thời gian chờ duyệt nên chưa thể sử dụng chức năng này.',
+          confirm: {
+            text: 'Đóng',
+            onPress: () => setDialogVisible(false),
+          },
+          dismiss: null,
+          failure: true,
+        });
+        setDialogVisible(true);
+        return;
+      }
+
+      // Điều hướng đến màn hình ImportCSVScreen
+      navigation.navigate('import-csv', { userId });
+    } else {
+      setDialogContent({
+        title: 'Thông báo',
+        content: 'Doanh nghiệp của bạn chưa đăng ký thông tin. Vui lòng đăng ký thông tin doanh nghiệp trước khi sử dụng chức năng này.',
+        confirm: {
+          text: 'Đăng ký ngay',
+          onPress: () => {
+            setDialogVisible(false);
+            navigation.navigate('edit-employer-profile');
+          },
+        },
+        dismiss: {
+          text: 'Hủy',
+          onPress: () => setDialogVisible(false),
+        },
+        failure: true,
+      });
+      setDialogVisible(true);
+    }
+  } catch (error) {
+    console.error('Error checking company details:', error);
+    setDialogContent({
+      title: 'Lỗi',
+      content: 'Không thể kiểm tra thông tin doanh nghiệp. Vui lòng thử lại.',
+      confirm: {
+        text: 'Đóng',
+        onPress: () => setDialogVisible(false),
+      },
+      dismiss: null,
+      failure: true,
+    });
+    setDialogVisible(true);
+  }
+};
+
   const handleApplyFilters = (filters: any) => {
     const { jobType } = filters;
 
@@ -237,7 +299,8 @@ const PostedJobs = ({ navigation }: any) => {
           </Text>
         )}
       />
-      <UploadButton onPress={handleUploadPress} />
+      <UploadButton onFirstIconPress={handleImportCSVPress}
+        onSecondIconPress={handleUploadPress} />
       <FilterDialog
         visible={filterVisible}
         onClose={() => {

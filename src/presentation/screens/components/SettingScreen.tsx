@@ -216,7 +216,7 @@ const SettingScreen = ({ navigation }: any) => {
       {
         id: '6',
         title: 'Đổi mật khẩu',
-        onPress: () => console.log('Go to Đổi mật khẩu'),
+        onPress: () => navigation.navigate("change-password"),
         icon: require('../../../../asset/images/right-arrow.png')
       },
       {

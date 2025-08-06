@@ -177,16 +177,34 @@ const ApplicantsScreen = ({ navigation }: any) => {
     setFilteredApplicants(filtered);
   }, [searchQuery, applicants]);
 
-  const updateStatus = async (applicantId: string, newStatus: number) => {
+  const updateStatus = async (sMaDonUngTuyen: string, newStatus: number) => {
     try {
+      const snapshot = await firestore()
+        .collection('tblDonUngTuyen')
+        .where('sMaDonUngTuyen', '==', sMaDonUngTuyen)
+        .get();
+
+      if (snapshot.empty) {
+        showDialog('Lỗi', 'Không tìm thấy ứng viên.', true, null, {
+          text: 'Đóng',
+          onPress: () => setDialogVisible(false),
+        });
+        return;
+      }
+
+      // Lấy ID tài liệu Firestore
+      const docId = snapshot.docs[0].id;
+
+      // Cập nhật trạng thái trong Firestore
       await firestore()
         .collection('tblDonUngTuyen')
-        .doc(applicantId)
+        .doc(docId)
         .update({ sTrangThai: newStatus });
 
+      // Cập nhật trạng thái trong danh sách `applicants` và `filteredApplicants`
       setApplicants(prev =>
         prev.map(applicant =>
-          applicant.id === applicantId
+          applicant.sMaDonUngTuyen === sMaDonUngTuyen
             ? { ...applicant, sTrangThai: newStatus }
             : applicant
         )
@@ -194,16 +212,23 @@ const ApplicantsScreen = ({ navigation }: any) => {
 
       setFilteredApplicants(prev =>
         prev.map(applicant =>
-          applicant.id === applicantId
+          applicant.sMaDonUngTuyen === sMaDonUngTuyen
             ? { ...applicant, sTrangThai: newStatus }
             : applicant
         )
       );
 
-      showDialog('Thành công', `Đã cập nhật trạng thái thành "${STATUS_TEXT_MAPPING[newStatus]}".`, false);
+      // Hiển thị thông báo thành công
+      showDialog('Thành công', `Đã cập nhật trạng thái thành "${STATUS_TEXT_MAPPING[newStatus]}".`, false, null, {
+        text: 'Đóng',
+        onPress: () => setDialogVisible(false),
+      });
     } catch (error) {
       console.error('Error updating status:', error);
-      showDialog('Lỗi', 'Không thể cập nhật trạng thái. Vui lòng thử lại.', true);
+      showDialog('Lỗi', 'Không thể cập nhật trạng thái. Vui lòng thử lại.', true, null, {
+        text: 'Đóng',
+        onPress: () => setDialogVisible(false),
+      });
     }
   };
 
@@ -309,6 +334,7 @@ const ApplicantsScreen = ({ navigation }: any) => {
         title="Quản lý đơn ứng tuyển"
         backgroundColor="#f2f2f2"
         onBackPress={() => navigation.goBack()}
+        style={styles.header}
       />
       <FlatList
         data={groupedApplicants}
@@ -341,6 +367,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f2f2f2',
     padding: 15,
+  },
+  header: {
+    textAlign: 'center',
+    verticalAlign: "middle"
   },
   list: {
     paddingBottom: 50,

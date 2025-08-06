@@ -162,7 +162,7 @@ const handleApplyFilters = (filters: any) => {
           }
         }}
         onApply={handleApplyFilters}
-        fields={['location', 'salaryRange']}
+        fields={['location']}
       />
     </>
   );

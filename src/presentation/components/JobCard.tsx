@@ -39,11 +39,13 @@ const JobCard: React.FC<JobCardProps> = ({
       case 1:
         return "Đã duyệt";
       case 2:
-        return "Bạn đã khóa";
+        return "Chờ duyệt";
       case 3:
-        return "Từ chối";
+        return "Bạn đã đóng";
       case 4:
         return "Hết hạn";
+      case 5:
+        return "Bị khóa";
       default:
         return "";
     }
@@ -53,20 +55,21 @@ const JobCard: React.FC<JobCardProps> = ({
   const getStatusUVText = (status: number | undefined) => {
     switch (status) {
       case 1:
-        return "Đã duyệt";
+        return "Đã được duyệt";
       case 2:
         return "Chờ duyệt";
       case 3:
-        return "Từ chối";
+        return "Bị từ chối";
       default:
         return "";
     }
   };
   const limitWords = (text: string, wordLimit: number) => {
-    const words = text.split(" ");
-    return words.length > wordLimit
-      ? words.slice(0, wordLimit).join(" ") + "..."
-      : text;
+      const safeText = text || "";
+  const words = safeText.split(" ");
+  return words.length > wordLimit
+    ? words.slice(0, wordLimit).join(" ") + "..."
+    : safeText;
   };
 
   return (
@@ -79,16 +82,16 @@ const JobCard: React.FC<JobCardProps> = ({
         <Text style={styles.statusText}>{getStatusUVText(sTrangThai)}</Text>
       ) : sCoKhoa ? (
         <Text style={styles.statusText}>{getStatusText(sCoKhoa)}</Text>
-      ) : 
-      // (
-      //   <TouchableOpacity>
-      //     <Image
-      //       source={require("../../../asset/images/save_job.png")}
-      //       style={styles.saveIcon}
-      //     />
-      //   </TouchableOpacity>
-      // )
-      null
+      ) :
+        // (
+        //   <TouchableOpacity>
+        //     <Image
+        //       source={require("../../../asset/images/save_job.png")}
+        //       style={styles.saveIcon}
+        //     />
+        //   </TouchableOpacity>
+        // )
+        null
       }
       <View style={styles.header}>
         <View style={styles.headerLeft}>

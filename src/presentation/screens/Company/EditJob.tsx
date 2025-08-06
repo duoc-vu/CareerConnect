@@ -109,8 +109,27 @@ const EditJob = ({ navigation, route }: any) => {
             if (!jobQuerySnapshot.empty) {
                 const jobDocId = jobQuerySnapshot.docs[0].id;
 
+                const minSalary = parseInt(formData.sMucLuongToiThieu.trim(), 10);
+                const maxSalary = parseInt(formData.sMucLuongToiDa.trim(), 10);
+                const soLuongTuyenDung = parseInt(formData.sSoLuongTuyenDung.trim(), 10);
+                const soNamKinhNghiem = parseInt(formData.sSoNamKinhNghiem.trim(), 10);
+    
+                if (isNaN(minSalary) || isNaN(maxSalary) || isNaN(soLuongTuyenDung) || isNaN(soNamKinhNghiem)) {
+                    setError('Mức lương, số lượng tuyển, và kinh nghiệm phải là số hợp lệ.');
+                    return;
+                }
+    
+                if (minSalary > maxSalary) {
+                    setError('Mức lương tối thiểu không được lớn hơn mức lương tối đa.');
+                    return;
+                }
+
                 await fbJob.doc(jobDocId).update({
                     ...formData,
+                    sMucLuongToiThieu: minSalary, 
+                    sMucLuongToiDa: maxSalary,  
+                    sSoLuongTuyenDung: soLuongTuyenDung, 
+                    sSoNamKinhNghiem: soNamKinhNghiem,
                     sThoiGianDangBai: formData.sThoiGianDangBai.toISOString().split('T')[0],
                     sThoiHanTuyenDung: formData.sThoiHanTuyenDung.toISOString().split('T')[0],
                     sCoKhoa: 2,

@@ -153,11 +153,11 @@ const Login = ({ navigation }: any) => {
             <View style={styles.loginOptionsContainer}>
                 <Button title="Đăng nhập" onPress={handleLogin} />
 
-                <CustomText style={styles.orText}>Hoặc</CustomText>
+                {/* <CustomText style={styles.orText}>Hoặc</CustomText>
 
                 <TouchableOpacity style={styles.socialIconContainer}>
                     <Image source={require('../../../asset/images/img_google.png')} style={styles.socialIcon} />
-                </TouchableOpacity>
+                </TouchableOpacity> */}
             </View>
 
             <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>

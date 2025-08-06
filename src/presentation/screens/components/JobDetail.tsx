@@ -16,6 +16,7 @@ const fbCT = firestore().collection("tblDoanhNghiep");
 const JobDetail = ({ route, navigation }: any) => {
   const { theme } = useTheme();
   const { sMaTinTuyenDung } = route.params;
+  const [isOwner, setIsOwner] = useState(false);
   const [job, setJob] = useState<any>(null);
   const [companyDetail, setCompanyDetail] = useState<any>(null);
   const { loading, setLoading } = useLoading();
@@ -23,6 +24,7 @@ const JobDetail = ({ route, navigation }: any) => {
   const [isSaved, setIsSaved] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
   const [recommendedCandidates, setRecommendedCandidates] = useState<any[]>([]);
+  const [applicantCount, setApplicantCount] = useState(0);
   const [dialogContent, setDialogContent] = useState({
     title: '',
     content: '',
@@ -30,6 +32,26 @@ const JobDetail = ({ route, navigation }: any) => {
     dismiss: null as null | { text: string; onPress: () => void },
     visible: false,
   });
+
+  useEffect(() => {
+    if (isOwner) {
+      fetchApplicantCount();
+    }
+  }, [isOwner, sMaTinTuyenDung]);
+
+  const fetchApplicantCount = async () => {
+    try {
+      const snapshot = await firestore()
+        .collection('tblDonUngTuyen')
+        .where('sMaTinTuyenDung', '==', sMaTinTuyenDung)
+        .get();
+
+      setApplicantCount(snapshot.size);
+    } catch (error) {
+      console.error('Lỗi khi lấy số lượng ứng viên:', error);
+    }
+  };
+
   useEffect(() => {
     if (userType === 2 && job) {
       setIsOwner(job.sMaDoanhNghiep === userId);
@@ -78,7 +100,6 @@ const JobDetail = ({ route, navigation }: any) => {
     checkIfJobIsSaved();
   }, [sMaTinTuyenDung, userId, userType]);
 
-  const [isOwner, setIsOwner] = useState(false);
   useEffect(() => {
     const getJobDetail = async () => {
       setLoading(true);
@@ -92,7 +113,7 @@ const JobDetail = ({ route, navigation }: any) => {
         if (!jobQuerySnapshot.empty) {
           const jobDoc = jobQuerySnapshot.docs[0];
           const jobData: any = jobDoc.data();
-          setJob(jobData);
+          setJob({ ...jobData, id: jobDoc.id });
 
           if (jobData.sMaDoanhNghiep) {
             const companySnapshot = await fbCT
@@ -230,7 +251,7 @@ const JobDetail = ({ route, navigation }: any) => {
             setLoading(true);
 
             if (job) {
-              const newStatus = isLocked ? 1 : 2;
+              const newStatus = isLocked ? 1 : 3;
               await firestore()
                 .collection('tblTinTuyenDung')
                 .doc(job.id)
@@ -359,7 +380,7 @@ const JobDetail = ({ route, navigation }: any) => {
                 jobType="On-site"
                 location={job.sDiaChiLamViec}
                 onPress={() => navigation.navigate("company-detail-candidate", { sMaDoanhNghiep: job.sMaDoanhNghiep })}
-                salaryMax={job.sMucLuongToiThieu}
+                salaryMax={job.sMucLuongToiDa}
               />
             </View>
 
@@ -391,30 +412,41 @@ const JobDetail = ({ route, navigation }: any) => {
                 </Text>
               </View>
               {isOwner && (
-              <View style={styles.section}>
-                <Text style={[styles.recommendedJobsTitle, Fonts.semiBold]}>
-                  Ứng viên phù hợp
-                </Text>
-                {recommendedCandidates.length > 0 ? (
-                  recommendedCandidates.map((candidate, index) => (
-                    <JobCard
-                      key={index}
-                      companyLogo={candidate.sAnhDaiDien || ""}
-                      companyName={candidate.sHoVaTen || "Ứng viên ẩn danh"}
-                      jobTitle={candidate.sChuyenNganh || "Chưa cập nhật"}
-                      location={candidate.sDiaChi || "Không rõ địa chỉ"}
-                      salaryMax={candidate.sKinhNghiem || "0"}
-                      jobType="Ứng viên"
-                      onPress={() =>
-                        navigation.navigate("application-detail", { sMaUngVien: candidate.sMaUngVien, sMaTinTuyenDung: sMaTinTuyenDung })
-                      }
-                      style={styles.jobCard}
-                    />
-                  ))
-                ) : (
-                  <Text style={styles.noJobsText}>Không có ứng viên phù hợp.</Text>
-                )}
-              </View>
+                <View style={styles.section}>
+                  <Text style={[styles.sectionTitle, { color: theme.surface }, Fonts.semiBold]}>
+                    Số lượng ứng viên đã ứng tuyển
+                  </Text>
+                  <Text style={[styles.description, { color: theme.surface }, Fonts.regular]}>
+                    {applicantCount} người đã ứng tuyển
+                  </Text>
+                </View>
+              )}
+
+              {isOwner && (
+                <View style={styles.section}>
+                  <Text style={[styles.recommendedJobsTitle, Fonts.semiBold]}>
+                    Ứng viên phù hợp
+                  </Text>
+                  {recommendedCandidates.length > 0 ? (
+                    recommendedCandidates.map((candidate, index) => (
+                      <JobCard
+                        key={index}
+                        companyLogo={candidate.sAnhDaiDien || ""}
+                        companyName={candidate.sHoVaTen || "Ứng viên ẩn danh"}
+                        jobTitle={candidate.sChuyenNganh || "Chưa cập nhật"}
+                        location={candidate.sDiaChi || "Không rõ địa chỉ"}
+                        salaryMax={candidate.sKinhNghiem || "0"}
+                        jobType="Ứng viên"
+                        onPress={() =>
+                          navigation.navigate("application-detail", { sMaUngVien: candidate.sMaUngVien, sMaTinTuyenDung: sMaTinTuyenDung })
+                        }
+                        style={styles.jobCard}
+                      />
+                    ))
+                  ) : (
+                    <Text style={styles.noJobsText}>Không có ứng viên phù hợp.</Text>
+                  )}
+                </View>
               )}
             </View>
           </ScrollView>
@@ -521,8 +553,7 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: "#FFFFFF",
     borderRadius: 12,
-    paddingVertical: 16,
-    marginBottom: 16,
+    marginBottom: 8,
     alignItems: "center",
   },
   content: {

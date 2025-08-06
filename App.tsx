@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { NavigationContainer, useNavigation } from '@react-navigation/native';
+import React, { useEffect } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Home from './src/presentation/screens/components/Home'
 import Login from './src/presentation/screens/Login';
@@ -36,6 +36,8 @@ import JobSaved from './src/presentation/screens/User/JobSaved';
 import LicensePreview from './src/presentation/screens/Company/LicensePreview';
 import PolicyPreview from './src/presentation/screens/components/PolicyPreview';
 import JobApplicantsScreen from './src/presentation/screens/Company/JobApplicantsScreen';
+import ChangePassword from './src/presentation/screens/components/ChangePassword';
+import ImportCSVScreen from './src/presentation/screens/components/ImportCSVToJob';
 
 const Stack = createNativeStackNavigator();
 
@@ -106,6 +108,8 @@ const App = () => {
               <Stack.Screen name='license-preview' component={LicensePreview} options={{ headerShown: false }} />
               <Stack.Screen name="policy-preview" component={PolicyPreview} options={{ headerShown: false }} />
               <Stack.Screen name="job-applicants" component={JobApplicantsScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="change-password" component={ChangePassword} options={{ headerShown: false }} />
+              <Stack.Screen name="import-csv" component={ImportCSVScreen} options={{ headerShown: false }} />
               </Stack.Navigator>
           </NavigationContainer>
         </LoadingProvider>

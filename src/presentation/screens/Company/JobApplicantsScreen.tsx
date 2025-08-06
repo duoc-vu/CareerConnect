@@ -24,19 +24,19 @@ const JobApplicantsScreen = ({ route, navigation }: any) => {
         dismiss: null as null | { text: string; onPress: () => void },
         failure: false,
     });
-  const [filteredApplicants, setFilteredApplicants] = useState<any[]>([]);
+    const [filteredApplicants, setFilteredApplicants] = useState<any[]>([]);
 
-    
-  const showDialog = (
-    title: string,
-    content: string,
-    failure: boolean,
-    confirm: { text: string; onPress: () => void } | null = null,
-    dismiss: { text: string; onPress: () => void } | null = null
-  ) => {
-    setDialogContent({ title, content, confirm, dismiss, failure });
-    setDialogVisible(true);
-  };
+
+    const showDialog = (
+        title: string,
+        content: string,
+        failure: boolean,
+        confirm: { text: string; onPress: () => void } | null = null,
+        dismiss: { text: string; onPress: () => void } | null = null
+    ) => {
+        setDialogContent({ title, content, confirm, dismiss, failure });
+        setDialogVisible(true);
+    };
 
     useEffect(() => {
         const fetchApplicants = async () => {
@@ -47,12 +47,31 @@ const JobApplicantsScreen = ({ route, navigation }: any) => {
                     .where('sMaTinTuyenDung', '==', sMaTinTuyenDung)
                     .get();
 
-                const applicantsList = applicantQuerySnapshot.docs.map(doc => ({
-                    ...doc.data(),
-                    id: doc.id,
-                }));
+                const applicantsList = await Promise.all(
+                    applicantQuerySnapshot.docs.map(async doc => {
+                        const applicantData = doc.data();
+                        const applicantId = doc.id;
+
+                        const userSnapshot = await firestore()
+                            .collection('tblUngVien')
+                            .where('sMaUngVien', '==', applicantData.sMaUngVien)
+                            .get();
+
+                        const userData = !userSnapshot.empty
+                            ? userSnapshot.docs[0].data()
+                            : { sHoTen: 'Không xác định', sEmail: 'Không xác định' };
+
+                        return {
+                            ...applicantData,
+                            id: applicantId, // ID của tài liệu trong tblDonUngTuyen
+                            applicantName: userData.sHoTen || 'Không xác định',
+                            applicantEmail: userData.sEmail || 'Không xác định',
+                        };
+                    })
+                );
 
                 setApplicants(applicantsList);
+                setFilteredApplicants(applicantsList);
             } catch (error) {
                 console.error('Error fetching applicants:', error);
             } finally {
@@ -69,6 +88,8 @@ const JobApplicantsScreen = ({ route, navigation }: any) => {
             applicationDate={item.sNgayTao}
             status={STATUS_TEXT_MAPPING[item.sTrangThai]}
             cvUrl={item.fFileCV}
+            applicantName={item.applicantName}
+            applicantEmail={item.applicantEmail}
             onViewCV={() =>
                 navigation.navigate('application-detail', {
                     sMaUngVien: item.sMaUngVien,
@@ -104,35 +125,60 @@ const JobApplicantsScreen = ({ route, navigation }: any) => {
         );
     };
 
-    const updateStatus = async (applicantId: string, newStatus: number) => {
+    const updateStatus = async (sMaDonUngTuyen: string, newStatus: number) => {
         try {
-          await firestore()
-            .collection('tblDonUngTuyen')
-            .doc(applicantId)
-            .update({ sTrangThai: newStatus });
+            // Truy vấn tài liệu trong tblDonUngTuyen bằng sMaDonUngTuyen
+            const snapshot = await firestore()
+                .collection('tblDonUngTuyen')
+                .where('sMaDonUngTuyen', '==', sMaDonUngTuyen)
+                .get();
     
-          setApplicants(prev =>
-            prev.map(applicant =>
-              applicant.id === applicantId
-                ? { ...applicant, sTrangThai: newStatus }
-                : applicant
-            )
-          );
+            if (snapshot.empty) {
+                showDialog('Lỗi', 'Không tìm thấy ứng viên.', true, null, {
+                    text: 'Đóng',
+                    onPress: () => setDialogVisible(false),
+                });
+                return;
+            }
     
-          setFilteredApplicants(prev =>
-            prev.map(applicant =>
-              applicant.id === applicantId
-                ? { ...applicant, sTrangThai: newStatus }
-                : applicant
-            )
-          );
+            // Lấy ID tài liệu Firestore
+            const docId = snapshot.docs[0].id;
     
-          showDialog('Thành công', `Đã cập nhật trạng thái thành "${STATUS_TEXT_MAPPING[newStatus]}".`, false);
+            // Cập nhật trạng thái trong Firestore
+            await firestore()
+                .collection('tblDonUngTuyen')
+                .doc(docId)
+                .update({ sTrangThai: newStatus });
+    
+            // Cập nhật trạng thái trong danh sách ứng viên
+            setApplicants(prev =>
+                prev.map(applicant =>
+                    applicant.sMaDonUngTuyen === sMaDonUngTuyen
+                        ? { ...applicant, sTrangThai: newStatus }
+                        : applicant
+                )
+            );
+    
+            setFilteredApplicants(prev =>
+                prev.map(applicant =>
+                    applicant.sMaDonUngTuyen === sMaDonUngTuyen
+                        ? { ...applicant, sTrangThai: newStatus }
+                        : applicant
+                )
+            );
+    
+            showDialog('Thành công', `Đã cập nhật trạng thái thành "${STATUS_TEXT_MAPPING[newStatus]}".`, false, null, {
+                text: 'Đóng',
+                onPress: () => setDialogVisible(false),
+            });
         } catch (error) {
-          console.error('Error updating status:', error);
-          showDialog('Lỗi', 'Không thể cập nhật trạng thái. Vui lòng thử lại.', true);
+            console.error('Error updating status:', error);
+            showDialog('Lỗi', 'Không thể cập nhật trạng thái. Vui lòng thử lại.', true, null, {
+                text: 'Đóng',
+                onPress: () => setDialogVisible(false),
+            });
         }
-      };
+    };
 
     const handleReject = async (applicantId: string) => {
         const applicant = await fetchApplicant(applicantId);
@@ -180,35 +226,35 @@ const JobApplicantsScreen = ({ route, navigation }: any) => {
 
     return (
         <>
-        <View style={styles.container}>
-            <HeaderWithIcons
-                title={`Ứng viên - ${sViTriTuyenDung}`}
-                onBackPress={() => navigation.goBack()}
-                style={styles.header}
-            />
-            {loading ? (
-                <Loading />
-            ) : (
-                <FlatList
-                    data={applicants}
-                    renderItem={renderItem}
-                    keyExtractor={(item: any) => item.id}
-                    contentContainerStyle={styles.list}
-                    ListEmptyComponent={() => (
-                        <Text style={styles.noApplicantsText}>Không có ứng viên nào ứng tuyển.</Text>
-                    )}
+            <View style={styles.container}>
+                <HeaderWithIcons
+                    title={`Ứng viên - ${sViTriTuyenDung}`}
+                    onBackPress={() => navigation.goBack()}
+                    style={styles.header}
                 />
-            )}
-        </View>
-        <Dialog
-        visible={dialogVisible}
-        title={dialogContent.title}
-        content={dialogContent.content}
-        confirm={dialogContent.confirm}
-        dismiss={dialogContent.dismiss}
-        failure={dialogContent.failure}
-      />
-      {loading && <Loading />}
+                {loading ? (
+                    <Loading />
+                ) : (
+                    <FlatList
+                        data={applicants}
+                        renderItem={renderItem}
+                        keyExtractor={(item: any) => item.id}
+                        contentContainerStyle={styles.list}
+                        ListEmptyComponent={() => (
+                            <Text style={styles.noApplicantsText}>Không có ứng viên nào ứng tuyển.</Text>
+                        )}
+                    />
+                )}
+            </View>
+            <Dialog
+                visible={dialogVisible}
+                title={dialogContent.title}
+                content={dialogContent.content}
+                confirm={dialogContent.confirm}
+                dismiss={dialogContent.dismiss}
+                failure={dialogContent.failure}
+            />
+            {loading && <Loading />}
         </>
     );
 };
@@ -219,7 +265,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#f2f2f2',
         padding: 15,
     },
-    header:{
+    header: {
         backgroundColor: '#f2f2f2',
     },
     list: {

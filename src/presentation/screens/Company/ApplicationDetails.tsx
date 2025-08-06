@@ -255,7 +255,6 @@ const ApplicantionDetail = ({ route, navigation }: any) => {
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <CustomText style={styles.sectionTitle}>Lĩnh Vực</CustomText>
-                        <Image source={require('../../../../asset/images/img_edit.png')} />
                     </View>
                     <CustomText style={styles.description}>{user.sChuyenNganh || 'Chưa có thông tin'}</CustomText>
                 </View>
@@ -263,7 +262,6 @@ const ApplicantionDetail = ({ route, navigation }: any) => {
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <CustomText style={styles.sectionTitle}>Kinh Nghiệm Làm Việc</CustomText>
-                        <Image source={require('../../../../asset/images/img_edit.png')} />
                     </View>
                     <CustomText style={styles.description}>{user.sKinhNghiem || 'Chưa có kinh nghiệm'}</CustomText>
                 </View>
@@ -271,8 +269,6 @@ const ApplicantionDetail = ({ route, navigation }: any) => {
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <CustomText style={styles.sectionTitle}>Kĩ năng</CustomText>
-
-                        <Image source={require('../../../../asset/images/img_edit.png')} />
                     </View>
                     <SkillTags
                         skills={user.sKiNang || 'Không có kĩ năng nào'}
@@ -283,7 +279,6 @@ const ApplicantionDetail = ({ route, navigation }: any) => {
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <CustomText style={styles.sectionTitle}>Sở Thích</CustomText>
-                        <Image source={require('../../../../asset/images/img_edit.png')} />
                     </View>
                     <CustomText style={styles.description}>{user.sSoThich || 'Không có sở thích.'}</CustomText>
                 </View>
@@ -291,7 +286,6 @@ const ApplicantionDetail = ({ route, navigation }: any) => {
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <CustomText style={styles.sectionTitle}>Giới thiệu bản thân</CustomText>
-                        <Image source={require('../../../../asset/images/img_edit.png')} />
                     </View>
                     <CustomText style={styles.description}>{user.sMoTaChiTiet || 'Không có mô tả chi tiết nào.'}</CustomText>
                 </View>
@@ -299,7 +293,6 @@ const ApplicantionDetail = ({ route, navigation }: any) => {
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <CustomText style={styles.sectionTitle}>Lời giới thiệu</CustomText>
-                        <Image source={require('../../../../asset/images/img_edit.png')} />
                     </View>
                     <CustomText style={styles.description}>{user.introduction || 'Không có lời giới thiệu.'}</CustomText>
                 </View>
@@ -307,7 +300,6 @@ const ApplicantionDetail = ({ route, navigation }: any) => {
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <CustomText style={styles.sectionTitle}>Đơn ứng tuyển</CustomText>
-                        <Image source={require('../../../../asset/images/img_edit.png')} />
                     </View>
                     {user.fFileCV.startsWith('http') ? (
                         <TouchableOpacity

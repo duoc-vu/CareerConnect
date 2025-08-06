@@ -9,12 +9,16 @@ import { useUser } from '../../../context/UserContext';
 import Dialog from '../../components/Dialog';
 import { View } from 'react-native-animatable';
 import HeaderWithIcons from '../../components/Header';
+import { useLoading } from '../../../context/themeContext';
+import Loading from '../../components/Loading';
 
 const fbJob = firestore().collection('tblTinTuyenDung');
 
 const PostJob = ({ navigation }: any) => {
     const { userId, userInfo } = useUser()
-
+    const [isFormValid, setIsFormValid] = useState(false);
+    const {loading, setLoading} = useLoading();
+    
     const [errors, setErrors] = useState({
         sMucLuongToiThieu: '',
         sMucLuongToiDa: '',
@@ -104,9 +108,29 @@ const PostJob = ({ navigation }: any) => {
 
     const isNumber = (value: string) => /^\d+$/.test(value);
 
-
+    const validateForm = () => {
+        const { sViTriTuyenDung, sLinhVucTuyenDung, sDiaChiLamViec, sMucLuongToiThieu, sMucLuongToiDa, sSoLuongTuyenDung, sSoNamKinhNghiem, sThoiGianDangBai, sThoiHanTuyenDung, sMoTaCongViec } = formData;
+    
+        if (
+            sViTriTuyenDung.trim() &&
+            sLinhVucTuyenDung.trim() &&
+            sDiaChiLamViec.trim() &&
+            sMucLuongToiThieu.trim() &&
+            sMucLuongToiDa.trim() &&
+            sSoLuongTuyenDung.trim() &&
+            sSoNamKinhNghiem.trim() &&
+            sThoiGianDangBai &&
+            sThoiHanTuyenDung &&
+            sMoTaCongViec.trim()
+        ) {
+            setIsFormValid(true);
+        } else {
+            setIsFormValid(false);
+        }
+    };
     const handlePostJob = async () => {
         try {
+            setLoading(true)
             const currentDate = new Date();
             currentDate.setHours(0, 0, 0, 0);
 
@@ -131,6 +155,9 @@ const PostJob = ({ navigation }: any) => {
 
             const minSalary = parseInt(formData.sMucLuongToiThieu.replace(/\./g, "").trim(), 10);
             const maxSalary = parseInt(formData.sMucLuongToiDa.replace(/\./g, "").trim(), 10);
+            const soLuongTuyenDung = parseInt(formData.sSoLuongTuyenDung.trim(), 10);
+            const soNamKinhNghiem = parseInt(formData.sSoNamKinhNghiem.trim(), 10);
+
 
             if (isNaN(minSalary) || isNaN(maxSalary)) {
                 setError("Mức lương phải là số hợp lệ!");
@@ -152,6 +179,10 @@ const PostJob = ({ navigation }: any) => {
                 sMaDoanhNghiep: userId,
                 sThoiGianDangBai: formData.sThoiGianDangBai.toISOString().split("T")[0],
                 sThoiHanTuyenDung: formData.sThoiHanTuyenDung.toISOString().split("T")[0],
+                sMucLuongToiThieu: minSalary,
+                sMucLuongToiDa: maxSalary,
+                sSoLuongTuyenDung: soLuongTuyenDung,
+                sSoNamKinhNghiem: soNamKinhNghiem,
                 sCoKhoa: 1
             });
 
@@ -184,6 +215,8 @@ const PostJob = ({ navigation }: any) => {
                 failure: true,
             });
             setDialogVisible(true);
+        } finally {
+            setLoading(false)
         }
     };
 
@@ -192,13 +225,17 @@ const PostJob = ({ navigation }: any) => {
         setError('');
     };
 
+    useEffect(() => {
+        validateForm();
+    }, [formData]);
+
     return (
         <View style={styles.container}>
-                        <HeaderWithIcons
-                    title='Đăng tin tuyển dụng'
-                    onBackPress={navigation.goBack}
-                    style={styles.header}
-                />
+            <HeaderWithIcons
+                title='Đăng tin tuyển dụng'
+                onBackPress={navigation.goBack}
+                style={styles.header}
+            />
             <ScrollView contentContainerStyle={styles.containerChild}>
 
 
@@ -240,7 +277,7 @@ const PostJob = ({ navigation }: any) => {
 
             </ScrollView>
             <View style={styles.button}>
-                <Button title="Đăng tin tuyển dụng" onPress={handlePostJob} />
+                <Button title="Đăng tin tuyển dụng" onPress={handlePostJob}  disabled={!isFormValid}/>
             </View>
 
             <Dialog
@@ -251,16 +288,17 @@ const PostJob = ({ navigation }: any) => {
                 dismiss={dialogContent.dismiss}
                 failure={dialogContent.failure}
             />
+            {loading && <Loading/>}
         </View>
     );
 };
 
 const styles = StyleSheet.create({
-    container: {backgroundColor: '#fff', flexGrow: 1 },
-    containerChild: { padding: 20, paddingBottom:150},
+    container: { backgroundColor: '#fff', flexGrow: 1 },
+    containerChild: { padding: 20, paddingBottom: 150 },
     title: { fontSize: 22, fontWeight: 'bold', textAlign: 'center', marginVertical: 10 },
-    header:{
-        marginBottom:10
+    header: {
+        marginBottom: 10
     },
     input: { marginBottom: 10, borderColor: "#BEBEBE", backgroundColor: "#EDEDED" },
     largeInput: { height: 100, textAlignVertical: 'top', marginBottom: 10, borderColor: "#BEBEBE", backgroundColor: "#EDEDED" },

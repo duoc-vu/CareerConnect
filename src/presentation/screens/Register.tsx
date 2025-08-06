@@ -141,12 +141,12 @@ const Register = ({ navigation }: any) => {
 
             <View style={styles.loginOptionsContainer}>
                 <Button title="Đăng ký" onPress={handleRegister} />
-
+{/* 
                 <CustomText style={styles.orText}>Hoặc</CustomText>
 
                 <TouchableOpacity style={styles.socialIconContainer}>
                     <Image source={require('../../../asset/images/img_google.png')} style={styles.socialIcon} />
-                </TouchableOpacity>
+                </TouchableOpacity> */}
             </View>
 
 
@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-around',
         width: width * 0.8,
-        marginBottom: 25,
+        marginVertical: 25,
     },
     orText: {
         color: '#aaa',

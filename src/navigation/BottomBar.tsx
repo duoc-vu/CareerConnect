@@ -284,9 +284,29 @@ const BottomBar = () => {
       ) : (
         <Tab.Navigator initialRouteName="Trang chủ" screenOptions={screenOptions}>
           {tabs.map(({ name, component }: any) => (
-            <Tab.Screen key={name} name={name} options={{ headerShown: false }}>
-              {() => component}
-            </Tab.Screen>
+            <Tab.Screen
+            key={name}
+            name={name}
+            options={{ headerShown: false }}
+            listeners={({ navigation }) => ({
+              tabPress: () => {
+                // Khi tab được nhấn, gọi lại hàm tải dữ liệu
+                if (name === "Trang chủ") {
+                  fetchJobData();
+                } else if (name === "Tìm kiếm") {
+                  // Gọi hàm tải dữ liệu cho màn hình Tìm kiếm (nếu có)
+                } else if (name === "Lưu công việc") {
+                  // Gọi hàm tải dữ liệu cho màn hình Lưu công việc (nếu có)
+                } else if (name === "Đã đăng tải") {
+                  // Gọi hàm tải dữ liệu cho màn hình Đã đăng tải (nếu có)
+                } else if (name === "Tài khoản" || name === "Tài khoản công ty") {
+                  // Gọi hàm tải dữ liệu cho màn hình Tài khoản (nếu có)
+                }
+              },
+            })}
+          >
+            {() => component}
+          </Tab.Screen>
           ))}
         </Tab.Navigator>
       )}
