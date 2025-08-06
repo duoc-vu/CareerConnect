@@ -1,0 +1,197 @@
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  StyleSheet,
+  Text,
+  FlatList,
+  Image,
+} from 'react-native';
+import firestore from '@react-native-firebase/firestore';
+import { useUser } from '../../../context/UserContext';
+import JobCard from '../../components/JobCard';
+import { theme } from '../../../theme/theme';
+import SearchBar from '../../components/SearchBar';
+import { Fonts } from '../../../theme/font';
+
+const fbDonUngTuyen = firestore().collection('tblDonUngTuyen');
+
+const AppliedJobsScreen = ({ navigation }: any) => {
+  const { userId, userInfo } = useUser();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [applicants, setApplicants] = useState([]);
+  const [filteredApplicants, setFilteredApplicants] = useState([]);
+
+  useEffect(() => {
+    const fetchApplicants = async () => {
+      try {
+        const applicantQuerySnapshot = await fbDonUngTuyen
+          .where('sMaUngVien', '==', userId)
+          .get();
+
+        const applicantsList: any = [];
+        for (const doc of applicantQuerySnapshot.docs) {
+          const applicantData = doc.data();
+
+          const jobQuerySnapshot = await firestore()
+            .collection('tblTinTuyenDung')
+            .where('sMaTinTuyenDung', '==', applicantData.sMaTinTuyenDung)
+            .get();
+
+          if (!jobQuerySnapshot.empty) {
+            const jobData = jobQuerySnapshot.docs[0].data();
+
+            const companySnapshot = await firestore()
+              .collection('tblDoanhNghiep')
+              .where('sMaDoanhNghiep', '==', jobData.sMaDoanhNghiep)
+              .get();
+
+            const companyData = !companySnapshot.empty
+              ? companySnapshot.docs[0].data()
+              : { sAnhDaiDien: '', sTenDoanhNghiep: 'Không xác định' };
+
+            applicantsList.push({
+              ...applicantData,
+              id: doc.id,
+              jobTitle: jobData.sViTriTuyenDung || 'Không xác định',
+              sThoiGianUngTuyen: applicantData.sThoiGianUngTuyen || 'Không xác định',
+              companyLogo: companyData.sAnhDaiDien || '',
+              companyName: companyData.sTenDoanhNghiep || 'Không xác định',
+              location: jobData.sDiaChiLamViec || 'Không xác định',
+              salaryMax: jobData.sMucLuongToiDa,
+              sTrangThai: applicantData.sTrangThai || 2,
+            });
+          } else {
+            applicantsList.push({
+              ...applicantData,
+              id: doc.id,
+              jobTitle: 'Không xác định',
+              sThoiGianUngTuyen: applicantData.sThoiGianUngTuyen || 'Không xác định',
+              companyLogo: '',
+              companyName: 'Không xác định',
+              location: 'Không xác định',
+              salaryMax: 0,
+              sTrangThai: applicantData.sTrangThai || 2,
+            });
+          }
+        }
+
+        setApplicants(applicantsList);
+        setFilteredApplicants(applicantsList);
+      } catch (error) {
+        console.error('Error fetching applicants:', error);
+      }
+    };
+    fetchApplicants();
+  }, [userId]);
+
+  useEffect(() => {
+    filterApplicants(searchQuery);
+  }, [searchQuery, applicants]);
+
+  const filterApplicants = (query: any) => {
+    if (!query.trim()) {
+      setFilteredApplicants(applicants);
+      return;
+    }
+
+    const filtered = applicants.filter((applicant: any) =>
+      applicant.sMaUngVien?.toLowerCase().includes(query.toLowerCase())
+    );
+    setFilteredApplicants(filtered);
+  };
+
+  const renderItem = ({ item }: any) => (
+    <View style={{ overflow: 'hidden' }}>
+      <View style={{ backgroundColor: 'transparent' }}>
+        <JobCard
+          companyLogo={item.companyLogo}
+          companyName={item.companyName}
+          jobTitle={item.jobTitle}
+          salaryMax={item.salaryMax}
+          jobAppliTime={item.sNgayTao}
+          location={item.location}
+          sTrangThai={item.sTrangThai}
+          onPress={() =>
+            navigation.navigate('job-detail', {
+              sMaTinTuyenDung: item.sMaTinTuyenDung,
+            })
+          }
+        />
+      </View>
+    </View>
+  );
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <SearchBar
+          style={styles.searchBar}
+          value={searchQuery}
+          onChangeText={(query: any) => {
+            setSearchQuery(query);
+          }} />
+        <Image
+          source={userInfo?.sAnhDaiDien ? { uri: userInfo?.sAnhDaiDien } : require('../../../../asset/images/img_ellipse_3.png')}
+          style={styles.avatar}
+        />
+      </View>
+      <Text style={styles.sectionTitle}>Công việc đã ứng tuyển</Text>
+      <FlatList
+        data={filteredApplicants}
+        renderItem={renderItem}
+        keyExtractor={(item: any) => item.id || Math.random().toString()}
+        contentContainerStyle={styles.list}
+        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={() => (
+          <Text style={styles.noApplicantsText}>
+            Chưa có đơn ứng tuyển nào.
+          </Text>
+        )}
+      />
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f2f2f2',
+  },
+  searchBar: {
+    width: '80%',
+  },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginHorizontal: 10,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '95%',
+    marginHorizontal: 20,
+    marginTop: 10
+  },
+  sectionTitle: {
+    fontFamily: Fonts.medium.fontFamily,
+    fontSize: 18,
+    color: theme.colors.titleJob.third,
+    marginVertical: 10,
+    marginLeft: 20,
+    marginRight: 10,
+},
+  list: {
+    paddingHorizontal: 10,
+    paddingBottom: 80
+  },
+  noApplicantsText: {
+    textAlign: 'center',
+    fontSize: 16,
+    color: '#6B7280',
+    marginTop: 20,
+  },
+});
+
+export default AppliedJobsScreen;
